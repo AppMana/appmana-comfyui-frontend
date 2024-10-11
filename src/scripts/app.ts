@@ -21,7 +21,7 @@ import {
   type NodeId,
   validateComfyWorkflow
 } from '@/types/comfyWorkflow'
-import type { ComfyNodeDef, ExecutedWsMessage } from '@/types/apiTypes'
+import type { BinaryPreview, ComfyNodeDef, ExecutedWsMessage } from '@/types/apiTypes'
 import { adjustColor, ColorAdjustOptions } from '@/utils/colorUtil'
 import { ComfyAppMenu } from './ui/menu/index'
 import { getStorageValue } from './utils'
@@ -1588,11 +1588,11 @@ export class ComfyApp {
       this.canvas.draw(true, true)
     })
 
-    api.addEventListener('b_preview', ({ detail }) => {
-      const id = this.runningNodeId
+    api.addEventListener('b_preview', ({ detail }: CustomEventInit<BinaryPreview>) => {
+      const id = detail.nodeId ?? this.runningNodeId
       if (id == null) return
 
-      const blob = detail
+      const blob = detail.imageBlob
       const blobUrl = URL.createObjectURL(blob)
       // Ensure clean up if `executing` event is missed.
       this.revokePreviews(id)

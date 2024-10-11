@@ -544,3 +544,10 @@ export type UserDataFullInfo = z.infer<typeof zUserDataFullInfo>
 export type TerminalSize = z.infer<typeof zTerminalSize>
 export type LogEntry = z.infer<typeof zLogEntry>
 export type LogsRawResponse = z.infer<typeof zLogRawResponse>
+
+// todo: promote this to a full zod type
+export interface BinaryPreview {
+  imageBlob: Blob
+  nodeId: string
+  promptId: string
+}

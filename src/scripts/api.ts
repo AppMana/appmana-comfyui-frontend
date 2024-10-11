@@ -13,7 +13,7 @@ import {
   SystemStats,
   User,
   Settings,
-  UserDataFullInfo
+  UserDataFullInfo, BinaryPreview
 } from '@/types/apiTypes'
 import axios from 'axios'
 
@@ -152,23 +152,47 @@ class ComfyApi extends EventTarget {
           const buffer = event.data.slice(4)
           switch (eventType) {
             case 1:
-              const view2 = new DataView(event.data)
+              const view2 = new DataView(buffer)
               const imageType = view2.getUint32(0)
               let imageMime
+              let nodeId = null
+              let promptId = null
+              let imageDataOffset = 4
+
               switch (imageType) {
                 case 1:
-                default:
+                case 3:
                   imageMime = 'image/jpeg'
                   break
                 case 2:
+                case 4:
                   imageMime = 'image/png'
+                  break
+                default:
+                  throw new Error(`Unknown image type: ${imageType}`)
               }
-              const imageBlob = new Blob([buffer.slice(4)], {
+
+              if (imageType === 3 || imageType === 4) {
+                const nodeIdLength = view2.getUint32(4)
+                const taskIdLength = view2.getUint32(8)
+                const decoder = new TextDecoder('utf-8')
+                nodeId = decoder.decode(buffer.slice(12, 12 + nodeIdLength))
+                promptId = decoder.decode(buffer.slice(12 + nodeIdLength, 12 + nodeIdLength + taskIdLength))
+                imageDataOffset = 12 + nodeIdLength + taskIdLength
+              }
+
+              const imageBlob = new Blob([buffer.slice(imageDataOffset)], {
                 type: imageMime
               })
-              this.dispatchEvent(
-                new CustomEvent('b_preview', { detail: imageBlob })
-              )
+
+              const eventInitDict: CustomEventInit<BinaryPreview> = {
+                detail: {
+                  imageBlob,
+                  nodeId,
+                  promptId
+                }
+              }
+              this.dispatchEvent(new CustomEvent('b_preview', eventInitDict))
               break
             default:
               throw new Error(

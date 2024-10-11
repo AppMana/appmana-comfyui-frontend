@@ -524,3 +524,10 @@ export type SystemStats = z.infer<typeof zSystemStats>
 export type User = z.infer<typeof zUser>
 export type UserData = z.infer<typeof zUserData>
 export type UserDataFullInfo = z.infer<typeof zUserDataFullInfo>
+
+// todo: promote this to a full zod type
+export interface BinaryPreview {
+  imageBlob: Blob
+  nodeId: string
+  promptId: string
+}

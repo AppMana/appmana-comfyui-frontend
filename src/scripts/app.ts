@@ -21,7 +21,7 @@ import {
   type NodeId,
   validateComfyWorkflow
 } from '../types/comfyWorkflow'
-import { ComfyNodeDef, StatusWsMessageStatus } from '@/types/apiTypes'
+import { BinaryPreview, ComfyNodeDef, StatusWsMessageStatus } from '@/types/apiTypes'
 import { adjustColor, ColorAdjustOptions } from '@/utils/colorUtil'
 import { ComfyAppMenu } from './ui/menu/index'
 import { getStorageValue } from './utils'
@@ -1607,11 +1607,11 @@ export class ComfyApp {
       this.canvas.draw(true, true)
     })
 
-    api.addEventListener('b_preview', ({ detail }) => {
-      const id = this.runningNodeId
+    api.addEventListener('b_preview', ({ detail }: CustomEventInit<BinaryPreview>) => {
+      const id = detail.nodeId ?? this.runningNodeId
       if (id == null) return
 
-      const blob = detail
+      const blob = detail.imageBlob
       const blobUrl = URL.createObjectURL(blob)
       // @ts-expect-error
       this.nodePreviewImages[id] = [blobUrl]

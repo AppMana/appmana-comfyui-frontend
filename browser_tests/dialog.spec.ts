@@ -1,5 +1,5 @@
 import { expect } from '@playwright/test'
-import { comfyPageFixture as test } from './ComfyPage'
+import { comfyPageFixture as test } from './fixtures/ComfyPage'
 
 test.describe('Load workflow warning', () => {
   test('Should display a warning when loading a workflow with missing nodes', async ({
@@ -63,45 +63,15 @@ test.describe('Missing models warning', () => {
 
     const downloadButton = comfyPage.page.getByLabel('Download')
     await expect(downloadButton).toBeVisible()
+    const downloadPromise = comfyPage.page.waitForEvent('download')
     await downloadButton.click()
 
-    const downloadComplete = comfyPage.page.locator('.download-complete')
-    await expect(downloadComplete).toBeVisible()
-  })
-
-  test('Can configure download folder', async ({ comfyPage }) => {
-    await comfyPage.loadWorkflow('missing_models')
-
-    const missingModelsWarning = comfyPage.page.locator('.comfy-missing-models')
-    await expect(missingModelsWarning).toBeVisible()
-
-    const folderSelectToggle = comfyPage.page.locator(
-      '.model-path-select-checkbox'
-    )
-    const folderSelect = comfyPage.page.locator('.model-path-select')
-    await expect(folderSelectToggle).toBeVisible()
-    await expect(folderSelect).not.toBeVisible()
-
-    await folderSelectToggle.click() // show the selectors
-    await expect(folderSelect).toBeVisible()
-
-    await folderSelect.click() // open dropdown
-    await expect(folderSelect).toHaveClass(/p-select-open/)
-
-    await folderSelect.click() // close the dropdown
-    await expect(folderSelect).not.toHaveClass(/p-select-open/)
-
-    await folderSelectToggle.click() // hide the selectors
-    await expect(folderSelect).not.toBeVisible()
+    const download = await downloadPromise
+    expect(download.suggestedFilename()).toBe('fake_model.safetensors')
   })
 })
 
 test.describe('Settings', () => {
-  test.afterEach(async ({ comfyPage }) => {
-    // Restore default setting value
-    await comfyPage.setSetting('Comfy.Graph.ZoomSpeed', 1.1)
-  })
-
   test('@mobile Should be visible on mobile', async ({ comfyPage }) => {
     await comfyPage.page.keyboard.press('Control+,')
     const searchBox = comfyPage.page.locator('.settings-content')

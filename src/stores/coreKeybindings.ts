@@ -160,5 +160,18 @@ export const CORE_KEYBINDINGS: Keybinding[] = [
     },
     commandId: 'Comfy.Canvas.ToggleSelectedNodes.Mute',
     targetSelector: '#graph-canvas'
+  },
+  {
+    combo: {
+      key: '`',
+      ctrl: true
+    },
+    commandId: 'Workspace.ToggleBottomPanelTab.integrated-terminal'
+  },
+  {
+    combo: {
+      key: 'f'
+    },
+    commandId: 'Workspace.ToggleFocusMode'
   }
 ]

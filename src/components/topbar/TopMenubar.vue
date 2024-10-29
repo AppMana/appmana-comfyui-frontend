@@ -14,6 +14,7 @@
       </div>
       <div class="comfyui-menu-right" ref="menuRight"></div>
       <Actionbar />
+      <BottomPanelToggleButton />
     </div>
   </teleport>
 </template>
@@ -23,17 +24,22 @@ import Divider from 'primevue/divider'
 import WorkflowTabs from '@/components/topbar/WorkflowTabs.vue'
 import CommandMenubar from '@/components/topbar/CommandMenubar.vue'
 import Actionbar from '@/components/actionbar/ComfyActionbar.vue'
+import BottomPanelToggleButton from '@/components/topbar/BottomPanelToggleButton.vue'
 import { computed, onMounted, provide, ref } from 'vue'
 import { useSettingStore } from '@/stores/settingStore'
 import { app } from '@/scripts/app'
 import { useEventBus } from '@vueuse/core'
+import { useWorkspaceStore } from '@/stores/workspaceStateStore'
 
+const workspaceState = useWorkspaceStore()
 const settingStore = useSettingStore()
 const workflowTabsPosition = computed(() =>
   settingStore.get('Comfy.Workflow.WorkflowTabsPosition')
 )
 const betaMenuEnabled = computed(
-  () => settingStore.get('Comfy.UseNewMenu') !== 'Disabled'
+  () =>
+    settingStore.get('Comfy.UseNewMenu') !== 'Disabled' &&
+    !workspaceState.focusMode
 )
 const teleportTarget = computed(() =>
   settingStore.get('Comfy.UseNewMenu') === 'Top'

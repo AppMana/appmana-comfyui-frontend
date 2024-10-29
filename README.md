@@ -193,7 +193,76 @@ https://github.com/user-attachments/assets/c142c43f-2fe9-4030-8196-b3bfd4c6977d
   https://github.com/user-attachments/assets/5696a89d-4a47-4fcc-9e8c-71e1264943f2
 </details>
 
-### Node developers API
+### Developer APIs
+
+<details>
+  <summary>v1.3.22: Register bottom panel tabs</summary>
+
+```js
+app.registerExtension({
+  name: 'TestExtension',
+  bottomPanelTabs: [
+    {
+      id: 'TestTab',
+      title: 'Test Tab',
+      type: 'custom',
+      render: (el) => {
+        el.innerHTML = '<div>Custom tab</div>'
+      }
+    }
+  ]
+})
+```
+
+![image](https://github.com/user-attachments/assets/2114f8b8-2f55-414b-b027-78e61c870b64)
+
+</details>
+
+<details>
+  <summary>v1.3.22: New settings API</summary>
+
+Legacy settings API.
+
+```js
+// Register a new setting
+app.ui.settings.addSetting({
+  id: 'TestSetting',
+  name: 'Test Setting',
+  type: 'text',
+  defaultValue: 'Hello, world!'
+})
+
+// Get the value of a setting
+const value = app.ui.settings.getSettingValue('TestSetting')
+
+// Set the value of a setting
+app.ui.settings.setSettingValue('TestSetting', 'Hello, universe!')
+```
+
+New settings API.
+
+```js
+// Register a new setting
+app.registerExtension({
+  name: 'TestExtension1',
+  settings: [
+    {
+      id: 'TestSetting',
+      name: 'Test Setting',
+      type: 'text',
+      defaultValue: 'Hello, world!'
+    }
+  ]
+})
+
+// Get the value of a setting
+const value = app.extensionManager.setting.get('TestSetting')
+
+// Set the value of a setting
+app.extensionManager.setting.set('TestSetting', 'Hello, universe!')
+```
+
+</details>
 
 <details>
   <summary>v1.3.7: Register commands and keybindings</summary>
@@ -298,6 +367,14 @@ We will support custom icons later.
 
 ## Development
 
+### Tech Stack
+
+- [Vue 3](https://vuejs.org/) with [TypeScript](https://www.typescriptlang.org/)
+- [Pinia](https://pinia.vuejs.org/) for state management
+- [PrimeVue](https://primevue.org/) with [TailwindCSS](https://tailwindcss.com/) for UI
+- [Litegraph](https://github.com/Comfy-Org/litegraph.js) for node editor
+- [zod](https://zod.dev/) for schema validation
+
 ### Git pre-commit hooks
 
 Run `npm run prepare` to install Git pre-commit hooks. Currently, the pre-commit
@@ -312,13 +389,23 @@ core extensions will be loaded.
 - Start local ComfyUI backend at `localhost:8188`
 - Run `npm run dev` to start the dev server
 
-### Test
+### Unit Test
 
 - `git clone https://github.com/comfyanonymous/ComfyUI_examples.git` to `tests-ui/ComfyUI_examples` or the EXAMPLE_REPO_PATH location specified in .env
 - `npm i` to install all dependencies
 - `npm run test:generate` to fetch `tests-ui/data/object_info.json`
 - `npm run test:generate:examples` to extract the example workflows
 - `npm run test` to execute all unit tests.
+
+### Component Test
+
+Component test verifies Vue components in `src/components/`.
+
+- `npm run test:component` to execute all component tests.
+
+### Playwright Test
+
+Playwright test verifies the whole app. See <https://github.com/Comfy-Org/ComfyUI_frontend/blob/main/browser_tests/README.md> for details.
 
 ### LiteGraph
 
@@ -327,7 +414,6 @@ This repo is using litegraph package hosted on <https://github.com/Comfy-Org/lit
 ### Test litegraph changes
 
 - Run `npm link` in the local litegraph repo.
-- Run `npm uninstall @comfyorg/litegraph` in this repo.
 - Run `npm link @comfyorg/litegraph` in this repo.
 
 This will replace the litegraph package in this repo with the local litegraph repo.

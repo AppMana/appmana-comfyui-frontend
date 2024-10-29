@@ -4,6 +4,9 @@
       <template #side-bar-panel>
         <SideToolbar />
       </template>
+      <template #bottom-panel>
+        <BottomPanel />
+      </template>
       <template #graph-canvas-panel>
         <GraphCanvasMenu v-if="canvasMenuEnabled" />
       </template>
@@ -14,14 +17,17 @@
   </teleport>
   <NodeSearchboxPopover />
   <NodeTooltip v-if="tooltipEnabled" />
+  <NodeBadge />
 </template>
 
 <script setup lang="ts">
 import TitleEditor from '@/components/graph/TitleEditor.vue'
 import SideToolbar from '@/components/sidebar/SideToolbar.vue'
+import BottomPanel from '@/components/bottomPanel/BottomPanel.vue'
 import LiteGraphCanvasSplitterOverlay from '@/components/LiteGraphCanvasSplitterOverlay.vue'
 import NodeSearchboxPopover from '@/components/searchbox/NodeSearchBoxPopover.vue'
 import NodeTooltip from '@/components/graph/NodeTooltip.vue'
+import NodeBadge from '@/components/graph/NodeBadge.vue'
 import { ref, computed, onMounted, watchEffect } from 'vue'
 import { app as comfyApp } from '@/scripts/app'
 import { useSettingStore } from '@/stores/settingStore'
@@ -56,7 +62,9 @@ const workspaceStore = useWorkspaceStore()
 const canvasStore = useCanvasStore()
 const modelToNodeStore = useModelToNodeStore()
 const betaMenuEnabled = computed(
-  () => settingStore.get('Comfy.UseNewMenu') !== 'Disabled'
+  () =>
+    settingStore.get('Comfy.UseNewMenu') !== 'Disabled' &&
+    !workspaceStore.focusMode
 )
 const canvasMenuEnabled = computed(() =>
   settingStore.get('Comfy.Graph.CanvasMenu')
@@ -97,6 +105,14 @@ watchEffect(() => {
     textarea.focus()
     textarea.blur()
   })
+})
+
+watchEffect(() => {
+  const linkRenderMode = settingStore.get('Comfy.LinkRenderMode')
+  if (canvasStore.canvas) {
+    canvasStore.canvas.links_render_mode = linkRenderMode
+    canvasStore.canvas.setDirty(/* fg */ false, /* bg */ true)
+  }
 })
 
 watchEffect(() => {

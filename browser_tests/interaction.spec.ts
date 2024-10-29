@@ -1,5 +1,5 @@
 import { expect } from '@playwright/test'
-import { comfyPageFixture as test } from './ComfyPage'
+import { comfyPageFixture as test } from './fixtures/ComfyPage'
 
 test.describe('Node Interaction', () => {
   test('Can enter prompt', async ({ comfyPage }) => {
@@ -73,6 +73,8 @@ test.describe('Node Interaction', () => {
       await comfyPage.disconnectEdge()
       await expect(comfyPage.canvas).toHaveScreenshot('disconnected-edge.png')
       await comfyPage.connectEdge()
+      // Move mouse to empty area to avoid slot highlight.
+      await comfyPage.moveMouseToEmptyArea()
       // Litegraph renders edge with a slight offset.
       await expect(comfyPage.canvas).toHaveScreenshot('default.png', {
         maxDiffPixels: 50
@@ -491,10 +493,6 @@ test.describe('Load workflow', () => {
 test.describe('Load duplicate workflow', () => {
   test.beforeEach(async ({ comfyPage }) => {
     await comfyPage.setSetting('Comfy.UseNewMenu', 'Top')
-  })
-
-  test.afterEach(async ({ comfyPage }) => {
-    await comfyPage.setSetting('Comfy.UseNewMenu', 'Disabled')
   })
 
   test('A workflow can be loaded multiple times in a row', async ({

@@ -6,11 +6,12 @@
   <GlobalToast />
   <UnloadWindowConfirmDialog />
   <BrowserTabTitle />
+  <MenuHamburger />
 </template>
 
 <script setup lang="ts">
 import GraphCanvas from '@/components/graph/GraphCanvas.vue'
-
+import MenuHamburger from '@/components/MenuHamburger.vue'
 import { computed, onMounted, onBeforeUnmount, watch, watchEffect } from 'vue'
 import { app } from '@/scripts/app'
 import { useSettingStore } from '@/stores/settingStore'
@@ -36,6 +37,8 @@ import { useKeybindingStore } from '@/stores/keybindingStore'
 import { useSidebarTabStore } from '@/stores/workspace/sidebarTabStore'
 import { useNodeBookmarkStore } from '@/stores/nodeBookmarkStore'
 import { useNodeDefStore, useNodeFrequencyStore } from '@/stores/nodeDefStore'
+import { useBottomPanelStore } from '@/stores/workspace/bottomPanelStore'
+import { useModelStore } from '@/stores/modelStore'
 
 setupAutoQueueHandler()
 
@@ -97,6 +100,7 @@ const init = () => {
   settingStore.addSettings(app.ui.settings)
   useKeybindingStore().loadCoreKeybindings()
   useSidebarTabStore().registerCoreSidebarTabs()
+  useBottomPanelStore().registerCoreBottomPanelTabs()
   app.extensionManager = useWorkspaceStore()
 }
 
@@ -156,6 +160,9 @@ const onGraphReady = () => {
       // Setting values now available after comfyApp.setup.
       // Load keybindings.
       useKeybindingStore().loadUserKeybindings()
+
+      // Load model folders
+      useModelStore().loadModelFolders()
 
       // Migrate legacy bookmarks
       useNodeBookmarkStore().migrateLegacyBookmarks()

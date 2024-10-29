@@ -1,14 +1,10 @@
 import { expect } from '@playwright/test'
-import { comfyPageFixture as test } from './ComfyPage'
+import { comfyPageFixture as test } from './fixtures/ComfyPage'
 
 test.describe('Browser tab title', () => {
   test.describe('Beta Menu', () => {
     test.beforeEach(async ({ comfyPage }) => {
       await comfyPage.setSetting('Comfy.UseNewMenu', 'Top')
-    })
-
-    test.afterEach(async ({ comfyPage }) => {
-      await comfyPage.setSetting('Comfy.UseNewMenu', 'Disabled')
     })
 
     test('Can display workflow name', async ({ comfyPage }) => {

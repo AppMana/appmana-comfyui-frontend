@@ -49,8 +49,16 @@ module.exports = async function () {
     return {
       useWorkspaceStore: () => ({
         shiftDown: false,
-        spinner: false
+        spinner: false,
+        focusMode: false,
+        toggleFocusMode: jest.fn()
       })
+    }
+  })
+
+  jest.mock('@/stores/workspace/bottomPanelStore', () => {
+    return {
+      toggleBottomPanel: jest.fn()
     }
   })
 

@@ -8,7 +8,7 @@ import { TaskItem } from '@/types/apiTypes'
 import { showSettingsDialog } from '@/services/dialogService'
 import { useSettingStore } from '@/stores/settingStore'
 import { useCommandStore } from '@/stores/commandStore'
-import { useWorkspaceStore } from '@/stores/workspaceStateStore'
+import { useWorkspaceStore } from '@/stores/workspaceStore'
 
 export const ComfyDialog = _ComfyDialog
 
@@ -636,6 +636,8 @@ export class ComfyUI {
         }
       })
     ]) as HTMLDivElement
+    // Hide by default on construction so it does not interfere with other views.
+    this.menuContainer.style.display = 'none'
 
     this.restoreMenuPosition = dragElement(this.menuContainer, this.settings)
 

@@ -9,27 +9,29 @@
         @click="modelStore.loadModelFolders"
         severity="secondary"
         text
-        v-tooltip="$t('refresh')"
+        v-tooltip.bottom="$t('refresh')"
       />
       <Button
         icon="pi pi-cloud-download"
         @click="modelStore.loadModels"
         severity="secondary"
         text
-        v-tooltip="$t('loadAllFolders')"
+        v-tooltip.bottom="$t('loadAllFolders')"
       />
     </template>
     <template #header>
       <SearchBox
-        class="model-lib-search-box p-4"
+        class="model-lib-search-box p-2 2xl:p-4"
         v-model:modelValue="searchQuery"
         :placeholder="$t('searchModels') + '...'"
         @search="handleSearch"
       />
     </template>
     <template #body>
+      <ElectronDownloadItems v-if="isElectron()" />
+
       <TreeExplorer
-        class="model-lib-tree-explorer py-0"
+        class="model-lib-tree-explorer"
         :roots="renderedRoot.children"
         v-model:expandedKeys="expandedKeys"
       >
@@ -48,6 +50,7 @@ import SearchBox from '@/components/common/SearchBox.vue'
 import TreeExplorer from '@/components/common/TreeExplorer.vue'
 import SidebarTabTemplate from '@/components/sidebar/tabs/SidebarTabTemplate.vue'
 import ModelTreeLeaf from '@/components/sidebar/tabs/modelLibrary/ModelTreeLeaf.vue'
+import ElectronDownloadItems from '@/components/sidebar/tabs/modelLibrary/ElectronDownloadItems.vue'
 import {
   ComfyModelDef,
   ModelFolder,
@@ -65,6 +68,8 @@ import { computed, ref, watch, toRef, onMounted, nextTick } from 'vue'
 import type { TreeNode } from 'primevue/treenode'
 import { app } from '@/scripts/app'
 import { buildTree } from '@/utils/treeUtil'
+import { isElectron } from '@/utils/envUtil'
+
 const modelStore = useModelStore()
 const modelToNodeStore = useModelToNodeStore()
 const settingStore = useSettingStore()
@@ -75,7 +80,7 @@ const { expandNode, toggleNodeOnEvent } = useTreeExpansion(expandedKeys)
 const filteredModels = ref<ComfyModelDef[]>([])
 const handleSearch = async (query: string) => {
   if (!query) {
-    filteredModels.value = modelStore.models
+    filteredModels.value = []
     expandedKeys.value = {}
     return
   }
@@ -94,10 +99,9 @@ const handleSearch = async (query: string) => {
 type ModelOrFolder = ComfyModelDef | ModelFolder
 
 const root = computed<TreeNode>(() => {
-  const allNodes: ModelOrFolder[] = [
-    ...modelStore.modelFolders,
-    ...filteredModels.value
-  ]
+  const allNodes: ModelOrFolder[] = searchQuery.value
+    ? filteredModels.value
+    : [...modelStore.modelFolders, ...modelStore.models]
   return buildTree(allNodes, (modelOrFolder: ModelOrFolder) =>
     modelOrFolder.key.split('/')
   )
@@ -165,6 +169,7 @@ const renderedRoot = computed<TreeExplorerNode<ModelOrFolder>>(() => {
       }
     }
   }
+
   return fillNodeInfo(root.value)
 })
 

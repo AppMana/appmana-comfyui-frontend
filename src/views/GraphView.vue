@@ -16,7 +16,7 @@ import { computed, onMounted, onBeforeUnmount, watch, watchEffect } from 'vue'
 import { app } from '@/scripts/app'
 import { useSettingStore } from '@/stores/settingStore'
 import { useI18n } from 'vue-i18n'
-import { useWorkspaceStore } from '@/stores/workspaceStateStore'
+import { useWorkspaceStore } from '@/stores/workspaceStore'
 import { api } from '@/scripts/api'
 import { StatusWsMessageStatus } from '@/types/apiTypes'
 import { useQueuePendingTaskCountStore } from '@/stores/queueStore'
@@ -24,10 +24,6 @@ import type { ToastMessageOptions } from 'primevue/toast'
 import { useToast } from 'primevue/usetoast'
 import { i18n } from '@/i18n'
 import { useExecutionStore } from '@/stores/executionStore'
-import {
-  useWorkflowStore,
-  useWorkflowBookmarkStore
-} from '@/stores/workflowStore'
 import GlobalToast from '@/components/toast/GlobalToast.vue'
 import UnloadWindowConfirmDialog from '@/components/dialog/UnloadWindowConfirmDialog.vue'
 import BrowserTabTitle from '@/components/BrowserTabTitle.vue'
@@ -127,12 +123,6 @@ const onReconnected = () => {
     life: 2000
   })
 }
-
-const workflowStore = useWorkflowStore()
-const workflowBookmarkStore = useWorkflowBookmarkStore()
-app.workflowManager.executionStore = executionStore
-app.workflowManager.workflowStore = workflowStore
-app.workflowManager.workflowBookmarkStore = workflowBookmarkStore
 
 onMounted(() => {
   api.addEventListener('status', onStatus)

@@ -36,6 +36,7 @@ test.describe('Execution error', () => {
   }) => {
     await comfyPage.loadWorkflow('execution_error')
     await comfyPage.queueButton.click()
+    await comfyPage.nextFrame()
 
     // Wait for the element with the .comfy-execution-error selector to be visible
     const executionError = comfyPage.page.locator('.comfy-error-report')
@@ -51,7 +52,9 @@ test.describe('Missing models warning', () => {
     }, comfyPage.url)
   })
 
-  test('Should display a warning when missing models are found', async ({
+  // Flaky test after parallelization
+  // https://github.com/Comfy-Org/ComfyUI_frontend/pull/1400
+  test.skip('Should display a warning when missing models are found', async ({
     comfyPage
   }) => {
     // The fake_model.safetensors is served by

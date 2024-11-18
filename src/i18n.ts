@@ -2,10 +2,62 @@ import { createI18n } from 'vue-i18n'
 
 const messages = {
   en: {
+    welcome: {
+      title: 'Welcome to ComfyUI',
+      getStarted: 'Get Started'
+    },
+    install: {
+      installLocation: 'Install Location',
+      migration: 'Migration',
+      desktopSettings: 'Desktop Settings',
+      chooseInstallationLocation: 'Choose Installation Location',
+      systemLocations: 'System Locations',
+      failedToSelectDirectory: 'Failed to select directory',
+      pathValidationFailed: 'Failed to validate path',
+      installLocationDescription:
+        "Select the directory for ComfyUI's user data. A python environment will be installed to the selected location. Please make sure the selected disk has enough space (~5GB) left.",
+      installLocationTooltip:
+        "ComfyUI's user data directory. Stores:\n- Python Environment\n- Models\n- Custom nodes\n",
+      appDataLocationTooltip:
+        "ComfyUI's app data directory. Stores:\n- Logs\n- Server configs",
+      appPathLocationTooltip:
+        "ComfyUI's app asset directory. Stores the ComfyUI code and assets",
+      migrateFromExistingInstallation: 'Migrate from Existing Installation',
+      migrationSourcePathDescription:
+        'If you have an existing ComfyUI installation, we can copy/link your existing user files and models to the new installation.',
+      selectItemsToMigrate: 'Select Items to Migrate',
+      migrationOptional:
+        "Migration is optional. If you don't have an existing installation, you can skip this step.",
+      desktopAppSettings: 'Desktop App Settings',
+      desktopAppSettingsDescription:
+        'Configure how ComfyUI behaves on your desktop. You can change these settings later.',
+      settings: {
+        autoUpdate: 'Automatic Updates',
+        allowMetrics: 'Usage Analytics',
+        autoUpdateDescription:
+          "Automatically download and install updates when they become available. You'll always be notified before updates are installed.",
+        allowMetricsDescription:
+          'Help improve ComfyUI by sending anonymous usage data. No personal information or workflow content will be collected.',
+        learnMoreAboutData: 'Learn more about data collection',
+        dataCollectionDialog: {
+          title: 'About Data Collection',
+          whatWeCollect: 'What we collect:',
+          whatWeDoNotCollect: "What we don't collect:",
+          errorReports: 'Error reports',
+          systemInfo: 'Operating system and app version',
+          personalInformation: 'Personal information',
+          workflowContent: 'Workflow content',
+          fileSystemInformation: 'File system information'
+        }
+      }
+    },
+    firstTimeUIMessage:
+      'This is the first time you use the new UI. Choose "Menu > Use New Menu > Disabled" to restore the old UI.',
     download: 'Download',
     loadAllFolders: 'Load All Folders',
     refresh: 'Refresh',
     terminal: 'Terminal',
+    logs: 'Logs',
     videoFailedToLoad: 'Video failed to load',
     extensionName: 'Extension Name',
     reloadToApplyChanges: 'Reload to apply changes',
@@ -68,6 +120,7 @@ const messages = {
         sortOrder: 'Sort Order'
       },
       modelLibrary: 'Model Library',
+      downloads: 'Downloads',
       queueTab: {
         showFlatList: 'Show Flat List',
         backToAllTasks: 'Back to All Tasks',
@@ -77,6 +130,8 @@ const messages = {
       }
     },
     menu: {
+      hideMenu: 'Hide Menu',
+      showMenu: 'Show Menu',
       batchCount: 'Batch Count',
       batchCountTooltip:
         'The number of times the workflow generation should be queued',
@@ -111,12 +166,23 @@ const messages = {
       zoomIn: 'Zoom In',
       zoomOut: 'Zoom Out',
       resetView: 'Reset View',
+      fitView: 'Fit View',
       selectMode: 'Select Mode',
       panMode: 'Pan Mode',
       toggleLinkVisibility: 'Toggle Link Visibility'
+    },
+    electronFileDownload: {
+      inProgress: 'In Progress',
+      pause: 'Pause Download',
+      paused: 'Paused',
+      resume: 'Resume Download',
+      cancel: 'Cancel Download',
+      cancelled: 'Cancelled'
     }
   },
   zh: {
+    firstTimeUIMessage:
+      '这是您第一次使用新界面。选择“Menu > Use New Menu > Disabled”以恢复旧界面。',
     download: '下载',
     loadAllFolders: '加载所有文件夹',
     refresh: '刷新',
@@ -193,6 +259,8 @@ const messages = {
       }
     },
     menu: {
+      hideMenu: '隐藏菜单',
+      showMenu: '显示菜单',
       batchCount: '批次数量',
       batchCountTooltip: '工作流生成次数',
       autoQueue: '自动执行',
@@ -225,6 +293,7 @@ const messages = {
       zoomIn: '放大',
       zoomOut: '缩小',
       resetView: '重置视图',
+      fitView: '适应视图',
       selectMode: '选择模式',
       panMode: '平移模式',
       toggleLinkVisibility: '切换链接可见性'
@@ -307,6 +376,8 @@ const messages = {
       }
     },
     menu: {
+      hideMenu: 'Скрыть меню',
+      showMenu: 'Показать меню',
       batchCount: 'Количество пакетов',
       batchCountTooltip:
         'Количество раз, когда генерация рабочего процесса должна быть помещена в очередь',
@@ -342,6 +413,7 @@ const messages = {
       zoomIn: 'Увеличить',
       zoomOut: 'Уменьшить',
       resetView: 'Сбросить вид',
+      fitView: 'Подгонять под выделенные',
       selectMode: 'Выбрать режим',
       panMode: 'Режим панорамирования',
       toggleLinkVisibility: 'Переключить видимость ссылок'

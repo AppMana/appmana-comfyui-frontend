@@ -1,20 +1,19 @@
-import { LGraphNode, IWidget } from './litegraph'
-import { ComfyApp } from '../scripts/app'
+import type { LGraphNode } from './litegraph'
+import type { ComfyApp } from '../scripts/app'
 import type { ComfyNodeDef } from '@/types/apiTypes'
 import type { Keybinding } from '@/types/keyBindingTypes'
 import type { ComfyCommand } from '@/stores/commandStore'
-import { SettingParams } from './settingTypes'
+import type { SettingParams } from './settingTypes'
 import type { BottomPanelExtension } from './extensionTypes'
+import type { ComfyWidgetConstructor } from '@/scripts/widgets'
 
-export type Widgets = Record<
-  string,
-  (
-    node,
-    inputName,
-    inputData,
-    app?: ComfyApp
-  ) => { widget?: IWidget; minWidth?: number; minHeight?: number }
->
+export type Widgets = Record<string, ComfyWidgetConstructor>
+
+export interface AboutPageBadge {
+  label: string
+  url: string
+  icon: string
+}
 
 export type MenuCommandGroup = {
   /**
@@ -66,6 +65,10 @@ export interface ComfyExtension {
    */
   bottomPanelTabs?: BottomPanelExtension[]
   /**
+   * Badges to add to the about page
+   */
+  aboutPageBadges?: AboutPageBadge[]
+  /**
    * Allows any initialisation, e.g. loading resources. Called after the canvas is created but before nodes are added
    * @param app The ComfyUI app instance
    */
@@ -84,6 +87,8 @@ export interface ComfyExtension {
     defs: Record<string, ComfyNodeDef>,
     app: ComfyApp
   ): Promise<void> | void
+  // TODO(huchenlei): We should deprecate the async return value of
+  // getCustomWidgets.
   /**
    * Allows the extension to add custom widgets
    * @param app The ComfyUI app instance

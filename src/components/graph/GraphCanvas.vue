@@ -1,6 +1,11 @@
 <template>
   <teleport to=".graph-canvas-container">
-    <LiteGraphCanvasSplitterOverlay v-if="betaMenuEnabled">
+    <!-- Load splitter overlay only after comfyApp is ready. -->
+    <!-- If load immediately, the top-level splitter stateKey won't be correctly
+    synced with the stateStorage (localStorage). -->
+    <LiteGraphCanvasSplitterOverlay
+      v-if="comfyAppReady && betaMenuEnabled && !workspaceStore.focusMode"
+    >
       <template #side-bar-panel>
         <SideToolbar />
       </template>
@@ -32,7 +37,7 @@ import { ref, computed, onMounted, watchEffect } from 'vue'
 import { app as comfyApp } from '@/scripts/app'
 import { useSettingStore } from '@/stores/settingStore'
 import { ComfyNodeDefImpl, useNodeDefStore } from '@/stores/nodeDefStore'
-import { useWorkspaceStore } from '@/stores/workspaceStateStore'
+import { useWorkspaceStore } from '@/stores/workspaceStore'
 import {
   LiteGraph,
   LGraph,
@@ -42,7 +47,8 @@ import {
   DragAndScale,
   LGraphCanvas,
   ContextMenu,
-  LGraphBadge
+  LGraphBadge,
+  CanvasPointer
 } from '@comfyorg/litegraph'
 import type { RenderedTreeExplorerNode } from '@/types/treeExplorerTypes'
 import { useCanvasStore } from '@/stores/graphStore'
@@ -53,6 +59,10 @@ import {
 } from '@/stores/modelToNodeStore'
 import GraphCanvasMenu from '@/components/graph/GraphCanvasMenu.vue'
 import { usePragmaticDroppable } from '@/hooks/dndHooks'
+import { useWorkflowStore } from '@/stores/workflowStore'
+import { setStorageValue } from '@/scripts/utils'
+import { ChangeTracker } from '@/scripts/changeTracker'
+import { api } from '@/scripts/api'
 
 const emit = defineEmits(['ready'])
 const canvasRef = ref<HTMLCanvasElement | null>(null)
@@ -62,9 +72,7 @@ const workspaceStore = useWorkspaceStore()
 const canvasStore = useCanvasStore()
 const modelToNodeStore = useModelToNodeStore()
 const betaMenuEnabled = computed(
-  () =>
-    settingStore.get('Comfy.UseNewMenu') !== 'Disabled' &&
-    !workspaceStore.focusMode
+  () => settingStore.get('Comfy.UseNewMenu') !== 'Disabled'
 )
 const canvasMenuEnabled = computed(() =>
   settingStore.get('Comfy.Graph.CanvasMenu')
@@ -83,6 +91,28 @@ watchEffect(() => {
   if (canvasStore.canvas) {
     canvasStore.canvas.zoom_speed = zoomSpeed
   }
+})
+
+watchEffect(() => {
+  LiteGraph.snaps_for_comfy = settingStore.get('Comfy.Node.AutoSnapLinkToSlot')
+})
+
+watchEffect(() => {
+  LiteGraph.snap_highlights_node = settingStore.get(
+    'Comfy.Node.SnapHighlightsNode'
+  )
+})
+
+watchEffect(() => {
+  LGraphNode.keepAllLinksOnBypass = settingStore.get(
+    'Comfy.Node.BypassAllLinksOnDelete'
+  )
+})
+
+watchEffect(() => {
+  LiteGraph.middle_click_slot_add_default_node = settingStore.get(
+    'Comfy.Node.MiddleClickRerouteNode'
+  )
 })
 
 watchEffect(() => {
@@ -116,20 +146,84 @@ watchEffect(() => {
 })
 
 watchEffect(() => {
+  const linkMarkerShape = settingStore.get('Comfy.Graph.LinkMarkers')
+  const { canvas } = canvasStore
+  if (canvas) {
+    canvas.linkMarkerShape = linkMarkerShape
+    canvas.setDirty(false, true)
+  }
+})
+
+watchEffect(() => {
+  const reroutesEnabled = settingStore.get('Comfy.RerouteBeta')
+  const { canvas } = canvasStore
+  if (canvas) {
+    canvas.reroutesEnabled = reroutesEnabled
+    canvas.setDirty(false, true)
+  }
+})
+
+watchEffect(() => {
+  CanvasPointer.doubleClickTime = settingStore.get(
+    'Comfy.Pointer.DoubleClickTime'
+  )
+})
+
+watchEffect(() => {
+  CanvasPointer.bufferTime = settingStore.get('Comfy.Pointer.ClickBufferTime')
+})
+
+watchEffect(() => {
+  CanvasPointer.maxClickDrift = settingStore.get('Comfy.Pointer.ClickDrift')
+})
+
+watchEffect(() => {
+  LiteGraph.CANVAS_GRID_SIZE = settingStore.get('Comfy.SnapToGrid.GridSize')
+})
+
+watchEffect(() => {
+  if (comfyApp.graph?.config) {
+    comfyApp.graph.config.alwaysSnapToGrid =
+      settingStore.get('pysssss.SnapToGrid')
+  }
+})
+
+watchEffect(() => {
   if (!canvasStore.canvas) return
 
-  if (canvasStore.canvas.dragging_canvas) {
+  if (canvasStore.canvas.state.draggingCanvas) {
     canvasStore.canvas.canvas.style.cursor = 'grabbing'
     return
   }
 
-  if (canvasStore.canvas.read_only) {
+  if (canvasStore.canvas.state.readOnly) {
     canvasStore.canvas.canvas.style.cursor = 'grab'
     return
   }
 
   canvasStore.canvas.canvas.style.cursor = 'default'
 })
+
+const workflowStore = useWorkflowStore()
+const persistCurrentWorkflow = () => {
+  const workflow = JSON.stringify(comfyApp.serializeGraph())
+  localStorage.setItem('workflow', workflow)
+  if (api.clientId) {
+    sessionStorage.setItem(`workflow:${api.clientId}`, workflow)
+  }
+}
+
+watchEffect(() => {
+  if (workflowStore.activeWorkflow) {
+    const workflow = workflowStore.activeWorkflow
+    setStorageValue('Comfy.PreviousWorkflow', workflow.key)
+    // When the activeWorkflow changes, the graph has already been loaded.
+    // Saving the current state of the graph to the localStorage.
+    persistCurrentWorkflow()
+  }
+})
+
+api.addEventListener('graphChanged', persistCurrentWorkflow)
 
 usePragmaticDroppable(() => canvasRef.value, {
   onDrop: (event) => {
@@ -186,6 +280,7 @@ usePragmaticDroppable(() => canvasRef.value, {
   }
 })
 
+const comfyAppReady = ref(false)
 onMounted(async () => {
   // Backward compatible
   // Assign all properties of lg to window
@@ -202,13 +297,18 @@ onMounted(async () => {
   comfyApp.vueAppReady = true
 
   workspaceStore.spinner = true
+  // ChangeTracker needs to be initialized before setup, as it will overwrite
+  // some listeners of litegraph canvas.
+  ChangeTracker.init(comfyApp)
   await comfyApp.setup(canvasRef.value)
   canvasStore.canvas = comfyApp.canvas
+  canvasStore.canvas.render_canvas_border = false
   workspaceStore.spinner = false
 
   window['app'] = comfyApp
   window['graph'] = comfyApp.graph
 
+  comfyAppReady.value = true
   emit('ready')
 })
 </script>

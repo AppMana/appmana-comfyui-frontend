@@ -15,23 +15,15 @@ test.describe('Copy Paste', () => {
     await textBox.click()
     const originalString = await textBox.inputValue()
     await textBox.selectText()
-    await comfyPage.ctrlC()
-    await comfyPage.ctrlV()
-    await comfyPage.ctrlV()
+    await comfyPage.ctrlC(null)
+    await comfyPage.ctrlV(null)
+    await comfyPage.ctrlV(null)
     const resultString = await textBox.inputValue()
     expect(resultString).toBe(originalString + originalString)
   })
 
   test('Can copy and paste widget value', async ({ comfyPage }) => {
     // Copy width value (512) from empty latent node to KSampler's seed.
-    // Empty latent node's width
-    await comfyPage.canvas.click({
-      position: {
-        x: 718,
-        y: 643
-      }
-    })
-    await comfyPage.ctrlC()
     // KSampler's seed
     await comfyPage.canvas.click({
       position: {
@@ -39,7 +31,15 @@ test.describe('Copy Paste', () => {
         y: 281
       }
     })
-    await comfyPage.ctrlV()
+    await comfyPage.ctrlC(null)
+    // Empty latent node's width
+    await comfyPage.canvas.click({
+      position: {
+        x: 718,
+        y: 643
+      }
+    })
+    await comfyPage.ctrlV(null)
     await comfyPage.page.keyboard.press('Enter')
     await expect(comfyPage.canvas).toHaveScreenshot('copied-widget-value.png')
   })
@@ -51,14 +51,14 @@ test.describe('Copy Paste', () => {
     comfyPage
   }) => {
     await comfyPage.clickEmptyLatentNode()
-    await comfyPage.ctrlC()
+    await comfyPage.ctrlC(null)
     const textBox = comfyPage.widgetTextBox
     await textBox.click()
     await textBox.inputValue()
     await textBox.selectText()
-    await comfyPage.ctrlC()
-    await comfyPage.ctrlV()
-    await comfyPage.ctrlV()
+    await comfyPage.ctrlC(null)
+    await comfyPage.ctrlV(null)
+    await comfyPage.ctrlV(null)
     await expect(comfyPage.canvas).toHaveScreenshot(
       'paste-in-text-area-with-node-previously-copied.png'
     )
@@ -69,10 +69,10 @@ test.describe('Copy Paste', () => {
     await textBox.click()
     await textBox.inputValue()
     await textBox.selectText()
-    await comfyPage.ctrlC()
+    await comfyPage.ctrlC(null)
     // Unfocus textbox.
     await comfyPage.page.mouse.click(10, 10)
-    await comfyPage.ctrlV()
+    await comfyPage.ctrlV(null)
     await expect(comfyPage.canvas).toHaveScreenshot('no-node-copied.png')
   })
 

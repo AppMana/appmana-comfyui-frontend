@@ -15,7 +15,7 @@ test.describe('Node search box', () => {
 
   test(`Can trigger on group body double click`, async ({ comfyPage }) => {
     await comfyPage.loadWorkflow('single_group_only')
-    await comfyPage.page.mouse.dblclick(50, 50)
+    await comfyPage.page.mouse.dblclick(50, 50, { delay: 5 })
     await comfyPage.nextFrame()
     await expect(comfyPage.searchBox.input).toHaveCount(1)
   })
@@ -138,6 +138,8 @@ test.describe('Release context menu', () => {
 
   test('Can trigger on link release', async ({ comfyPage }) => {
     await comfyPage.disconnectEdge()
+    await comfyPage.page.mouse.move(10, 10)
+    await comfyPage.nextFrame()
     await expect(comfyPage.canvas).toHaveScreenshot(
       'link-release-context-menu.png'
     )

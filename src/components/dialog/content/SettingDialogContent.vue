@@ -1,6 +1,6 @@
 <template>
   <div class="settings-container">
-    <ScrollPanel class="settings-sidebar flex-shrink-0 p-2 w-64">
+    <ScrollPanel class="settings-sidebar flex-shrink-0 p-2 w-48 2xl:w-64">
       <SearchBox
         class="settings-search-box w-full mb-2"
         v-model:modelValue="searchQuery"
@@ -16,9 +16,10 @@
         class="border-none w-full"
       />
     </ScrollPanel>
-    <Divider layout="vertical" />
+    <Divider layout="vertical" class="mx-1 2xl:mx-4" />
     <ScrollPanel class="settings-content flex-grow">
-      <Tabs :value="tabValue">
+      <Tabs :value="tabValue" :lazy="true">
+        <FirstTimeUIMessage v-if="tabValue === 'Comfy'" />
         <TabPanels class="settings-tab-panels">
           <TabPanel key="search-results" value="Search Results">
             <div v-if="searchResults.length > 0">
@@ -91,6 +92,7 @@ import SearchBox from '@/components/common/SearchBox.vue'
 import NoResultsPlaceholder from '@/components/common/NoResultsPlaceholder.vue'
 import { flattenTree } from '@/utils/treeUtil'
 import AboutPanel from './setting/AboutPanel.vue'
+import FirstTimeUIMessage from './setting/FirstTimeUIMessage.vue'
 
 const KeybindingPanel = defineAsyncComponent(
   () => import('./setting/KeybindingPanel.vue')

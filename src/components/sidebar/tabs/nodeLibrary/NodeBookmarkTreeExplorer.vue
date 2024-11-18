@@ -1,6 +1,6 @@
 <template>
   <TreeExplorer
-    class="node-lib-bookmark-tree-explorer py-0"
+    class="node-lib-bookmark-tree-explorer"
     ref="treeExplorerRef"
     :roots="renderedBookmarkedRoot.children"
     :expandedKeys="expandedKeys"
@@ -39,7 +39,6 @@ import { useI18n } from 'vue-i18n'
 import { useTreeExpansion } from '@/hooks/treeHooks'
 import { app } from '@/scripts/app'
 import { findNodeByKey } from '@/utils/treeUtil'
-import { useErrorHandling } from '@/hooks/errorHooks'
 
 const props = defineProps<{
   filteredNodeDefs: ComfyNodeDefImpl[]
@@ -212,13 +211,11 @@ defineExpose({
   addNewBookmarkFolder
 })
 
-const handleRename = useErrorHandling().wrapWithErrorHandling(
-  (node: TreeNode, newName: string) => {
-    if (node.data && node.data.isDummyFolder) {
-      nodeBookmarkStore.renameBookmarkFolder(node.data, newName)
-    }
+const handleRename = (node: TreeNode, newName: string) => {
+  if (node.data && node.data.isDummyFolder) {
+    nodeBookmarkStore.renameBookmarkFolder(node.data, newName)
   }
-)
+}
 
 const showCustomizationDialog = ref(false)
 const initialIcon = ref(nodeBookmarkStore.defaultBookmarkIcon)

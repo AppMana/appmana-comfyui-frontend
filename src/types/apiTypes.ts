@@ -10,9 +10,9 @@ const zNodeType = z.string()
 const zQueueIndex = z.number()
 const zPromptId = z.string()
 const zResultItem = z.object({
-  filename: z.string(),
+  filename: z.string().optional(),
   subfolder: z.string().optional(),
-  type: z.string()
+  type: z.string().optional()
 })
 export type ResultItem = z.infer<typeof zResultItem>
 const zOutputs = z
@@ -77,6 +77,23 @@ const zExecutionErrorWsMessage = zExecutionWsMessageBase.extend({
   current_outputs: z.any()
 })
 
+const zTerminalSize = z.object({
+  cols: z.number(),
+  row: z.number()
+})
+const zLogEntry = z.object({
+  t: z.string(),
+  m: z.string()
+})
+const zLogsWsMessage = z.object({
+  size: zTerminalSize.optional(),
+  entries: z.array(zLogEntry)
+})
+const zLogRawResponse = z.object({
+  size: zTerminalSize,
+  entries: z.array(zLogEntry)
+})
+
 export type StatusWsMessageStatus = z.infer<typeof zStatusWsMessageStatus>
 export type StatusWsMessage = z.infer<typeof zStatusWsMessage>
 export type ProgressWsMessage = z.infer<typeof zProgressWsMessage>
@@ -91,6 +108,7 @@ export type ExecutionInterruptedWsMessage = z.infer<
   typeof zExecutionInterruptedWsMessage
 >
 export type ExecutionErrorWsMessage = z.infer<typeof zExecutionErrorWsMessage>
+export type LogsWsMessage = z.infer<typeof zLogsWsMessage>
 // End of ws messages
 
 const zPromptInputItem = z.object({
@@ -244,7 +262,9 @@ const zBaseInputSpecValue = z
     forceInput: z.boolean().optional(),
     lazy: z.boolean().optional(),
     rawLink: z.boolean().optional(),
-    tooltip: z.string().optional()
+    tooltip: z.string().optional(),
+    hidden: z.boolean().optional(),
+    advanced: z.boolean().optional()
   })
   .passthrough()
 
@@ -464,11 +484,6 @@ const zSettings = z.record(z.any()).and(
         zBookmarkCustomization
       ),
       'Comfy.NodeInputConversionSubmenus': z.boolean(),
-      'Comfy.NodeSearchBoxImpl.LinkReleaseTrigger': z.enum([
-        'always',
-        'hold shift',
-        'NOT hold shift'
-      ]),
       'Comfy.LinkRelease.Action': zLinkReleaseTriggerAction,
       'Comfy.LinkRelease.ActionShift': zLinkReleaseTriggerAction,
       'Comfy.NodeSearchBoxImpl.NodePreview': z.boolean(),
@@ -502,7 +517,9 @@ const zSettings = z.record(z.any()).and(
       'Comfy.Keybinding.NewBindings': z.array(zKeybinding),
       'Comfy.Extension.Disabled': z.array(z.string()),
       'Comfy.Settings.ExtensionPanel': z.boolean(),
-      'Comfy.LinkRenderMode': z.number()
+      'Comfy.LinkRenderMode': z.number(),
+      'Comfy.Node.AutoSnapLinkToSlot': z.boolean(),
+      'Comfy.Node.SnapHighlightsNode': z.boolean()
     })
     .optional()
 )
@@ -516,6 +533,9 @@ export type SystemStats = z.infer<typeof zSystemStats>
 export type User = z.infer<typeof zUser>
 export type UserData = z.infer<typeof zUserData>
 export type UserDataFullInfo = z.infer<typeof zUserDataFullInfo>
+export type TerminalSize = z.infer<typeof zTerminalSize>
+export type LogEntry = z.infer<typeof zLogEntry>
+export type LogsRawResponse = z.infer<typeof zLogRawResponse>
 
 // todo: promote this to a full zod type
 export interface BinaryPreview {

@@ -1,8 +1,8 @@
 import { FitAddon } from '@xterm/addon-fit'
 import { Terminal } from '@xterm/xterm'
-import { debounce } from 'lodash'
-import { markRaw, onMounted, onUnmounted, Ref } from 'vue'
 import '@xterm/xterm/css/xterm.css'
+import { debounce } from 'lodash'
+import { Ref, markRaw, onMounted, onUnmounted } from 'vue'
 
 export function useTerminal(element: Ref<HTMLElement>) {
   const fitAddon = new FitAddon()
@@ -14,11 +14,14 @@ export function useTerminal(element: Ref<HTMLElement>) {
   terminal.loadAddon(fitAddon)
 
   terminal.attachCustomKeyEventHandler((event) => {
-    if (event.type === 'keydown' && (event.ctrlKey || event.metaKey)) {
-      if (event.key === 'c' || event.key === 'v') {
-        // Allow default browser copy/paste handling
-        return false
-      }
+    // Allow default browser copy/paste handling
+    if (
+      event.type === 'keydown' &&
+      (event.ctrlKey || event.metaKey) &&
+      ((event.key === 'c' && terminal.hasSelection()) || event.key === 'v')
+    ) {
+      // TODO: Deselect text after copy/paste; use IPC.
+      return false
     }
     return true
   })
@@ -33,12 +36,21 @@ export function useTerminal(element: Ref<HTMLElement>) {
 
   return {
     terminal,
-    useAutoSize(
-      root: Ref<HTMLElement>,
-      autoRows: boolean = true,
-      autoCols: boolean = true,
+    useAutoSize({
+      root,
+      autoRows = true,
+      autoCols = true,
+      minCols = Number.NEGATIVE_INFINITY,
+      minRows = Number.NEGATIVE_INFINITY,
+      onResize
+    }: {
+      root: Ref<HTMLElement>
+      autoRows?: boolean
+      autoCols?: boolean
+      minCols?: number
+      minRows?: number
       onResize?: () => void
-    ) {
+    }) {
       const ensureValidRows = (rows: number | undefined) => {
         if (rows == null || isNaN(rows)) {
           return root.value?.clientHeight / 20
@@ -58,8 +70,14 @@ export function useTerminal(element: Ref<HTMLElement>) {
         const dims = fitAddon.proposeDimensions()
         // Sometimes propose returns NaN, so we may need to estimate.
         terminal.resize(
-          autoCols ? ensureValidCols(dims?.cols) : terminal.cols,
-          autoRows ? ensureValidRows(dims?.rows) : terminal.rows
+          Math.max(
+            autoCols ? ensureValidCols(dims?.cols) : terminal.cols,
+            minCols
+          ),
+          Math.max(
+            autoRows ? ensureValidRows(dims?.rows) : terminal.rows,
+            minRows
+          )
         )
         onResize?.()
       }

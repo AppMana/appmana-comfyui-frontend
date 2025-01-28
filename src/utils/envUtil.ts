@@ -1,17 +1,20 @@
-import { ElectronAPI } from '@comfyorg/comfyui-electron-types'
-
-export type InstallOptions = Parameters<ElectronAPI['installComfyUI']>[0]
-export type TorchDeviceType = InstallOptions['device']
+import {
+  ElectronAPI,
+  ElectronContextMenuOptions
+} from '@comfyorg/comfyui-electron-types'
 
 export function isElectron() {
-  return 'electronAPI' in window && window['electronAPI'] !== undefined
+  return 'electronAPI' in window && window.electronAPI !== undefined
 }
 
 export function electronAPI() {
-  return (window as any)['electronAPI'] as ElectronAPI
+  return (window as any).electronAPI as ElectronAPI
 }
 
-type NativeContextOptions = Parameters<ElectronAPI['showContextMenu']>[0]
-export function showNativeMenu(options?: NativeContextOptions) {
-  electronAPI()?.showContextMenu(options)
+export function showNativeMenu(event: MouseEvent) {
+  electronAPI()?.showContextMenu(event as ElectronContextMenuOptions)
+}
+
+export function isNativeWindow() {
+  return isElectron() && !!window.navigator.windowControlsOverlay?.visible
 }

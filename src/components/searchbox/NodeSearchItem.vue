@@ -17,7 +17,7 @@
       </div>
       <div
         v-if="showCategory"
-        class="option-category font-light text-sm text-gray-400 overflow-hidden text-ellipsis whitespace-nowrap"
+        class="option-category font-light text-sm text-muted overflow-hidden text-ellipsis whitespace-nowrap"
       >
         {{ nodeDef.category.replaceAll('/', ' > ') }}
       </div>
@@ -49,14 +49,15 @@
 </template>
 
 <script setup lang="ts">
-import Tag from 'primevue/tag'
 import Chip from 'primevue/chip'
-import { NodeSourceType } from '@/types/nodeSource'
-import { ComfyNodeDefImpl, useNodeFrequencyStore } from '@/stores/nodeDefStore'
-import { highlightQuery } from '@/utils/formatUtil'
+import Tag from 'primevue/tag'
 import { computed } from 'vue'
-import { useSettingStore } from '@/stores/settingStore'
+
 import { useNodeBookmarkStore } from '@/stores/nodeBookmarkStore'
+import { ComfyNodeDefImpl, useNodeFrequencyStore } from '@/stores/nodeDefStore'
+import { useSettingStore } from '@/stores/settingStore'
+import { NodeSourceType } from '@/types/nodeSource'
+import { highlightQuery } from '@/utils/formatUtil'
 import { formatNumberWithSuffix } from '@/utils/formatUtil'
 
 const settingStore = useSettingStore()

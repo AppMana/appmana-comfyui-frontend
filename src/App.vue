@@ -9,14 +9,16 @@
 </template>
 
 <script setup lang="ts">
-import config from '@/config'
-import { computed, onMounted } from 'vue'
-import { useWorkspaceStore } from '@/stores/workspaceStore'
+import { useEventListener } from '@vueuse/core'
 import BlockUI from 'primevue/blockui'
 import ProgressSpinner from 'primevue/progressspinner'
+import { computed, onMounted } from 'vue'
+
 import GlobalDialog from '@/components/dialog/GlobalDialog.vue'
-import { useEventListener } from '@vueuse/core'
-import { isElectron, showNativeMenu } from './utils/envUtil'
+import config from '@/config'
+import { useWorkspaceStore } from '@/stores/workspaceStore'
+
+import { electronAPI, isElectron } from './utils/envUtil'
 
 const workspaceStore = useWorkspaceStore()
 const isLoading = computed<boolean>(() => workspaceStore.spinner)
@@ -32,7 +34,7 @@ const showContextMenu = (event: PointerEvent) => {
     case target instanceof HTMLTextAreaElement:
     case target instanceof HTMLInputElement && target.type === 'text':
       // TODO: Context input menu explicitly for text input
-      showNativeMenu({ type: 'text' })
+      electronAPI()?.showContextMenu({ type: 'text' })
       return
   }
 }

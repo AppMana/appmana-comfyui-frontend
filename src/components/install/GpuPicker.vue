@@ -130,11 +130,13 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
-import { electronAPI, TorchDeviceType } from '@/utils/envUtil'
-import ToggleSwitch from 'primevue/toggleswitch'
+import type { TorchDeviceType } from '@comfyorg/comfyui-electron-types'
 import Tag from 'primevue/tag'
+import ToggleSwitch from 'primevue/toggleswitch'
+import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
+
+import { electronAPI } from '@/utils/envUtil'
 
 const { t } = useI18n()
 
@@ -157,8 +159,8 @@ const pickGpu = (value: typeof selected.value) => {
 }
 </script>
 
-<style lang="postcss">
-:root {
+<style scoped>
+.p-tag {
   --p-tag-gap: 0.5rem;
 }
 

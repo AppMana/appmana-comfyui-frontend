@@ -6,6 +6,7 @@
     "comingSoon": "Coming Soon",
     "firstTimeUIMessage": "This is the first time you use the new UI. Choose \"Menu > Use New Menu > Disabled\" to restore the old UI.",
     "download": "Download",
+    "import": "Import",
     "loadAllFolders": "Load All Folders",
     "refresh": "Refresh",
     "terminal": "Terminal",
@@ -67,7 +68,28 @@
     "disableAll": "Disable All",
     "command": "Command",
     "keybinding": "Keybinding",
-    "upload": "Upload"
+    "upload": "Upload",
+    "export": "Export",
+    "workflow": "Workflow",
+    "success": "Success",
+    "ok": "OK",
+    "feedback": "Feedback"
+  },
+  "issueReport": {
+    "submitErrorReport": "Submit Error Report (Optional)",
+    "provideEmail": "Give us your email (optional)",
+    "provideAdditionalDetails": "Provide additional details (optional)",
+    "stackTrace": "Stack Trace",
+    "systemStats": "System Stats",
+    "contactFollowUp": "Contact me for follow up",
+    "notifyResolve": "Notify me when resolved",
+    "helpFix": "Help Fix This",
+    "rating": "Rating",
+    "feedbackTitle": "Help us improve ComfyUI by providing feedback",
+    "validation": {
+      "maxLength": "Message too long",
+      "invalidEmail": "Please enter a valid email address"
+    }
   },
   "color": {
     "default": "Default",
@@ -138,7 +160,7 @@
     "appDataLocationTooltip": "ComfyUI's app data directory. Stores:\n- Logs\n- Server configs",
     "appPathLocationTooltip": "ComfyUI's app asset directory. Stores the ComfyUI code and assets",
     "migrateFromExistingInstallation": "Migrate from Existing Installation",
-    "migrationSourcePathDescription": "If you have an existing ComfyUI installation, we can copy/link your existing user files and models to the new installation.",
+    "migrationSourcePathDescription": "If you have an existing ComfyUI installation, we can copy/link your existing user files and models to the new installation. Your existing ComfyUI installation will not be affected.",
     "selectItemsToMigrate": "Select Items to Migrate",
     "migrationOptional": "Migration is optional. If you don't have an existing installation, you can skip this step.",
     "desktopAppSettings": "Desktop App Settings",
@@ -168,25 +190,38 @@
     },
     "settings": {
       "autoUpdate": "Automatic Updates",
-      "allowMetrics": "Crash Reports",
-      "autoUpdateDescription": "Automatically download and install updates when they become available. You'll always be notified before updates are installed.",
-      "allowMetricsDescription": "Help improve ComfyUI by sending anonymous crash reports. No personal information or workflow content will be collected. This can be disabled at any time in the settings menu.",
+      "allowMetrics": "Usage Metrics",
+      "errorUpdatingConsent": "Error Updating Consent",
+      "errorUpdatingConsentDetail": "Failed to update metrics consent settings",
+      "autoUpdateDescription": "Automatically download updates when they become available. You will be notified before updates are installed.",
+      "allowMetricsDescription": "Help improve ComfyUI by sending anonymous usage metrics. No personal information or workflow content will be collected.",
       "learnMoreAboutData": "Learn more about data collection",
       "dataCollectionDialog": {
         "title": "About Data Collection",
         "whatWeCollect": "What we collect:",
         "whatWeDoNotCollect": "What we don't collect:",
-        "errorReports": "Error message and stack trace",
-        "systemInfo": "Hardware, OS type, and app version",
-        "personalInformation": "Personal information",
-        "workflowContent": "Workflow content",
-        "fileSystemInformation": "File system information",
-        "workflowContents": "Workflow contents",
-        "customNodeConfigurations": "Custom node configurations"
+        "collect": {
+          "errorReports": "Error message and stack trace",
+          "systemInfo": "Hardware, OS type, and app version",
+          "userJourneyEvents": "User journey events"
+        },
+        "doNotCollect": {
+          "personalInformation": "Personal information",
+          "fileSystemInformation": "File system information",
+          "workflowContents": "Workflow contents",
+          "customNodeConfigurations": "Custom node configurations"
+        },
+        "viewFullPolicy": "View full policy"
       }
     },
     "customNodes": "Custom Nodes",
-    "customNodesDescription": "Reinstall custom nodes from existing ComfyUI installations."
+    "customNodesDescription": "Reinstall custom nodes from existing ComfyUI installations.",
+    "helpImprove": "Please help improve ComfyUI",
+    "moreInfo": "For more info, please read our",
+    "privacyPolicy": "privacy policy",
+    "metricsEnabled": "Metrics Enabled",
+    "metricsDisabled": "Metrics Disabled",
+    "updateConsent": "You previously opted in to reporting crashes. We are now tracking event-based metrics to help identify bugs and improve the app. No personal identifiable information is collected."
   },
   "serverStart": {
     "reinstall": "Reinstall",
@@ -277,7 +312,9 @@
     "closeTab": "Close Tab",
     "closeTabsToLeft": "Close Tabs to Left",
     "closeTabsToRight": "Close Tabs to Right",
-    "closeOtherTabs": "Close Other Tabs"
+    "closeOtherTabs": "Close Other Tabs",
+    "addToBookmarks": "Add to Bookmarks",
+    "removeFromBookmarks": "Remove from Bookmarks"
   },
   "templateWorkflows": {
     "title": "Get Started with a Template",
@@ -329,8 +366,8 @@
     "Open Models Folder": "Open Models Folder",
     "Open Outputs Folder": "Open Outputs Folder",
     "Open DevTools": "Open DevTools",
-    "Feedback": "Feedback",
     "Desktop User Guide": "Desktop User Guide",
+    "Quit": "Quit",
     "Reinstall": "Reinstall",
     "Restart": "Restart",
     "Browse Templates": "Browse Templates",
@@ -347,8 +384,10 @@
     "Zoom Out": "Zoom Out",
     "Clear Pending Tasks": "Clear Pending Tasks",
     "Clear Workflow": "Clear Workflow",
+    "Duplicate Current Workflow": "Duplicate Current Workflow",
     "Export": "Export",
     "Export (API)": "Export (API)",
+    "Give Feedback": "Give Feedback",
     "Fit Group To Contents": "Fit Group To Contents",
     "Group Selected Nodes": "Group Selected Nodes",
     "Convert selected nodes to group node": "Convert selected nodes to group node",
@@ -357,6 +396,7 @@
     "About ComfyUI": "About ComfyUI",
     "Comfy-Org Discord": "Comfy-Org Discord",
     "ComfyUI Docs": "ComfyUI Docs",
+    "ComfyUI Forum": "ComfyUI Forum",
     "ComfyUI Issues": "ComfyUI Issues",
     "Interrupt": "Interrupt",
     "Load Default Workflow": "Load Default Workflow",
@@ -372,6 +412,7 @@
     "Show Settings Dialog": "Show Settings Dialog",
     "Toggle Theme (Dark/Light)": "Toggle Theme (Dark/Light)",
     "Undo": "Undo",
+    "Close Current Workflow": "Close Current Workflow",
     "Next Opened Workflow": "Next Opened Workflow",
     "Previous Opened Workflow": "Previous Opened Workflow",
     "Toggle Search Box": "Toggle Search Box",
@@ -386,7 +427,9 @@
   },
   "desktopMenu": {
     "reinstall": "Reinstall",
-    "confirmReinstall": "This will clear your extra_models_config.yaml file,\nand begin installation again.\n\nAre you sure?"
+    "confirmReinstall": "This will clear your extra_models_config.yaml file,\nand begin installation again.\n\nAre you sure?",
+    "quit": "Quit",
+    "confirmQuit": "There are unsaved workflows open; any unsaved changes will be lost.  Ignore this and quit?"
   },
   "settingsCategories": {
     "Comfy-Desktop": "Comfy-Desktop",
@@ -427,7 +470,9 @@
     "Window": "Window",
     "Server-Config": "Server-Config",
     "About": "About",
-    "EditTokenWeight": "Edit Token Weight"
+    "EditTokenWeight": "Edit Token Weight",
+    "CustomColorPalettes": "Custom Color Palettes",
+    "ContextMenu": "Context Menu"
   },
   "serverConfigItems": {
     "listen": {
@@ -577,6 +622,7 @@
     "combine": "combine",
     "cond single": "cond single",
     "controlnet": "controlnet",
+    "inpaint": "inpaint",
     "scheduling": "scheduling",
     "create": "create",
     "mask": "mask",
@@ -596,7 +642,6 @@
     "batch": "batch",
     "video_models": "video_models",
     "upscaling": "upscaling",
-    "inpaint": "inpaint",
     "instructpix2pix": "instructpix2pix",
     "compositing": "compositing",
     "samplers": "samplers",
@@ -648,5 +693,26 @@
     "UPSCALE_MODEL": "UPSCALE_MODEL",
     "VAE": "VAE",
     "WEBCAM": "WEBCAM"
+  },
+  "maintenance": {
+    "allOk": "No issues were detected.",
+    "status": "Status",
+    "detected": "Detected",
+    "refreshing": "Refreshing",
+    "None": "None",
+    "OK": "OK",
+    "Skipped": "Skipped",
+    "showManual": "Show maintenance tasks",
+    "confirmTitle": "Are you sure?",
+    "error": {
+      "toastTitle": "Task error",
+      "taskFailed": "Task failed to run.",
+      "defaultDescription": "An error occurred while running a maintenance task."
+    }
+  },
+  "missingModelsDialog": {
+    "doNotAskAgain": "Don't show this again",
+    "missingModels": "Missing Models",
+    "missingModelsMessage": "When loading the graph, the following models were not found"
   }
 }

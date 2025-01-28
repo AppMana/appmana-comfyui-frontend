@@ -59,10 +59,19 @@
         </h4>
         <ul class="list-disc pl-6 space-y-1">
           <li>
-            {{ $t('install.settings.dataCollectionDialog.errorReports') }}
+            {{
+              $t('install.settings.dataCollectionDialog.collect.errorReports')
+            }}
           </li>
           <li>
-            {{ $t('install.settings.dataCollectionDialog.systemInfo') }}
+            {{ $t('install.settings.dataCollectionDialog.collect.systemInfo') }}
+          </li>
+          <li>
+            {{
+              $t(
+                'install.settings.dataCollectionDialog.collect.userJourneyEvents'
+              )
+            }}
           </li>
         </ul>
 
@@ -72,39 +81,57 @@
         <ul class="list-disc pl-6 space-y-1">
           <li>
             {{
-              $t('install.settings.dataCollectionDialog.personalInformation')
-            }}
-          </li>
-          <li>
-            {{ $t('install.settings.dataCollectionDialog.workflowContents') }}
-          </li>
-          <li>
-            {{
-              $t('install.settings.dataCollectionDialog.fileSystemInformation')
+              $t(
+                'install.settings.dataCollectionDialog.doNotCollect.personalInformation'
+              )
             }}
           </li>
           <li>
             {{
               $t(
-                'install.settings.dataCollectionDialog.customNodeConfigurations'
+                'install.settings.dataCollectionDialog.doNotCollect.workflowContents'
+              )
+            }}
+          </li>
+          <li>
+            {{
+              $t(
+                'install.settings.dataCollectionDialog.doNotCollect.fileSystemInformation'
+              )
+            }}
+          </li>
+          <li>
+            {{
+              $t(
+                'install.settings.dataCollectionDialog.doNotCollect.customNodeConfigurations'
               )
             }}
           </li>
         </ul>
+
+        <div class="mt-4">
+          <a
+            href="https://comfy.org/privacy"
+            target="_blank"
+            class="text-blue-400 hover:text-blue-300 underline"
+          >
+            {{ $t('install.settings.dataCollectionDialog.viewFullPolicy') }}
+          </a>
+        </div>
       </div>
     </Dialog>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
-import ToggleSwitch from 'primevue/toggleswitch'
 import Dialog from 'primevue/dialog'
 import Divider from 'primevue/divider'
+import ToggleSwitch from 'primevue/toggleswitch'
+import { ref } from 'vue'
 
 const showDialog = ref(false)
-const autoUpdate = defineModel('autoUpdate', { required: true })
-const allowMetrics = defineModel('allowMetrics', { required: true })
+const autoUpdate = defineModel<boolean>('autoUpdate', { required: true })
+const allowMetrics = defineModel<boolean>('allowMetrics', { required: true })
 
 const showMetricsInfo = () => {
   showDialog.value = true

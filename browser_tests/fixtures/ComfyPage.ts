@@ -1,28 +1,37 @@
-import type { Page, Locator, APIRequestContext } from '@playwright/test'
+import type { APIRequestContext, Locator, Page } from '@playwright/test'
 import { expect } from '@playwright/test'
 import { test as base } from '@playwright/test'
-import { ComfyActionbar } from '../helpers/actionbar'
 import dotenv from 'dotenv'
-dotenv.config()
 import * as fs from 'fs'
-import { NodeBadgeMode } from '../../src/types/nodeSource'
+
+import type { useWorkspaceStore } from '../../src/stores/workspaceStore'
 import type { NodeId } from '../../src/types/comfyWorkflow'
 import type { KeyCombo } from '../../src/types/keyBindingTypes'
+import { NodeBadgeMode } from '../../src/types/nodeSource'
+import { ComfyActionbar } from '../helpers/actionbar'
 import { ComfyTemplates } from '../helpers/templates'
 import { ComfyNodeSearchBox } from './components/ComfyNodeSearchBox'
+import { SettingDialog } from './components/SettingDialog'
 import {
   NodeLibrarySidebarTab,
+  QueueSidebarTab,
   WorkflowsSidebarTab
 } from './components/SidebarTab'
 import { Topbar } from './components/Topbar'
-import { NodeReference } from './utils/litegraphUtils'
 import type { Position, Size } from './types'
-import type { useWorkspaceStore } from '../../src/stores/workspaceStore'
-import { SettingDialog } from './components/SettingDialog'
+import { NodeReference } from './utils/litegraphUtils'
+import TaskHistory from './utils/taskHistory'
+
+dotenv.config()
 
 type WorkspaceStore = ReturnType<typeof useWorkspaceStore>
 
 class ComfyMenu {
+  private _nodeLibraryTab: NodeLibrarySidebarTab | null = null
+  private _workflowsTab: WorkflowsSidebarTab | null = null
+  private _queueTab: QueueSidebarTab | null = null
+  private _topbar: Topbar | null = null
+
   public readonly sideToolbar: Locator
   public readonly themeToggleButton: Locator
   public readonly saveButton: Locator
@@ -36,15 +45,23 @@ class ComfyMenu {
   }
 
   get nodeLibraryTab() {
-    return new NodeLibrarySidebarTab(this.page)
+    this._nodeLibraryTab ??= new NodeLibrarySidebarTab(this.page)
+    return this._nodeLibraryTab
   }
 
   get workflowsTab() {
-    return new WorkflowsSidebarTab(this.page)
+    this._workflowsTab ??= new WorkflowsSidebarTab(this.page)
+    return this._workflowsTab
+  }
+
+  get queueTab() {
+    this._queueTab ??= new QueueSidebarTab(this.page)
+    return this._queueTab
   }
 
   get topbar() {
-    return new Topbar(this.page)
+    this._topbar ??= new Topbar(this.page)
+    return this._topbar
   }
 
   async toggleTheme() {
@@ -83,11 +100,13 @@ class ConfirmDialog {
   public readonly delete: Locator
   public readonly overwrite: Locator
   public readonly reject: Locator
+  public readonly confirm: Locator
 
   constructor(public readonly page: Page) {
     this.delete = page.locator('button.p-button[aria-label="Delete"]')
     this.overwrite = page.locator('button.p-button[aria-label="Overwrite"]')
     this.reject = page.locator('button.p-button[aria-label="Cancel"]')
+    this.confirm = page.locator('button.p-button[aria-label="Confirm"]')
   }
 
   async click(locator: KeysOfType<ConfirmDialog, Locator>) {
@@ -98,6 +117,8 @@ class ConfirmDialog {
 }
 
 export class ComfyPage {
+  private _history: TaskHistory | null = null
+
   public readonly url: string
   // All canvas position operations are based on default view of canvas.
   public readonly canvas: Locator
@@ -231,6 +252,11 @@ export class ComfyPage {
     }
   }
 
+  setupHistory(): TaskHistory {
+    this._history ??= new TaskHistory(this)
+    return this._history
+  }
+
   async setup({ clearStorage = true }: { clearStorage?: boolean } = {}) {
     await this.goto()
     if (clearStorage) {
@@ -341,11 +367,6 @@ export class ComfyPage {
     return await this.page.evaluate(async (id) => {
       return await window['app'].extensionManager.setting.get(id)
     }, settingId)
-  }
-
-  async reload({ clearStorage = true }: { clearStorage?: boolean } = {}) {
-    await this.page.reload({ timeout: 15000 })
-    await this.setup({ clearStorage })
   }
 
   async goto() {
@@ -516,6 +537,13 @@ export class ComfyPage {
 
   get promptDialogInput() {
     return this.page.locator('.p-dialog-content input[type="text"]')
+  }
+
+  async fillPromptDialog(value: string) {
+    await this.promptDialogInput.fill(value)
+    await this.page.keyboard.press('Enter')
+    await this.promptDialogInput.waitFor({ state: 'hidden' })
+    await this.nextFrame()
   }
 
   async disconnectEdge() {
@@ -785,9 +813,7 @@ export class ComfyPage {
     await this.canvas.press('Control+a')
     const node = await this.getFirstNodeRef()
     await node!.clickContextMenuOption('Convert to Group Node')
-    await this.promptDialogInput.fill(groupNodeName)
-    await this.page.keyboard.press('Enter')
-    await this.promptDialogInput.waitFor({ state: 'hidden' })
+    await this.fillPromptDialog(groupNodeName)
     await this.nextFrame()
   }
 
@@ -798,6 +824,11 @@ export class ComfyPage {
   }
   async getNodeRefById(id: NodeId) {
     return new NodeReference(id, this)
+  }
+  async getNodes() {
+    return await this.page.evaluate(() => {
+      return window['app'].graph.nodes
+    })
   }
   async getNodeRefsByType(type: string): Promise<NodeReference[]> {
     return Promise.all(
@@ -845,6 +876,12 @@ export class ComfyPage {
       return (await window['app'].graphToPrompt())[api ? 'output' : 'workflow']
     }, api)
   }
+  async setFocusMode(focusMode: boolean) {
+    await this.page.evaluate((focusMode) => {
+      window['app'].extensionManager.focusMode = focusMode
+    }, focusMode)
+    await this.nextFrame()
+  }
 }
 
 export const comfyPageFixture = base.extend<{ comfyPage: ComfyPage }>({
@@ -867,7 +904,9 @@ export const comfyPageFixture = base.extend<{ comfyPage: ComfyPage }>({
         'Comfy.NodeBadge.NodeSourceBadgeMode': NodeBadgeMode.None,
         // Disable tooltips by default to avoid flakiness.
         'Comfy.EnableTooltips': false,
-        'Comfy.userId': userId
+        'Comfy.userId': userId,
+        // Set tutorial completed to true to avoid loading the tutorial workflow.
+        'Comfy.TutorialCompleted': true
       })
     } catch (e) {
       console.error(e)

@@ -1,57 +1,59 @@
 <template>
-  <div
-    class="font-sans flex flex-col justify-center items-center h-screen m-0 text-neutral-300 bg-neutral-900 dark-theme pointer-events-auto"
-  >
-    <h2 class="text-2xl font-bold">
-      {{ t(`serverStart.process.${status}`) }}
-      <span v-if="status === ProgressStatus.ERROR">
-        v{{ electronVersion }}
-      </span>
-    </h2>
-    <div
-      v-if="status === ProgressStatus.ERROR"
-      class="flex flex-col items-center gap-4"
-    >
-      <div class="flex items-center my-4 gap-2">
+  <BaseViewTemplate dark class="flex-col">
+    <div class="flex flex-col w-full h-full items-center">
+      <h2 class="text-2xl font-bold">
+        {{ t(`serverStart.process.${status}`) }}
+        <span v-if="status === ProgressStatus.ERROR">
+          v{{ electronVersion }}
+        </span>
+      </h2>
+      <div
+        v-if="status === ProgressStatus.ERROR"
+        class="flex flex-col items-center gap-4"
+      >
+        <div class="flex items-center my-4 gap-2">
+          <Button
+            icon="pi pi-flag"
+            severity="secondary"
+            :label="t('serverStart.reportIssue')"
+            @click="reportIssue"
+          />
+          <Button
+            icon="pi pi-file"
+            severity="secondary"
+            :label="t('serverStart.openLogs')"
+            @click="openLogs"
+          />
+          <Button
+            icon="pi pi-refresh"
+            :label="t('serverStart.reinstall')"
+            @click="reinstall"
+          />
+        </div>
         <Button
-          icon="pi pi-flag"
+          v-if="!terminalVisible"
+          icon="pi pi-search"
           severity="secondary"
-          :label="t('serverStart.reportIssue')"
-          @click="reportIssue"
-        />
-        <Button
-          icon="pi pi-file"
-          severity="secondary"
-          :label="t('serverStart.openLogs')"
-          @click="openLogs"
-        />
-        <Button
-          icon="pi pi-refresh"
-          :label="t('serverStart.reinstall')"
-          @click="reinstall"
+          :label="t('serverStart.showTerminal')"
+          @click="terminalVisible = true"
         />
       </div>
-      <Button
-        v-if="!terminalVisible"
-        icon="pi pi-search"
-        severity="secondary"
-        :label="t('serverStart.showTerminal')"
-        @click="terminalVisible = true"
-      />
+      <BaseTerminal v-show="terminalVisible" @created="terminalCreated" />
     </div>
-    <BaseTerminal v-show="terminalVisible" @created="terminalCreated" />
-  </div>
+  </BaseViewTemplate>
 </template>
 
 <script setup lang="ts">
-import Button from 'primevue/button'
-import { ref, onMounted, Ref } from 'vue'
-import BaseTerminal from '@/components/bottomPanel/tabs/terminal/BaseTerminal.vue'
 import { ProgressStatus } from '@comfyorg/comfyui-electron-types'
-import { electronAPI } from '@/utils/envUtil'
-import type { useTerminal } from '@/hooks/bottomPanelTabs/useTerminal'
 import { Terminal } from '@xterm/xterm'
+import Button from 'primevue/button'
+import { Ref, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
+
+import BaseTerminal from '@/components/bottomPanel/tabs/terminal/BaseTerminal.vue'
+import type { useTerminal } from '@/hooks/bottomPanelTabs/useTerminal'
+import { electronAPI } from '@/utils/envUtil'
+import BaseViewTemplate from '@/views/templates/BaseViewTemplate.vue'
 
 const electron = electronAPI()
 const { t } = useI18n()
@@ -76,7 +78,7 @@ const terminalCreated = (
 ) => {
   xterm = terminal
 
-  useAutoSize(root, true, true)
+  useAutoSize({ root, autoRows: true, autoCols: true })
   electron.onLogMessage((message: string) => {
     terminal.write(message)
   })

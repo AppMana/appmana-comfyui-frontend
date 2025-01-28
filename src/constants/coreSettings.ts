@@ -1,9 +1,11 @@
+import { LinkMarkerShape } from '@comfyorg/litegraph'
+import { LiteGraph } from '@comfyorg/litegraph'
+
+import type { ColorPalettes } from '@/types/colorPaletteTypes'
 import type { Keybinding } from '@/types/keyBindingTypes'
 import { NodeBadgeMode } from '@/types/nodeSource'
 import { LinkReleaseTriggerAction } from '@/types/searchBoxTypes'
 import type { SettingParams } from '@/types/settingTypes'
-import { LinkMarkerShape } from '@comfyorg/litegraph'
-import { LiteGraph } from '@comfyorg/litegraph'
 
 export const CORE_SETTINGS: SettingParams[] = [
   {
@@ -83,7 +85,8 @@ export const CORE_SETTINGS: SettingParams[] = [
     name: 'Sidebar size',
     type: 'combo',
     options: ['normal', 'small'],
-    defaultValue: () => (window.innerWidth < 1600 ? 'small' : 'normal')
+    // Default to small if the window is less than 1536px(2xl) wide.
+    defaultValue: () => (window.innerWidth < 1536 ? 'small' : 'normal')
   },
   {
     id: 'Comfy.TextareaWidget.FontSize',
@@ -154,7 +157,7 @@ export const CORE_SETTINGS: SettingParams[] = [
     id: 'Comfy.Workflow.ShowMissingModelsWarning',
     name: 'Show missing models warning',
     type: 'boolean',
-    defaultValue: false,
+    defaultValue: true,
     experimental: true
   },
   {
@@ -227,7 +230,8 @@ export const CORE_SETTINGS: SettingParams[] = [
     id: 'Comfy.Window.UnloadConfirmation',
     name: 'Show confirmation when closing window',
     type: 'boolean',
-    defaultValue: false
+    defaultValue: true,
+    versionModified: '1.7.12'
   },
   {
     id: 'Comfy.TreeExplorer.ItemPadding',
@@ -267,7 +271,8 @@ export const CORE_SETTINGS: SettingParams[] = [
       { value: 'zh', text: '中文' },
       { value: 'ru', text: 'Русский' },
       { value: 'ja', text: '日本語' },
-      { value: 'ko', text: '한국어' }
+      { value: 'ko', text: '한국어' },
+      { value: 'fr', text: 'Français' }
     ],
     defaultValue: () => navigator.language.split('-')[0] || 'en'
   },
@@ -285,7 +290,7 @@ export const CORE_SETTINGS: SettingParams[] = [
     name: 'Node ID badge mode',
     type: 'combo',
     options: [NodeBadgeMode.None, NodeBadgeMode.ShowAll],
-    defaultValue: NodeBadgeMode.ShowAll
+    defaultValue: NodeBadgeMode.None
   },
   {
     id: 'Comfy.NodeBadge.NodeLifeCycleBadgeMode',
@@ -396,8 +401,10 @@ export const CORE_SETTINGS: SettingParams[] = [
     id: 'Comfy.Workflow.WorkflowTabsPosition',
     name: 'Opened workflows position',
     type: 'combo',
-    options: ['Sidebar', 'Topbar'],
-    defaultValue: 'Topbar'
+    options: ['Sidebar', 'Topbar', 'Topbar (2nd-row)'],
+    // Default to topbar (2nd-row) if the window is less than 1536px(2xl) wide.
+    defaultValue: () =>
+      window.innerWidth < 1536 ? 'Topbar (2nd-row)' : 'Topbar'
   },
   {
     id: 'Comfy.Graph.CanvasMenu',
@@ -420,7 +427,16 @@ export const CORE_SETTINGS: SettingParams[] = [
     name: 'Keybindings unset by the user',
     type: 'hidden',
     defaultValue: [] as Keybinding[],
-    versionAdded: '1.3.7'
+    versionAdded: '1.3.7',
+    versionModified: '1.7.3',
+    migrateDeprecatedValue: (value: any[]) => {
+      return value.map((keybinding) => {
+        if (keybinding['targetSelector'] === '#graph-canvas') {
+          keybinding['targetElementId'] = 'graph-canvas'
+        }
+        return keybinding
+      })
+    }
   },
   {
     id: 'Comfy.Keybinding.NewBindings',
@@ -663,5 +679,48 @@ export const CORE_SETTINGS: SettingParams[] = [
     type: 'boolean',
     defaultValue: true,
     versionAdded: '1.5.6'
+  },
+  {
+    id: 'Comfy.ColorPalette',
+    name: 'The active color palette id',
+    type: 'hidden',
+    defaultValue: 'dark',
+    versionModified: '1.6.7',
+    migrateDeprecatedValue(value: string) {
+      // Legacy custom palettes were prefixed with 'custom_'
+      return value.startsWith('custom_') ? value.replace('custom_', '') : value
+    }
+  },
+  {
+    id: 'Comfy.CustomColorPalettes',
+    name: 'Custom color palettes',
+    type: 'hidden',
+    defaultValue: {} as ColorPalettes,
+    versionModified: '1.6.7'
+  },
+  {
+    id: 'Comfy.WidgetControlMode',
+    category: ['Comfy', 'Node Widget', 'WidgetControlMode'],
+    name: 'Widget control mode',
+    tooltip:
+      'Controls when widget values are updated (randomize/increment/decrement), either before the prompt is queued or after.',
+    type: 'combo',
+    defaultValue: 'after',
+    options: ['before', 'after'],
+    versionModified: '1.6.10'
+  },
+  {
+    id: 'Comfy.TutorialCompleted',
+    name: 'Tutorial completed',
+    type: 'hidden',
+    defaultValue: false,
+    versionAdded: '1.8.7'
+  },
+  {
+    id: 'LiteGraph.ContextMenu.Scaling',
+    name: 'Scale node combo widget menus (lists) when zoomed in',
+    defaultValue: false,
+    type: 'boolean',
+    versionAdded: '1.8.8'
   }
 ]

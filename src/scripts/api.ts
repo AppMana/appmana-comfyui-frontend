@@ -1,31 +1,33 @@
-import type { ComfyWorkflowJSON, NodeId } from '@/types/comfyWorkflow'
+import axios from 'axios'
+
 import type {
-  HistoryTaskItem,
-  PendingTaskItem,
-  RunningTaskItem,
   ComfyNodeDef,
   EmbeddingsResponse,
-  ExtensionsResponse,
-  PromptResponse,
-  SystemStats,
-  User,
-  Settings,
-  UserDataFullInfo,
-  LogsRawResponse,
-  ExecutingWsMessage,
   ExecutedWsMessage,
-  ProgressWsMessage,
-  ExecutionStartWsMessage,
+  ExecutingWsMessage,
+  ExecutionCachedWsMessage,
   ExecutionErrorWsMessage,
+  ExecutionInterruptedWsMessage,
+  ExecutionStartWsMessage,
+  ExecutionSuccessWsMessage,
+  ExtensionsResponse,
+  HistoryTaskItem,
+  LogsRawResponse,
+  LogsWsMessage,
+  PendingTaskItem,
+  ProgressWsMessage,
+  PromptResponse,
+  RunningTaskItem,
+  Settings,
   StatusWsMessage,
   StatusWsMessageStatus,
-  ExecutionCachedWsMessage,
-  ExecutionSuccessWsMessage,
-  LogsWsMessage,
+  SystemStats,
+  User,
+  UserDataFullInfo,
   BinaryPreview,
 } from '@/types/apiTypes'
 import { validateComfyNodeDef } from '@/types/apiTypes'
-import axios from 'axios'
+import type { ComfyWorkflowJSON, NodeId } from '@/types/comfyWorkflow'
 
 interface QueuePromptRequestBody {
   client_id: string
@@ -59,6 +61,7 @@ interface BackendApiCalls {
   execution_start: ExecutionStartWsMessage
   execution_success: ExecutionSuccessWsMessage
   execution_error: ExecutionErrorWsMessage
+  execution_interrupted: ExecutionInterruptedWsMessage
   execution_cached: ExecutionCachedWsMessage
   logs: LogsWsMessage
   /** Mr Blob Preview, I presume? */
@@ -381,6 +384,7 @@ export class ComfyApi extends EventTarget {
               break
             case 'execution_start':
             case 'execution_error':
+            case 'execution_interrupted':
             case 'execution_cached':
             case 'execution_success':
             case 'progress':
@@ -422,6 +426,17 @@ export class ComfyApi extends EventTarget {
   async getExtensions(): Promise<ExtensionsResponse> {
     const resp = await this.fetchApi('/extensions', { cache: 'no-store' })
     return await resp.json()
+  }
+
+  /**
+   * Gets the available workflow templates from custom nodes.
+   * @returns A map of custom_node names and associated template workflow names.
+   */
+  async getWorkflowTemplates(): Promise<{
+    [customNodesName: string]: string[]
+  }> {
+    const res = await this.fetchApi('/workflow_templates')
+    return await res.json()
   }
 
   /**
@@ -888,6 +903,15 @@ export class ComfyApi extends EventTarget {
 
   async getFolderPaths(): Promise<Record<string, string[]>> {
     return (await axios.get(this.internalURL('/folder_paths'))).data
+  }
+
+  /**
+   * Gets the custom nodes i18n data from the server.
+   *
+   * @returns The custom nodes i18n data
+   */
+  async getCustomNodesI18n(): Promise<Record<string, any>> {
+    return (await axios.get(this.apiURL('/i18n'))).data
   }
 }
 

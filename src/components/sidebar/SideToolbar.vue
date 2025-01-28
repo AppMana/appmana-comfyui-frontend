@@ -1,6 +1,6 @@
 <template>
   <teleport :to="teleportTarget">
-    <nav :class="'side-tool-bar-container' + (isSmall ? ' small-sidebar' : '')">
+    <nav class="side-tool-bar-container" :class="{ 'small-sidebar': isSmall }">
       <SidebarIcon
         v-for="tab in tabs"
         :key="tab.id"
@@ -27,17 +27,19 @@
 </template>
 
 <script setup lang="ts">
-import SidebarIcon from './SidebarIcon.vue'
-import SidebarThemeToggleIcon from './SidebarThemeToggleIcon.vue'
-import SidebarSettingsToggleIcon from './SidebarSettingsToggleIcon.vue'
-import SidebarLogoutIcon from './SidebarLogoutIcon.vue'
-import ExtensionSlot from '@/components/common/ExtensionSlot.vue'
 import { computed } from 'vue'
-import { useWorkspaceStore } from '@/stores/workspaceStore'
-import { useSettingStore } from '@/stores/settingStore'
-import type { SidebarTabExtension } from '@/types/extensionTypes'
+
+import ExtensionSlot from '@/components/common/ExtensionSlot.vue'
 import { useKeybindingStore } from '@/stores/keybindingStore'
+import { useSettingStore } from '@/stores/settingStore'
 import { useUserStore } from '@/stores/userStore'
+import { useWorkspaceStore } from '@/stores/workspaceStore'
+import type { SidebarTabExtension } from '@/types/extensionTypes'
+
+import SidebarIcon from './SidebarIcon.vue'
+import SidebarLogoutIcon from './SidebarLogoutIcon.vue'
+import SidebarSettingsToggleIcon from './SidebarSettingsToggleIcon.vue'
+import SidebarThemeToggleIcon from './SidebarThemeToggleIcon.vue'
 
 const workspaceStore = useWorkspaceStore()
 const settingStore = useSettingStore()
@@ -67,17 +69,6 @@ const getTabTooltipSuffix = (tab: SidebarTabExtension) => {
 }
 </script>
 
-<style>
-:root {
-  --sidebar-width: 64px;
-  --sidebar-icon-size: 1.5rem;
-}
-:root .small-sidebar {
-  --sidebar-width: 40px;
-  --sidebar-icon-size: 1rem;
-}
-</style>
-
 <style scoped>
 .side-tool-bar-container {
   display: flex;
@@ -92,6 +83,14 @@ const getTabTooltipSuffix = (tab: SidebarTabExtension) => {
   background-color: var(--comfy-menu-secondary-bg);
   color: var(--fg-color);
   box-shadow: var(--bar-shadow);
+
+  --sidebar-width: 4rem;
+  --sidebar-icon-size: 1.5rem;
+}
+
+.side-tool-bar-container.small-sidebar {
+  --sidebar-width: 2.5rem;
+  --sidebar-icon-size: 1rem;
 }
 
 .side-tool-bar-end {

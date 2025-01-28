@@ -1,8 +1,13 @@
 <template>
-  <div
-    class="font-sans flex flex-col items-center h-screen m-0 text-neutral-300 bg-neutral-900 dark-theme pointer-events-auto"
-  >
-    <Stepper class="stepper" value="0" @update:value="setHighestStep">
+  <BaseViewTemplate dark>
+    <!-- h-full to make sure the stepper does not layout shift between steps
+    as for each step the stepper height is different. Inherit the center element
+    placement from BaseViewTemplate would cause layout shift. -->
+    <Stepper
+      class="h-full p-8 2xl:p-16"
+      value="0"
+      @update:value="handleStepChange"
+    >
       <StepList class="select-none">
         <Step value="0">
           {{ $t('install.gpu') }}
@@ -94,28 +99,29 @@
         </StepPanel>
       </StepPanels>
     </Stepper>
-  </div>
+  </BaseViewTemplate>
 </template>
 
 <script setup lang="ts">
+import type {
+  InstallOptions,
+  TorchDeviceType
+} from '@comfyorg/comfyui-electron-types'
 import Button from 'primevue/button'
-import Stepper from 'primevue/stepper'
-import StepList from 'primevue/steplist'
-import StepPanels from 'primevue/steppanels'
 import Step from 'primevue/step'
+import StepList from 'primevue/steplist'
 import StepPanel from 'primevue/steppanel'
+import StepPanels from 'primevue/steppanels'
+import Stepper from 'primevue/stepper'
+import { computed, onMounted, ref, toRaw } from 'vue'
+import { useRouter } from 'vue-router'
 
+import DesktopSettingsConfiguration from '@/components/install/DesktopSettingsConfiguration.vue'
+import GpuPicker from '@/components/install/GpuPicker.vue'
 import InstallLocationPicker from '@/components/install/InstallLocationPicker.vue'
 import MigrationPicker from '@/components/install/MigrationPicker.vue'
-import DesktopSettingsConfiguration from '@/components/install/DesktopSettingsConfiguration.vue'
-import {
-  electronAPI,
-  type InstallOptions,
-  type TorchDeviceType
-} from '@/utils/envUtil'
-import { ref, computed, toRaw, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
-import GpuPicker from '@/components/install/GpuPicker.vue'
+import { electronAPI } from '@/utils/envUtil'
+import BaseViewTemplate from '@/views/templates/BaseViewTemplate.vue'
 
 const device = ref<TorchDeviceType>(null)
 
@@ -130,6 +136,14 @@ const allowMetrics = ref(true)
 
 /** Forces each install step to be visited at least once. */
 const highestStep = ref(0)
+
+const handleStepChange = (value: string | number) => {
+  setHighestStep(value)
+
+  electronAPI().Events.trackEvent('install_stepper_change', {
+    step: value
+  })
+}
 
 const setHighestStep = (value: string | number) => {
   const int = typeof value === 'number' ? value : parseInt(value, 10)
@@ -161,17 +175,19 @@ onMounted(async () => {
   if (!electron) return
 
   const detectedGpu = await electron.Config.getDetectedGpu()
-  if (detectedGpu === 'mps' || detectedGpu === 'nvidia')
+  if (detectedGpu === 'mps' || detectedGpu === 'nvidia') {
     device.value = detectedGpu
+  }
+
+  electronAPI().Events.trackEvent('install_stepper_change', {
+    step: '0',
+    gpu: detectedGpu
+  })
 })
 </script>
 
-<style lang="postcss" scoped>
+<style scoped>
 :deep(.p-steppanel) {
   @apply bg-transparent;
-}
-
-.stepper {
-  margin-top: max(1rem, max(0px, calc((100vh - 42rem) * 0.5)));
 }
 </style>

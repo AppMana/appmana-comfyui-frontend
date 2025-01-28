@@ -1,24 +1,31 @@
 <template>
-  <Button
+  <div
     v-show="workspaceState.focusMode"
-    class="comfy-menu-hamburger"
+    class="comfy-menu-hamburger no-drag"
     :style="positionCSS"
-    icon="pi pi-bars"
-    severity="secondary"
-    text
-    size="large"
-    v-tooltip="{ value: $t('menu.showMenu'), showDelay: 300 }"
-    @click="exitFocusMode"
-    @contextmenu="showNativeMenu"
-  />
+  >
+    <Button
+      icon="pi pi-bars"
+      severity="secondary"
+      text
+      size="large"
+      v-tooltip="{ value: $t('menu.showMenu'), showDelay: 300 }"
+      :aria-label="$t('menu.showMenu')"
+      aria-live="assertive"
+      @click="exitFocusMode"
+      @contextmenu="showNativeMenu"
+    />
+    <div v-show="menuSetting !== 'Bottom'" class="window-actions-spacer" />
+  </div>
 </template>
 
 <script setup lang="ts">
 import Button from 'primevue/button'
-import { useWorkspaceStore } from '@/stores/workspaceStore'
-import { computed, CSSProperties, watchEffect } from 'vue'
+import { CSSProperties, computed, watchEffect } from 'vue'
+
 import { app } from '@/scripts/app'
 import { useSettingStore } from '@/stores/settingStore'
+import { useWorkspaceStore } from '@/stores/workspaceStore'
 import { showNativeMenu } from '@/utils/envUtil'
 
 const workspaceState = useWorkspaceStore()
@@ -50,8 +57,6 @@ const positionCSS = computed<CSSProperties>(() =>
 
 <style scoped>
 .comfy-menu-hamburger {
-  pointer-events: auto;
-  position: fixed;
-  z-index: 9999;
+  @apply pointer-events-auto fixed z-[9999] flex flex-row;
 }
 </style>

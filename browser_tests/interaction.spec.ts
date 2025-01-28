@@ -1,4 +1,5 @@
 import { expect } from '@playwright/test'
+
 import { comfyPageFixture as test } from './fixtures/ComfyPage'
 
 test.describe('Item Interaction', () => {
@@ -452,6 +453,9 @@ test.describe('Canvas Interaction', () => {
     expect(await getCursorStyle()).toBe('default')
     await comfyPage.page.mouse.down()
     expect(await getCursorStyle()).toBe('grabbing')
+    // Move mouse should not alter cursor style.
+    await comfyPage.page.mouse.move(10, 20)
+    expect(await getCursorStyle()).toBe('grabbing')
     await comfyPage.page.mouse.up()
     expect(await getCursorStyle()).toBe('default')
 
@@ -462,6 +466,43 @@ test.describe('Canvas Interaction', () => {
     await comfyPage.page.mouse.up()
     expect(await getCursorStyle()).toBe('grab')
     await comfyPage.page.keyboard.up('Space')
+    expect(await getCursorStyle()).toBe('default')
+  })
+
+  // https://github.com/Comfy-Org/litegraph.js/pull/424
+  test('Properly resets dragging state after pan mode sequence', async ({
+    comfyPage
+  }) => {
+    const getCursorStyle = async () => {
+      return await comfyPage.page.evaluate(() => {
+        return (
+          document.getElementById('graph-canvas')!.style.cursor || 'default'
+        )
+      })
+    }
+
+    // Initial state check
+    await comfyPage.page.mouse.move(10, 10)
+    expect(await getCursorStyle()).toBe('default')
+
+    // Click and hold
+    await comfyPage.page.mouse.down()
+    expect(await getCursorStyle()).toBe('grabbing')
+
+    // Press space while holding click
+    await comfyPage.page.keyboard.down('Space')
+    expect(await getCursorStyle()).toBe('grabbing')
+
+    // Release click while space is still down
+    await comfyPage.page.mouse.up()
+    expect(await getCursorStyle()).toBe('grab')
+
+    // Release space
+    await comfyPage.page.keyboard.up('Space')
+    expect(await getCursorStyle()).toBe('default')
+
+    // Move mouse - cursor should remain default
+    await comfyPage.page.mouse.move(20, 20)
     expect(await getCursorStyle()).toBe('default')
   })
 
@@ -552,7 +593,7 @@ test.describe('Load workflow', () => {
   }) => {
     await comfyPage.loadWorkflow('single_ksampler')
     await expect(comfyPage.canvas).toHaveScreenshot('single_ksampler.png')
-    await comfyPage.reload({ clearStorage: false })
+    await comfyPage.setup({ clearStorage: false })
     await expect(comfyPage.canvas).toHaveScreenshot('single_ksampler.png')
   })
 
@@ -569,10 +610,71 @@ test.describe('Load workflow', () => {
     await expect(comfyPage.canvas).toHaveScreenshot(
       'single_ksampler_modified.png'
     )
-    await comfyPage.reload({ clearStorage: false })
+    await comfyPage.setup({ clearStorage: false })
     await expect(comfyPage.canvas).toHaveScreenshot(
       'single_ksampler_modified.png'
     )
+  })
+
+  test.describe('Restore all open workflows on reload', () => {
+    let workflowA: string
+    let workflowB: string
+
+    const generateUniqueFilename = (extension = '') =>
+      `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}${extension}`
+
+    test.beforeEach(async ({ comfyPage }) => {
+      await comfyPage.setSetting('Comfy.UseNewMenu', 'Top')
+
+      workflowA = generateUniqueFilename()
+      await comfyPage.menu.topbar.saveWorkflow(workflowA)
+      workflowB = generateUniqueFilename()
+      await comfyPage.menu.topbar.triggerTopbarCommand(['Workflow', 'New'])
+      await comfyPage.menu.topbar.saveWorkflow(workflowB)
+
+      // Wait for localStorage to persist the workflow paths before reloading
+      await comfyPage.page.waitForFunction(
+        () => !!window.localStorage.getItem('Comfy.OpenWorkflowsPaths')
+      )
+      await comfyPage.setup({ clearStorage: false })
+    })
+
+    test('Restores topbar workflow tabs after reload', async ({
+      comfyPage
+    }) => {
+      await comfyPage.setSetting(
+        'Comfy.Workflow.WorkflowTabsPosition',
+        'Topbar'
+      )
+      const tabs = await comfyPage.menu.topbar.getTabNames()
+      const activeWorkflowName = await comfyPage.menu.topbar.getActiveTabName()
+
+      expect(tabs).toEqual(expect.arrayContaining([workflowA, workflowB]))
+      expect(tabs.indexOf(workflowA)).toBeLessThan(tabs.indexOf(workflowB))
+      expect(activeWorkflowName).toEqual(workflowB)
+    })
+
+    test('Restores sidebar workflows after reload', async ({ comfyPage }) => {
+      await comfyPage.setSetting(
+        'Comfy.Workflow.WorkflowTabsPosition',
+        'Sidebar'
+      )
+      await comfyPage.menu.workflowsTab.open()
+      const openWorkflows =
+        await comfyPage.menu.workflowsTab.getOpenedWorkflowNames()
+      const activeWorkflowName =
+        await comfyPage.menu.workflowsTab.getActiveWorkflowName()
+      const workflowPathA = `${workflowA}.json`
+      const workflowPathB = `${workflowB}.json`
+
+      expect(openWorkflows).toEqual(
+        expect.arrayContaining([workflowPathA, workflowPathB])
+      )
+      expect(openWorkflows.indexOf(workflowPathA)).toBeLessThan(
+        openWorkflows.indexOf(workflowPathB)
+      )
+      expect(activeWorkflowName).toEqual(workflowPathB)
+    })
   })
 })
 

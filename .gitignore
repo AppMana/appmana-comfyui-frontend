@@ -16,6 +16,9 @@ dist-ssr
 .vscode/*
 *.code-workspace
 !.vscode/extensions.json
+!.vscode/tailwind.json
+!.vscode/settings.json.default
+!.vscode/launch.json.default
 .idea
 .DS_Store
 *.suo
@@ -42,3 +45,6 @@ browser_tests/*/*-win32.png
 dist.zip
 
 /temp/
+
+# Generated JSON Schemas
+/schemas/

@@ -1,15 +1,17 @@
 // @ts-strict-ignore
-import { ComfyWidgets, addValueControlWidgets } from '../../scripts/widgets'
-import { app } from '../../scripts/app'
-import { applyTextReplacements } from '../../scripts/utils'
-import { LiteGraph, LGraphNode } from '@comfyorg/litegraph'
+import { LGraphNode, LiteGraph } from '@comfyorg/litegraph'
 import type {
   INodeInputSlot,
   IWidget,
   LiteGraphCanvasEvent
 } from '@comfyorg/litegraph'
-import type { InputSpec } from '@/types/apiTypes'
+
 import { useNodeDefStore } from '@/stores/nodeDefStore'
+import type { InputSpec } from '@/types/apiTypes'
+
+import { app } from '../../scripts/app'
+import { applyTextReplacements } from '../../scripts/utils'
+import { ComfyWidgets, addValueControlWidgets } from '../../scripts/widgets'
 
 const CONVERTED_TYPE = 'converted-widget'
 const VALID_TYPES = [
@@ -631,7 +633,8 @@ export function mergeIfValid(
       k !== 'defaultInput' &&
       k !== 'control_after_generate' &&
       k !== 'multiline' &&
-      k !== 'tooltip'
+      k !== 'tooltip' &&
+      k !== 'dynamicPrompts'
     ) {
       let v1 = config1[1][k]
       let v2 = config2[1]?.[k]
@@ -779,7 +782,27 @@ app.registerExtension({
         ? origGetExtraMenuOptions.apply(this, arguments)
         : undefined
 
+      const getPointerCanvasPos = () => {
+        const pos = this.graph?.list_of_graphcanvas?.at(0)?.graph_mouse
+        return pos ? { canvasX: pos[0], canvasY: pos[1] } : undefined
+      }
+
       if (this.widgets) {
+        const { canvasX, canvasY } = getPointerCanvasPos()
+        const widget = this.getWidgetOnPos(canvasX, canvasY)
+        // @ts-expect-error custom widget type
+        if (widget && widget.type !== CONVERTED_TYPE) {
+          const config = getConfig.call(this, widget.name) ?? [
+            widget.type,
+            widget.options || {}
+          ]
+          if (isConvertibleWidget(widget, config)) {
+            options.push({
+              content: `Convert ${widget.name} to input`,
+              callback: () => convertToInput(this, widget, config) && false
+            })
+          }
+        }
         let toInput = []
         let toWidget = []
         for (const w of this.widgets) {

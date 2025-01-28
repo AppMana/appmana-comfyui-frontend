@@ -1,7 +1,5 @@
 <template>
-  <div
-    class="font-sans w-screen h-screen flex items-center justify-around m-0 text-neutral-900 bg-neutral-300 pointer-events-auto"
-  >
+  <BaseViewTemplate>
     <div class="sad-container">
       <!-- Right side image -->
       <img
@@ -54,12 +52,14 @@
         </div>
       </div>
     </div>
-  </div>
+  </BaseViewTemplate>
 </template>
 
 <script setup lang="ts">
 import Button from 'primevue/button'
 import { useRouter } from 'vue-router'
+
+import BaseViewTemplate from '@/views/templates/BaseViewTemplate.vue'
 
 const openDocs = () => {
   window.open(
@@ -78,7 +78,7 @@ const continueToInstall = () => {
 }
 </script>
 
-<style>
+<style scoped>
 .sad-container {
   @apply grid items-center justify-evenly;
   grid-template-columns: 25rem 1fr;

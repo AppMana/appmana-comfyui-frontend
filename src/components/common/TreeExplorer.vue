@@ -8,9 +8,11 @@
     selectionMode="single"
     :pt="{
       nodeLabel: 'tree-explorer-node-label',
-      nodeContent: ({ props }) => ({
-        onClick: (e: MouseEvent) => onNodeContentClick(e, props.node),
-        onContextmenu: (e: MouseEvent) => handleContextMenu(props.node, e)
+      nodeContent: ({ context }) => ({
+        onClick: (e: MouseEvent) =>
+          onNodeContentClick(e, context.node as RenderedTreeExplorerNode),
+        onContextmenu: (e: MouseEvent) =>
+          handleContextMenu(e, context.node as RenderedTreeExplorerNode)
       }),
       nodeToggleButton: () => ({
         onClick: (e: MouseEvent) => {
@@ -33,17 +35,18 @@
   <ContextMenu ref="menu" :model="menuItems" />
 </template>
 <script setup lang="ts">
-import { ref, computed, provide } from 'vue'
-import Tree from 'primevue/tree'
 import ContextMenu from 'primevue/contextmenu'
+import type { MenuItem, MenuItemCommandEvent } from 'primevue/menuitem'
+import Tree from 'primevue/tree'
+import { computed, provide, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
+
 import TreeExplorerTreeNode from '@/components/common/TreeExplorerTreeNode.vue'
+import { useErrorHandling } from '@/hooks/errorHooks'
 import type {
   RenderedTreeExplorerNode,
   TreeExplorerNode
 } from '@/types/treeExplorerTypes'
-import type { MenuItem, MenuItemCommandEvent } from 'primevue/menuitem'
-import { useI18n } from 'vue-i18n'
-import { useErrorHandling } from '@/hooks/errorHooks'
 
 const expandedKeys = defineModel<Record<string, boolean>>('expandedKeys')
 provide('expandedKeys', expandedKeys)
@@ -151,7 +154,7 @@ const menuItems = computed<MenuItem[]>(() =>
   }))
 )
 
-const handleContextMenu = (node: RenderedTreeExplorerNode, e: MouseEvent) => {
+const handleContextMenu = (e: MouseEvent, node: RenderedTreeExplorerNode) => {
   menuTargetNode.value = node
   emit('contextMenu', node, e)
   if (menuItems.value.filter((item) => item.visible).length > 0) {

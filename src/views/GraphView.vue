@@ -4,44 +4,49 @@
   <TopMenubar />
   <GraphCanvas @ready="onGraphReady" />
   <GlobalToast />
-  <UnloadWindowConfirmDialog />
+  <UnloadWindowConfirmDialog v-if="!isElectron()" />
   <BrowserTabTitle />
   <MenuHamburger />
 </template>
 
 <script setup lang="ts">
-import GraphCanvas from '@/components/graph/GraphCanvas.vue'
-import MenuHamburger from '@/components/MenuHamburger.vue'
-import { computed, onMounted, onBeforeUnmount, watch, watchEffect } from 'vue'
-import { app } from '@/scripts/app'
-import { useSettingStore } from '@/stores/settingStore'
+import { useEventListener } from '@vueuse/core'
+import type { ToastMessageOptions } from 'primevue/toast'
+import { useToast } from 'primevue/usetoast'
+import { onBeforeUnmount, onMounted, watch, watchEffect } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { useWorkspaceStore } from '@/stores/workspaceStore'
+
+import BrowserTabTitle from '@/components/BrowserTabTitle.vue'
+import MenuHamburger from '@/components/MenuHamburger.vue'
+import UnloadWindowConfirmDialog from '@/components/dialog/UnloadWindowConfirmDialog.vue'
+import GraphCanvas from '@/components/graph/GraphCanvas.vue'
+import GlobalToast from '@/components/toast/GlobalToast.vue'
+import TopMenubar from '@/components/topbar/TopMenubar.vue'
+import { SERVER_CONFIG_ITEMS } from '@/constants/serverConfig'
+import { useCoreCommands } from '@/hooks/coreCommandHooks'
+import { useErrorHandling } from '@/hooks/errorHooks'
+import { i18n } from '@/i18n'
 import { api } from '@/scripts/api'
-import { StatusWsMessageStatus } from '@/types/apiTypes'
+import { app } from '@/scripts/app'
+import { setupAutoQueueHandler } from '@/services/autoQueueService'
+import { useKeybindingService } from '@/services/keybindingService'
+import { useCommandStore } from '@/stores/commandStore'
+import { useExecutionStore } from '@/stores/executionStore'
+import { useMenuItemStore } from '@/stores/menuItemStore'
+import { useModelStore } from '@/stores/modelStore'
+import { useNodeDefStore, useNodeFrequencyStore } from '@/stores/nodeDefStore'
 import {
   useQueuePendingTaskCountStore,
   useQueueStore
 } from '@/stores/queueStore'
-import type { ToastMessageOptions } from 'primevue/toast'
-import { useToast } from 'primevue/usetoast'
-import { i18n } from '@/i18n'
-import { useExecutionStore } from '@/stores/executionStore'
-import GlobalToast from '@/components/toast/GlobalToast.vue'
-import UnloadWindowConfirmDialog from '@/components/dialog/UnloadWindowConfirmDialog.vue'
-import BrowserTabTitle from '@/components/BrowserTabTitle.vue'
-import TopMenubar from '@/components/topbar/TopMenubar.vue'
-import { setupAutoQueueHandler } from '@/services/autoQueueService'
-import { useKeybindingStore } from '@/stores/keybindingStore'
-import { useSidebarTabStore } from '@/stores/workspace/sidebarTabStore'
-import { useNodeDefStore, useNodeFrequencyStore } from '@/stores/nodeDefStore'
-import { useBottomPanelStore } from '@/stores/workspace/bottomPanelStore'
-import { useModelStore } from '@/stores/modelStore'
 import { useServerConfigStore } from '@/stores/serverConfigStore'
-import { SERVER_CONFIG_ITEMS } from '@/constants/serverConfig'
-import { useMenuItemStore } from '@/stores/menuItemStore'
-import { useCommandStore } from '@/stores/commandStore'
-import { useCoreCommands } from '@/hooks/coreCommandHooks'
+import { useSettingStore } from '@/stores/settingStore'
+import { useBottomPanelStore } from '@/stores/workspace/bottomPanelStore'
+import { useColorPaletteStore } from '@/stores/workspace/colorPaletteStore'
+import { useSidebarTabStore } from '@/stores/workspace/sidebarTabStore'
+import { useWorkspaceStore } from '@/stores/workspaceStore'
+import { StatusWsMessageStatus } from '@/types/apiTypes'
+import { electronAPI, isElectron } from '@/utils/envUtil'
 
 setupAutoQueueHandler()
 
@@ -49,22 +54,54 @@ const { t } = useI18n()
 const toast = useToast()
 const settingStore = useSettingStore()
 const executionStore = useExecutionStore()
-
-const theme = computed<string>(() => settingStore.get('Comfy.ColorPalette'))
+const colorPaletteStore = useColorPaletteStore()
+const queueStore = useQueueStore()
 
 watch(
-  theme,
+  () => colorPaletteStore.completedActivePalette,
   (newTheme) => {
     const DARK_THEME_CLASS = 'dark-theme'
-    const isDarkTheme = newTheme !== 'light'
-    if (isDarkTheme) {
-      document.body.classList.add(DARK_THEME_CLASS)
-    } else {
+    if (newTheme.light_theme) {
       document.body.classList.remove(DARK_THEME_CLASS)
+    } else {
+      document.body.classList.add(DARK_THEME_CLASS)
+    }
+
+    if (isElectron()) {
+      electronAPI().changeTheme({
+        color: 'rgba(0, 0, 0, 0)',
+        symbolColor: newTheme.colors.comfy_base['input-text']
+      })
     }
   },
   { immediate: true }
 )
+
+if (isElectron()) {
+  watch(
+    () => queueStore.tasks,
+    (newTasks, oldTasks) => {
+      // Report tasks that previously running but are now completed (i.e. in history)
+      const oldRunningTaskIds = new Set(
+        oldTasks.filter((task) => task.isRunning).map((task) => task.promptId)
+      )
+      newTasks
+        .filter(
+          (task) => oldRunningTaskIds.has(task.promptId) && task.isHistory
+        )
+        .forEach((task) => {
+          electronAPI().Events.incrementUserProperty(
+            `execution:${task.displayStatus.toLowerCase()}`,
+            1
+          )
+          electronAPI().Events.trackEvent('execution', {
+            status: task.displayStatus.toLowerCase()
+          })
+        })
+    },
+    { deep: true }
+  )
+}
 
 watchEffect(() => {
   const fontSize = settingStore.get('Comfy.TextareaWidget.FontSize')
@@ -92,7 +129,7 @@ watchEffect(() => {
 watchEffect(() => {
   const useNewMenu = settingStore.get('Comfy.UseNewMenu')
   if (useNewMenu === 'Disabled') {
-    app.ui.menuContainer.style.removeProperty('display')
+    app.ui.menuContainer.style.setProperty('display', 'block')
     app.ui.restoreMenuPosition()
   } else {
     app.ui.menuContainer.style.setProperty('display', 'none')
@@ -100,25 +137,23 @@ watchEffect(() => {
 })
 
 watchEffect(() => {
-  useQueueStore().maxHistoryItems = settingStore.get(
-    'Comfy.Queue.MaxHistoryItems'
-  )
+  queueStore.maxHistoryItems = settingStore.get('Comfy.Queue.MaxHistoryItems')
 })
 
 const init = () => {
-  settingStore.addSettings(app.ui.settings)
   const coreCommands = useCoreCommands()
   useCommandStore().registerCommands(coreCommands)
   useMenuItemStore().registerCoreMenuCommands()
-  useKeybindingStore().loadCoreKeybindings()
+  useKeybindingService().registerCoreKeybindings()
   useSidebarTabStore().registerCoreSidebarTabs()
   useBottomPanelStore().registerCoreBottomPanelTabs()
   app.extensionManager = useWorkspaceStore()
 }
 
 const queuePendingTaskCountStore = useQueuePendingTaskCountStore()
-const onStatus = (e: CustomEvent<StatusWsMessageStatus>) => {
+const onStatus = async (e: CustomEvent<StatusWsMessageStatus>) => {
   queuePendingTaskCountStore.update(e)
+  await queueStore.update()
 }
 
 const reconnectingMessage: ToastMessageOptions = {
@@ -160,29 +195,32 @@ onBeforeUnmount(() => {
   executionStore.unbindExecutionEvents()
 })
 
+useEventListener(window, 'keydown', useKeybindingService().keybindHandler)
+
+const { wrapWithErrorHandling, wrapWithErrorHandlingAsync } = useErrorHandling()
 const onGraphReady = () => {
   requestIdleCallback(
     () => {
       // Setting values now available after comfyApp.setup.
       // Load keybindings.
-      useKeybindingStore().loadUserKeybindings()
+      wrapWithErrorHandling(useKeybindingService().registerUserKeybindings)()
 
       // Load server config
-      useServerConfigStore().loadServerConfig(
+      wrapWithErrorHandling(useServerConfigStore().loadServerConfig)(
         SERVER_CONFIG_ITEMS,
         settingStore.get('Comfy.Server.ServerConfigValues')
       )
 
       // Load model folders
-      useModelStore().loadModelFolders()
+      wrapWithErrorHandlingAsync(useModelStore().loadModelFolders)()
+
+      // Non-blocking load of node frequencies
+      wrapWithErrorHandlingAsync(useNodeFrequencyStore().loadNodeFrequencies)()
 
       // Node defs now available after comfyApp.setup.
       // Explicitly initialize nodeSearchService to avoid indexing delay when
       // node search is triggered
       useNodeDefStore().nodeSearchService.endsWithFilterStartSequence('')
-
-      // Non-blocking load of node frequencies
-      useNodeFrequencyStore().loadNodeFrequencies()
     },
     { timeout: 1000 }
   )

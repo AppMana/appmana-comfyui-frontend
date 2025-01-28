@@ -15,7 +15,7 @@
         :label="$t('g.download') + ' (' + fileSize + ')'"
         size="small"
         outlined
-        :disabled="props.error"
+        :disabled="!!props.error"
         :title="props.url"
         @click="download.triggerBrowserDownload"
       />
@@ -24,9 +24,10 @@
 </template>
 
 <script setup lang="ts">
-import { useDownload } from '@/hooks/downloadHooks'
 import Button from 'primevue/button'
 import { computed } from 'vue'
+
+import { useDownload } from '@/hooks/downloadHooks'
 import { formatSize } from '@/utils/formatUtil'
 
 const props = defineProps<{

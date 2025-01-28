@@ -1,4 +1,6 @@
-import { expect } from '@playwright/test'
+import { Locator, expect } from '@playwright/test'
+
+import { Keybinding } from '../src/types/keyBindingTypes'
 import { comfyPageFixture as test } from './fixtures/ComfyPage'
 
 test.describe('Load workflow warning', () => {
@@ -42,6 +44,18 @@ test.describe('Execution error', () => {
     const executionError = comfyPage.page.locator('.comfy-error-report')
     await expect(executionError).toBeVisible()
   })
+
+  test('Can display Issue Report form', async ({ comfyPage }) => {
+    await comfyPage.loadWorkflow('execution_error')
+    await comfyPage.queueButton.click()
+    await comfyPage.nextFrame()
+
+    await comfyPage.page.getByLabel('Help Fix This').click()
+    const issueReportForm = comfyPage.page.getByText(
+      'Submit Error Report (Optional)'
+    )
+    await expect(issueReportForm).toBeVisible()
+  })
 })
 
 test.describe('Missing models warning', () => {
@@ -52,9 +66,71 @@ test.describe('Missing models warning', () => {
     }, comfyPage.url)
   })
 
+  test('Should display a warning when missing models are found', async ({
+    comfyPage
+  }) => {
+    await comfyPage.loadWorkflow('missing_models')
+
+    const missingModelsWarning = comfyPage.page.locator('.comfy-missing-models')
+    await expect(missingModelsWarning).toBeVisible()
+
+    const downloadButton = missingModelsWarning.getByLabel('Download')
+    await expect(downloadButton).toBeVisible()
+  })
+
+  test('Should not display a warning when no missing models are found', async ({
+    comfyPage
+  }) => {
+    const modelFoldersRes = {
+      status: 200,
+      body: JSON.stringify([
+        {
+          name: 'clip',
+          folders: ['ComfyUI/models/clip']
+        }
+      ])
+    }
+    comfyPage.page.route(
+      '**/api/experiment/models',
+      (route) => route.fulfill(modelFoldersRes),
+      { times: 1 }
+    )
+
+    // Reload page to trigger indexing of model folders
+    await comfyPage.setup()
+
+    const clipModelsRes = {
+      status: 200,
+      body: JSON.stringify([
+        {
+          name: 'fake_model.safetensors',
+          pathIndex: 0
+        }
+      ])
+    }
+    comfyPage.page.route(
+      '**/api/experiment/models/clip',
+      (route) => route.fulfill(clipModelsRes),
+      { times: 1 }
+    )
+
+    await comfyPage.loadWorkflow('missing_models')
+
+    const missingModelsWarning = comfyPage.page.locator('.comfy-missing-models')
+    await expect(missingModelsWarning).not.toBeVisible()
+  })
+
+  test('should show on tutorial workflow', async ({ comfyPage }) => {
+    await comfyPage.setSetting('Comfy.TutorialCompleted', false)
+    await comfyPage.setup({ clearStorage: true })
+    const missingModelsWarning = comfyPage.page.locator('.comfy-missing-models')
+    await expect(missingModelsWarning).toBeVisible()
+    expect(await comfyPage.getSetting('Comfy.TutorialCompleted')).toBe(true)
+  })
+
   // Flaky test after parallelization
   // https://github.com/Comfy-Org/ComfyUI_frontend/pull/1400
-  test.skip('Should display a warning when missing models are found', async ({
+  test.skip('Should download missing model when clicking download button', async ({
     comfyPage
   }) => {
     // The fake_model.safetensors is served by
@@ -71,6 +147,49 @@ test.describe('Missing models warning', () => {
 
     const download = await downloadPromise
     expect(download.suggestedFilename()).toBe('fake_model.safetensors')
+  })
+
+  test.describe('Do not show again checkbox', () => {
+    let checkbox: Locator
+    let closeButton: Locator
+
+    test.beforeEach(async ({ comfyPage }) => {
+      await comfyPage.setSetting(
+        'Comfy.Workflow.ShowMissingModelsWarning',
+        true
+      )
+      await comfyPage.loadWorkflow('missing_models')
+
+      checkbox = comfyPage.page.getByLabel("Don't show this again")
+      closeButton = comfyPage.page.getByLabel('Close')
+    })
+
+    test('Should disable warning dialog when checkbox is checked', async ({
+      comfyPage
+    }) => {
+      await checkbox.click()
+      const changeSettingPromise = comfyPage.page.waitForRequest(
+        '**/api/settings/Comfy.Workflow.ShowMissingModelsWarning'
+      )
+      await closeButton.click()
+      await changeSettingPromise
+
+      const settingValue = await comfyPage.getSetting(
+        'Comfy.Workflow.ShowMissingModelsWarning'
+      )
+      expect(settingValue).toBe(false)
+    })
+
+    test('Should keep warning dialog enabled when checkbox is unchecked', async ({
+      comfyPage
+    }) => {
+      await closeButton.click()
+
+      const settingValue = await comfyPage.getSetting(
+        'Comfy.Workflow.ShowMissingModelsWarning'
+      )
+      expect(settingValue).toBe(true)
+    })
   })
 })
 
@@ -101,5 +220,87 @@ test.describe('Settings', () => {
     await test.step('Setting should persist', async () => {
       expect(await comfyPage.getSetting('Comfy.Graph.ZoomSpeed')).toBe(maxSpeed)
     })
+  })
+
+  test('Should persist keybinding setting', async ({ comfyPage }) => {
+    // Open the settings dialog
+    await comfyPage.page.keyboard.press('Control+,')
+    await comfyPage.page.waitForSelector('.settings-container')
+
+    // Open the keybinding tab
+    await comfyPage.page.getByLabel('Keybinding').click()
+    await comfyPage.page.waitForSelector(
+      '[placeholder="Search Keybindings..."]'
+    )
+
+    // Focus the 'New Blank Workflow' row
+    const newBlankWorkflowRow = comfyPage.page.locator('tr', {
+      has: comfyPage.page.getByRole('cell', { name: 'New Blank Workflow' })
+    })
+    await newBlankWorkflowRow.click()
+
+    // Click edit button
+    const editKeybindingButton = newBlankWorkflowRow.locator('.pi-pencil')
+    await editKeybindingButton.click()
+
+    // Set new keybinding
+    const input = comfyPage.page.getByPlaceholder('Press keys for new binding')
+    await input.press('Alt+n')
+
+    const requestPromise = comfyPage.page.waitForRequest(
+      '**/api/settings/Comfy.Keybinding.NewBindings'
+    )
+
+    // Save keybinding
+    const saveButton = comfyPage.page
+      .getByLabel('Comfy.NewBlankWorkflow')
+      .getByLabel('Save')
+    await saveButton.click()
+
+    const request = await requestPromise
+    const expectedSetting: Keybinding = {
+      commandId: 'Comfy.NewBlankWorkflow',
+      combo: {
+        key: 'n',
+        ctrl: false,
+        alt: true,
+        shift: false
+      }
+    }
+    expect(request.postData()).toContain(JSON.stringify(expectedSetting))
+  })
+})
+
+test.describe('Feedback dialog', () => {
+  test('Should open from topmenu help command', async ({ comfyPage }) => {
+    // Open feedback dialog from top menu
+    await comfyPage.setSetting('Comfy.UseNewMenu', 'Top')
+    await comfyPage.menu.topbar.triggerTopbarCommand(['Help', 'Feedback'])
+
+    // Verify feedback dialog content is visible
+    const feedbackHeader = comfyPage.page.getByRole('heading', {
+      name: 'Feedback'
+    })
+    await expect(feedbackHeader).toBeVisible()
+  })
+
+  test('Should close when close button clicked', async ({ comfyPage }) => {
+    // Open feedback dialog
+    await comfyPage.setSetting('Comfy.UseNewMenu', 'Top')
+    await comfyPage.menu.topbar.triggerTopbarCommand(['Help', 'Feedback'])
+
+    const feedbackHeader = comfyPage.page.getByRole('heading', {
+      name: 'Feedback'
+    })
+
+    // Close feedback dialog
+    await comfyPage.page
+      .getByLabel('', { exact: true })
+      .getByLabel('Close')
+      .click()
+    await feedbackHeader.waitFor({ state: 'hidden' })
+
+    // Verify dialog is closed
+    await expect(feedbackHeader).not.toBeVisible()
   })
 })

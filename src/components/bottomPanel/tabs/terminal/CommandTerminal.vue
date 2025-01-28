@@ -3,10 +3,12 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, onUnmounted, Ref } from 'vue'
+import { IDisposable } from '@xterm/xterm'
+import { Ref, onMounted, onUnmounted } from 'vue'
+
 import type { useTerminal } from '@/hooks/bottomPanelTabs/useTerminal'
 import { electronAPI } from '@/utils/envUtil'
-import { IDisposable } from '@xterm/xterm'
+
 import BaseTerminal from './BaseTerminal.vue'
 
 const terminalCreated = (
@@ -18,11 +20,16 @@ const terminalCreated = (
   let offData: IDisposable
   let offOutput: () => void
 
-  useAutoSize(root, true, true, () => {
-    // If we aren't visible, don't resize
-    if (!terminal.element?.offsetParent) return
+  useAutoSize({
+    root,
+    autoRows: true,
+    autoCols: true,
+    onResize: () => {
+      // If we aren't visible, don't resize
+      if (!terminal.element?.offsetParent) return
 
-    terminalApi.resize(terminal.cols, terminal.rows)
+      terminalApi.resize(terminal.cols, terminal.rows)
+    }
   })
 
   onMounted(async () => {

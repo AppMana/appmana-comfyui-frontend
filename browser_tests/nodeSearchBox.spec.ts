@@ -1,6 +1,6 @@
 import {
-  comfyPageFixture as test,
-  comfyExpect as expect
+  comfyExpect as expect,
+  comfyPageFixture as test
 } from './fixtures/ComfyPage'
 
 test.describe('Node search box', () => {
@@ -82,10 +82,14 @@ test.describe('Node search box', () => {
   test('Has correct aria-labels on search results', async ({ comfyPage }) => {
     const node = 'Load Checkpoint'
     await comfyPage.doubleClickCanvas()
-    await comfyPage.searchBox.fillAndSelectFirstNode(node)
-    const firstResult = comfyPage.page
-      .locator('li.p-autocomplete-option')
-      .first()
+    await comfyPage.searchBox.input.waitFor({ state: 'visible' })
+    await comfyPage.searchBox.input.fill(node)
+    await comfyPage.searchBox.dropdown.waitFor({ state: 'visible' })
+    // Wait for some time for the auto complete list to update.
+    // The auto complete list is debounced and may take some time to update.
+    await comfyPage.page.waitForTimeout(500)
+
+    const firstResult = comfyPage.searchBox.dropdown.locator('li').first()
     await expect(firstResult).toHaveAttribute('aria-label', node)
   })
 
@@ -130,6 +134,48 @@ test.describe('Node search box', () => {
     test('Can add filter', async ({ comfyPage }) => {
       await comfyPage.searchBox.addFilter('MODEL', 'Input Type')
       await expectFilterChips(comfyPage, ['MODEL'])
+    })
+
+    // Flaky test.
+    // Sample test failure:
+    // https://github.com/Comfy-Org/ComfyUI_frontend/actions/runs/12696912248/job/35391990861?pr=2210
+    /*
+    1) [chromium-2x] › nodeSearchBox.spec.ts:135:5 › Node search box › Filtering › Outer click dismisses filter panel but keeps search box visible
+
+    Error: expect(locator).not.toBeVisible()
+
+    Locator: getByRole('dialog').locator('div').filter({ hasText: 'Add node filter condition' })
+    Expected: not visible
+    Received: visible
+    Call log:
+      - expect.not.toBeVisible with timeout 5000ms
+      - waiting for getByRole('dialog').locator('div').filter({ hasText: 'Add node filter condition' })
+
+
+      143 |
+      144 |       // Verify the filter selection panel is hidden
+    > 145 |       expect(panel.header).not.toBeVisible()
+          |                                ^
+      146 |
+      147 |       // Verify the node search dialog is still visible
+      148 |       expect(comfyPage.searchBox.input).toBeVisible()
+
+        at /home/runner/work/ComfyUI_frontend/ComfyUI_frontend/ComfyUI_frontend/browser_tests/nodeSearchBox.spec.ts:145:32
+     */
+    test.skip('Outer click dismisses filter panel but keeps search box visible', async ({
+      comfyPage
+    }) => {
+      await comfyPage.searchBox.filterButton.click()
+      const panel = comfyPage.searchBox.filterSelectionPanel
+      await panel.header.waitFor({ state: 'visible' })
+      const panelBounds = await panel.header.boundingBox()
+      await comfyPage.page.mouse.click(panelBounds!.x - 10, panelBounds!.y - 10)
+
+      // Verify the filter selection panel is hidden
+      expect(panel.header).not.toBeVisible()
+
+      // Verify the node search dialog is still visible
+      expect(comfyPage.searchBox.input).toBeVisible()
     })
 
     test('Can add multiple filters', async ({ comfyPage }) => {

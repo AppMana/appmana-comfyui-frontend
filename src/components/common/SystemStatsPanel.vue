@@ -19,6 +19,7 @@
           v-for="device in props.stats.devices"
           :key="device.index"
           :header="device.name"
+          :value="device.index"
         >
           <DeviceInfo :device="device" />
         </TabPanel>
@@ -29,12 +30,13 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
-import TabView from 'primevue/tabview'
-import TabPanel from 'primevue/tabpanel'
 import Divider from 'primevue/divider'
-import type { SystemStats } from '@/types/apiTypes'
+import TabPanel from 'primevue/tabpanel'
+import TabView from 'primevue/tabview'
+import { computed } from 'vue'
+
 import DeviceInfo from '@/components/common/DeviceInfo.vue'
+import type { SystemStats } from '@/types/apiTypes'
 import { formatSize } from '@/utils/formatUtil'
 
 const props = defineProps<{

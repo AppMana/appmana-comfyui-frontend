@@ -1,6 +1,7 @@
 import { expect } from '@playwright/test'
-import { comfyPageFixture as test } from './fixtures/ComfyPage'
+
 import { NodeBadgeMode } from '../src/types/nodeSource'
+import { comfyPageFixture as test } from './fixtures/ComfyPage'
 
 test.describe('Canvas Right Click Menu', () => {
   // See https://github.com/comfyanonymous/ComfyUI/issues/3883
@@ -101,6 +102,18 @@ test.describe('Node Right Click Menu', () => {
       await expect(comfyPage.canvas).toHaveScreenshot('right-click-node.png')
       await comfyPage.page.getByText('Convert Widget to Input').click()
       await comfyPage.nextFrame()
+      // The submenu has an identical entry as the base menu - use last
+      await comfyPage.page.getByText('Convert width to input').last().click()
+      await comfyPage.nextFrame()
+      await expect(comfyPage.canvas).toHaveScreenshot(
+        'right-click-node-widget-converted.png'
+      )
+    })
+
+    test('Can convert widget without submenu', async ({ comfyPage }) => {
+      // Right-click the width widget
+      await comfyPage.rightClickEmptyLatentNode()
+      await expect(comfyPage.canvas).toHaveScreenshot('right-click-node.png')
       await comfyPage.page.getByText('Convert width to input').click()
       await comfyPage.nextFrame()
       await expect(comfyPage.canvas).toHaveScreenshot(

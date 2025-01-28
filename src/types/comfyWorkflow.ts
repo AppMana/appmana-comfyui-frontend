@@ -1,4 +1,4 @@
-import { z, type SafeParseReturnType } from 'zod'
+import { type SafeParseReturnType, z } from 'zod'
 import { fromZodError } from 'zod-validation-error'
 
 // GroupNode is hacking node id to be a string, so we need to allow that.
@@ -200,7 +200,7 @@ export const zComfyWorkflow = z
   .passthrough()
 
 /** Schema version 1 */
-const zComfyWorkflow1 = z
+export const zComfyWorkflow1 = z
   .object({
     version: z.literal(1),
     config: zConfig.optional().nullable(),

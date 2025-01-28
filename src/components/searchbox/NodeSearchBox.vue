@@ -19,7 +19,13 @@
       class="filter-button z-10"
       @click="nodeSearchFilterVisible = true"
     />
-    <Dialog v-model:visible="nodeSearchFilterVisible" class="min-w-96">
+    <Dialog
+      v-model:visible="nodeSearchFilterVisible"
+      class="min-w-96"
+      dismissable-mask
+      modal
+      @hide="reFocusInput"
+    >
       <template #header>
         <h3>Add node filter condition</h3>
       </template>
@@ -54,8 +60,9 @@
       <!-- FilterAndValue -->
       <template v-slot:chip="{ value }">
         <SearchFilterChip
+          v-if="Array.isArray(value) && value.length === 2"
           :key="`${value[0].id}-${value[1]}`"
-          @remove="onRemoveFilter($event, value)"
+          @remove="onRemoveFilter($event, value as FilterAndValue)"
           :text="value[1]"
           :badge="value[0].invokeSequence.toUpperCase()"
           :badge-class="value[0].invokeSequence + '-badge'"
@@ -66,21 +73,23 @@
 </template>
 
 <script setup lang="ts">
-import { computed, nextTick, onMounted, ref } from 'vue'
-import AutoCompletePlus from '@/components/primevueOverride/AutoCompletePlus.vue'
-import Dialog from 'primevue/dialog'
 import Button from 'primevue/button'
+import Dialog from 'primevue/dialog'
+import { computed, nextTick, onMounted, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
+
+import NodePreview from '@/components/node/NodePreview.vue'
+import AutoCompletePlus from '@/components/primevueOverride/AutoCompletePlus.vue'
 import NodeSearchFilter from '@/components/searchbox/NodeSearchFilter.vue'
 import NodeSearchItem from '@/components/searchbox/NodeSearchItem.vue'
 import { type FilterAndValue } from '@/services/nodeSearchService'
-import NodePreview from '@/components/node/NodePreview.vue'
 import {
   ComfyNodeDefImpl,
   useNodeDefStore,
   useNodeFrequencyStore
 } from '@/stores/nodeDefStore'
 import { useSettingStore } from '@/stores/settingStore'
-import { useI18n } from 'vue-i18n'
+
 import SearchFilterChip from '../common/SearchFilterChip.vue'
 
 const settingStore = useSettingStore()
@@ -138,7 +147,6 @@ onMounted(reFocusInput)
 const onAddFilter = (filterAndValue: FilterAndValue) => {
   nodeSearchFilterVisible.value = false
   emit('addFilter', filterAndValue)
-  reFocusInput()
 }
 const onRemoveFilter = (event: Event, filterAndValue: FilterAndValue) => {
   event.stopPropagation()

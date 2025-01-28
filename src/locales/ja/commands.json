@@ -20,11 +20,11 @@
   "Comfy-Desktop_OpenDevTools": {
     "label": "DevToolsを開く"
   },
-  "Comfy-Desktop_OpenFeedbackPage": {
-    "label": "フィードバック"
-  },
   "Comfy-Desktop_OpenUserGuide": {
     "label": "デスクトップユーザーガイド"
+  },
+  "Comfy-Desktop_Quit": {
+    "label": "終了"
   },
   "Comfy-Desktop_Reinstall": {
     "label": "再インストール"
@@ -74,11 +74,17 @@
   "Comfy_ClearWorkflow": {
     "label": "ワークフローをクリア"
   },
+  "Comfy_DuplicateWorkflow": {
+    "label": "現在のワークフローを複製"
+  },
   "Comfy_ExportWorkflow": {
     "label": "ワークフローをエクスポート"
   },
   "Comfy_ExportWorkflowAPI": {
     "label": "ワークフローをエクスポート（API形式）"
+  },
+  "Comfy_Feedback": {
+    "label": "フィードバック"
   },
   "Comfy_Graph_FitGroupToContents": {
     "label": "グループを内容に合わせて調整"
@@ -103,6 +109,9 @@
   },
   "Comfy_Help_OpenComfyUIDocs": {
     "label": "ComfyUIのドキュメントを開く"
+  },
+  "Comfy_Help_OpenComfyUIForum": {
+    "label": "Comfy-Orgフォーラムを開く"
   },
   "Comfy_Help_OpenComfyUIIssues": {
     "label": "ComfyUIの問題を開く"
@@ -148,6 +157,9 @@
   },
   "Comfy_Undo": {
     "label": "元に戻す"
+  },
+  "Workspace_CloseWorkflow": {
+    "label": "現在のワークフローを閉じる"
   },
   "Workspace_NextOpenedWorkflow": {
     "label": "次の開いたワークフロー"

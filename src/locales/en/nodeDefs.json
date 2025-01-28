@@ -177,13 +177,16 @@
   },
   "CLIPLoader": {
     "display_name": "Load CLIP",
-    "description": "[Recipes]\n\nstable_diffusion: clip-l\nstable_cascade: clip-g\nsd3: t5 / clip-g / clip-l\nstable_audio: t5\nmochi: t5",
+    "description": "[Recipes]\n\nstable_diffusion: clip-l\nstable_cascade: clip-g\nsd3: t5 / clip-g / clip-l\nstable_audio: t5\nmochi: t5\ncosmos: old t5 xxl",
     "inputs": {
       "clip_name": {
         "name": "clip_name"
       },
       "type": {
         "name": "type"
+      },
+      "device": {
+        "name": "device"
       }
     }
   },
@@ -859,6 +862,32 @@
       }
     }
   },
+  "CosmosImageToVideoLatent": {
+    "display_name": "CosmosImageToVideoLatent",
+    "inputs": {
+      "vae": {
+        "name": "vae"
+      },
+      "width": {
+        "name": "width"
+      },
+      "height": {
+        "name": "height"
+      },
+      "length": {
+        "name": "length"
+      },
+      "batch_size": {
+        "name": "batch_size"
+      },
+      "start_image": {
+        "name": "start_image"
+      },
+      "end_image": {
+        "name": "end_image"
+      }
+    }
+  },
   "CreateHookKeyframe": {
     "display_name": "Create Hook Keyframe",
     "inputs": {
@@ -1100,6 +1129,15 @@
       }
     }
   },
+  "DevToolsNodeWithSeedInput": {
+    "display_name": "Node With Seed Input",
+    "description": "A node with a seed input",
+    "inputs": {
+      "seed": {
+        "name": "seed"
+      }
+    }
+  },
   "DevToolsNodeWithStringInput": {
     "display_name": "Node With String Input",
     "description": "A node with a string input",
@@ -1121,6 +1159,21 @@
       },
       "int_input": {
         "name": "int_input"
+      }
+    }
+  },
+  "DevToolsObjectPatchNode": {
+    "display_name": "Object Patch Node",
+    "description": "A node that applies an object patch",
+    "inputs": {
+      "model": {
+        "name": "model"
+      },
+      "target_module": {
+        "name": "target_module"
+      },
+      "dummy_float": {
+        "name": "dummy_float"
       }
     }
   },
@@ -1197,6 +1250,26 @@
       },
       "type": {
         "name": "type"
+      },
+      "device": {
+        "name": "device"
+      }
+    }
+  },
+  "EmptyCosmosLatentVideo": {
+    "display_name": "EmptyCosmosLatentVideo",
+    "inputs": {
+      "width": {
+        "name": "width"
+      },
+      "height": {
+        "name": "height"
+      },
+      "length": {
+        "name": "length"
+      },
+      "batch_size": {
+        "name": "batch_size"
       }
     }
   },
@@ -2293,6 +2366,9 @@
       },
       "up_direction": {
         "name": "up_direction"
+      },
+      "fov": {
+        "name": "fov"
       }
     },
     "outputs": {
@@ -2345,6 +2421,9 @@
       },
       "animation_speed": {
         "name": "animation_speed"
+      },
+      "fov": {
+        "name": "fov"
       }
     },
     "outputs": {
@@ -4249,6 +4328,9 @@
       },
       "up_direction": {
         "name": "up_direction"
+      },
+      "fov": {
+        "name": "fov"
       }
     }
   },
@@ -4703,6 +4785,17 @@
       },
       "hooks": {
         "name": "hooks"
+      }
+    }
+  },
+  "SetFirstSigma": {
+    "display_name": "SetFirstSigma",
+    "inputs": {
+      "sigmas": {
+        "name": "sigmas"
+      },
+      "sigma": {
+        "name": "sigma"
       }
     }
   },

@@ -113,11 +113,14 @@
     }
   },
   "CLIPLoader": {
-    "description": "[レシピ]\n\nstable_diffusion: clip-l\nstable_cascade: clip-g\nsd3: t5 / clip-g / clip-l\nstable_audio: t5\nmochi: t5",
+    "description": "[レシピ]\n\nstable_diffusion: clip-l\nstable_cascade: clip-g\nsd3: t5 / clip-g / clip-l\nstable_audio: t5\nmochi: t5\ncosmos: old t5 xxl",
     "display_name": "CLIPを読み込む",
     "inputs": {
       "clip_name": {
         "name": "clip名"
+      },
+      "device": {
+        "name": "デバイス"
       },
       "type": {
         "name": "タイプ"
@@ -859,6 +862,32 @@
       }
     }
   },
+  "CosmosImageToVideoLatent": {
+    "display_name": "CosmosImageToVideoLatent",
+    "inputs": {
+      "batch_size": {
+        "name": "バッチサイズ"
+      },
+      "end_image": {
+        "name": "終了画像"
+      },
+      "height": {
+        "name": "高さ"
+      },
+      "length": {
+        "name": "長さ"
+      },
+      "start_image": {
+        "name": "開始画像"
+      },
+      "vae": {
+        "name": "vae"
+      },
+      "width": {
+        "name": "幅"
+      }
+    }
+  },
   "CreateHookKeyframe": {
     "display_name": "フックキーフレームを作成",
     "inputs": {
@@ -1100,6 +1129,15 @@
       }
     }
   },
+  "DevToolsNodeWithSeedInput": {
+    "description": "シード入力付きのノード",
+    "display_name": "シード入力付きノード",
+    "inputs": {
+      "seed": {
+        "name": "シード"
+      }
+    }
+  },
   "DevToolsNodeWithStringInput": {
     "description": "文字列入力を持つノード",
     "display_name": "文字列入力ノード",
@@ -1121,6 +1159,21 @@
       },
       "string_or_int_input": {
         "name": "文字列または整数入力"
+      }
+    }
+  },
+  "DevToolsObjectPatchNode": {
+    "description": "オブジェクトパッチを適用するノード",
+    "display_name": "オブジェクトパッチノード",
+    "inputs": {
+      "dummy_float": {
+        "name": "ダミーフロート"
+      },
+      "model": {
+        "name": "モデル"
+      },
+      "target_module": {
+        "name": "ターゲットモジュール"
       }
     }
   },
@@ -1195,8 +1248,28 @@
       "clip_name2": {
         "name": "clip_name2"
       },
+      "device": {
+        "name": "デバイス"
+      },
       "type": {
         "name": "タイプ"
+      }
+    }
+  },
+  "EmptyCosmosLatentVideo": {
+    "display_name": "EmptyCosmosLatentVideo",
+    "inputs": {
+      "batch_size": {
+        "name": "バッチサイズ"
+      },
+      "height": {
+        "name": "高さ"
+      },
+      "length": {
+        "name": "長さ"
+      },
+      "width": {
+        "name": "幅"
       }
     }
   },
@@ -2358,6 +2431,9 @@
       "camera_type": {
         "name": "カメラタイプ"
       },
+      "fov": {
+        "name": "fov"
+      },
       "height": {
         "name": "高さ"
       },
@@ -2409,6 +2485,9 @@
       },
       "camera_type": {
         "name": "カメラタイプ"
+      },
+      "fov": {
+        "name": "fov"
       },
       "height": {
         "name": "高さ"
@@ -4232,6 +4311,9 @@
       "camera_type": {
         "name": "カメラタイプ"
       },
+      "fov": {
+        "name": "fov"
+      },
       "light_intensity": {
         "name": "光の強度"
       },
@@ -4783,6 +4865,17 @@
       },
       "schedule_clip": {
         "name": "schedule_clip"
+      }
+    }
+  },
+  "SetFirstSigma": {
+    "display_name": "SetFirstSigma",
+    "inputs": {
+      "sigma": {
+        "name": "シグマ"
+      },
+      "sigmas": {
+        "name": "シグマ"
       }
     }
   },

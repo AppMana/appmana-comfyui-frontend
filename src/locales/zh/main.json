@@ -1,12 +1,56 @@
 {
+  "clipboard": {
+    "errorMessage": "复制到剪贴板失败",
+    "errorNotSupported": "您的浏览器不支持剪贴板API",
+    "successMessage": "已复制到剪贴板"
+  },
   "color": {
+    "black": "黑色",
     "blue": "蓝色",
+    "brown": "棕色",
     "custom": "自定义",
+    "cyan": "青色",
     "default": "默认",
     "green": "绿色",
+    "noColor": "无色",
+    "pale_blue": "淡蓝色",
     "pink": "粉色",
+    "purple": "紫色",
     "red": "红色",
     "yellow": "黄色"
+  },
+  "contextMenu": {
+    " to input": " 为输入",
+    " to widget": " 为控件",
+    "Add Group": "添加组",
+    "Add Group For Selected Nodes": "为选定节点添加组",
+    "Add Node": "添加节点",
+    "Bypass": "绕过",
+    "Clone": "克隆",
+    "Collapse": "折叠",
+    "Colors": "颜色",
+    "Convert ": "转换 ",
+    "Convert Input to Widget": "将输入转换为控件",
+    "Convert Widget to Input": "将控件转换为输入",
+    "Convert to Group Node": "转换为组节点",
+    "Copy (Clipspace)": "复制 (Clipspace)",
+    "Expand": "展开",
+    "Inputs": "输入",
+    "Manage": "管理",
+    "Manage Group Nodes": "管理组节点",
+    "Mode": "模式",
+    "Node Templates": "节点模板",
+    "Outputs": "输出",
+    "Pin": "固定",
+    "Properties": "属性",
+    "Properties Panel": "属性面板",
+    "Remove": "删除",
+    "Resize": "调整大小",
+    "Save Selected as Template": "将选定节点另存为模板",
+    "Search": "搜索",
+    "Shapes": "形状",
+    "Title": "标题",
+    "Unpin": "取消固定"
   },
   "dataTypes": {
     "AUDIO": "音频",
@@ -48,6 +92,11 @@
     "quit": "退出",
     "reinstall": "重新安装"
   },
+  "desktopUpdate": {
+    "description": "ComfyUI桌面正在安装新的依赖项。这可能需要几分钟的时间。",
+    "terminalDefaultMessage": "更新过程中的任何控制台输出都将在这里显示。",
+    "title": "正在更新ComfyUI桌面"
+  },
   "downloadGit": {
     "gitWebsite": "下载 git",
     "instructions": "请下载并安装适合您操作系统的最新版本。下面的下载 git 按钮将打开 git-scm.com 下载页面。",
@@ -74,6 +123,9 @@
     "comingSoon": "即将推出",
     "command": "指令",
     "confirm": "确认",
+    "continue": "继续",
+    "control_after_generate": "生成后控制",
+    "control_before_generate": "生成前控制",
     "copyToClipboard": "复制到剪贴板",
     "currentUser": "当前用户",
     "customize": "自定义",
@@ -220,6 +272,7 @@
       "allowMetricsDescription": "通过发送匿名使用情况指标来帮助改进ComfyUI。不会收集任何个人信息或工作流内容。",
       "autoUpdate": "自动更新",
       "autoUpdateDescription": "更新可用时自动更新。您将在安装更新之前收到通知。",
+      "checkingMirrors": "正在检查到Python镜像的网络访问...",
       "dataCollectionDialog": {
         "collect": {
           "errorReports": "错误报告和堆栈跟踪",
@@ -239,7 +292,12 @@
       },
       "errorUpdatingConsent": "更新同意错误",
       "errorUpdatingConsentDetail": "无法更新度量同意设置",
-      "learnMoreAboutData": "了解更多关于数据收集的信息"
+      "learnMoreAboutData": "了解更多关于数据收集的信息",
+      "mirrorSettings": "镜像设置",
+      "mirrorsReachable": "到Python镜像的网络访问良好",
+      "mirrorsUnreachable": "对某些python镜像的网络访问不佳",
+      "pypiMirrorPlaceholder": "输入PyPI镜像URL",
+      "pythonMirrorPlaceholder": "输入Python镜像URL"
     },
     "systemLocations": "系统位置",
     "unhandledError": "未知错误",
@@ -261,21 +319,42 @@
       "maxLength": "消息过长"
     }
   },
+  "load3d": {
+    "backgroundColor": "背景颜色",
+    "camera": "相机",
+    "fov": "视场",
+    "light": "灯光",
+    "lightIntensity": "光照强度",
+    "loadingModel": "正在加载3D模型...",
+    "materialMode": "材料模式",
+    "model": "模型",
+    "previewOutput": "预览输出",
+    "removeBackgroundImage": "移除背景图片",
+    "scene": "场景",
+    "showGrid": "显示网格",
+    "switchCamera": "切换摄像头",
+    "upDirection": "向上方向",
+    "uploadBackgroundImage": "上传背景图片"
+  },
   "maintenance": {
     "None": "无",
     "OK": "确定",
     "Skipped": "跳过",
     "allOk": "未检测到任何问题。",
     "confirmTitle": "你确定吗？",
+    "consoleLogs": "控制台日志",
     "detected": "检测到",
     "error": {
+      "cannotContinue": "无法继续 - 仍有错误",
       "defaultDescription": "运行维护任务时发生错误。",
       "taskFailed": "任务运行失败。",
       "toastTitle": "任务错误"
     },
     "refreshing": "刷新中",
     "showManual": "显示维护任务",
-    "status": "状态"
+    "status": "状态",
+    "terminalDefaultMessage": "当你运行一个故障排除命令时，任何输出都会在这里显示。",
+    "title": "维护"
   },
   "menu": {
     "autoQueue": "自动执行",
@@ -316,6 +395,7 @@
     "ComfyUI Forum": "ComfyUI 论坛",
     "ComfyUI Issues": "ComfyUI 问题",
     "Convert selected nodes to group node": "将选中节点转换为组节点",
+    "Delete Selected Items": "删除选定的项目",
     "Desktop User Guide": "桌面端用户指南",
     "Duplicate Current Workflow": "复制当前工作流",
     "Edit": "编辑",
@@ -591,9 +671,9 @@
       "ready": "完成中...",
       "starting-server": "正在启动 ComfyUI 服务器..."
     },
-    "reinstall": "重新安装",
     "reportIssue": "报告问题",
-    "showTerminal": "显示终端"
+    "showTerminal": "显示终端",
+    "troubleshoot": "故障排除"
   },
   "settingsCategories": {
     "About": "关于",
@@ -634,6 +714,7 @@
     "Settings": "设置",
     "Sidebar": "侧边栏",
     "Tree Explorer": "树形浏览器",
+    "UV": "UV",
     "Validation": "验证",
     "Window": "窗口",
     "Workflow": "工作流"
@@ -672,6 +753,7 @@
       "deleteFailedTitle": "删除失败",
       "deleted": "工作流已删除",
       "dirtyClose": "以下文件已被更改。您想在关闭之前保存它们吗？",
+      "dirtyCloseHint": "按住 Shift 关闭而不提示",
       "dirtyCloseTitle": "保存更改？",
       "workflowTreeType": {
         "bookmarks": "书签",
@@ -692,10 +774,71 @@
   },
   "templateWorkflows": {
     "template": {
-      "default": "默认",
-      "flux_schnell": "Flux Schnell",
-      "image2image": "图像到图像",
-      "upscale": "2步放大"
+      "3D": {
+        "stable_zero123_example": "稳定Zero123"
+      },
+      "Area Composition": {
+        "area_composition": "区域构成",
+        "area_composition_reversed": "反向区域构成",
+        "area_composition_square_area_for_subject": "主题的方形区域构成"
+      },
+      "Audio": {
+        "stable_audio_example": "稳定音频"
+      },
+      "Basics": {
+        "default": "图像生成",
+        "embedding_example": "嵌入",
+        "gligen_textbox_example": "Gligen文本框",
+        "image2image": "图像到图像",
+        "inpain_model_outpainting": "Inpaint模型Outpainting",
+        "inpaint_example": "Inpaint",
+        "lora": "Lora",
+        "lora_multiple": "Lora多个"
+      },
+      "ControlNet": {
+        "2_pass_pose_worship": "2通道姿势崇拜",
+        "controlnet_example": "ControlNet",
+        "depth_controlnet": "深度ControlNet",
+        "depth_t2i_adapter": "深度T2I适配器",
+        "mixing_controlnets": "混合ControlNets"
+      },
+      "Flux": {
+        "flux_canny_model_example": "Flux Canny Model",
+        "flux_depth_lora_example": "Flux Depth Lora",
+        "flux_dev_checkpoint_example": "Flux Dev的检查点示例",
+        "flux_fill_inpaint_example": "Flux Inpaint",
+        "flux_fill_outpaint_example": "Flux Outpaint",
+        "flux_redux_model_example": "Flux Redux Model",
+        "flux_schnell": "Flux Schnell"
+      },
+      "SD3_5": {
+        "sd3_5_large_blur": "SD3.5 Large 模糊",
+        "sd3_5_large_canny_controlnet_example": "SD3.5 Large Canny 控制网",
+        "sd3_5_large_depth": "SD3.5 Large 深度",
+        "sd3_5_simple_example": "SD3.5 简易示例"
+      },
+      "SDXL": {
+        "sdxl_refiner_prompt_example": "SDXL Refiner提示",
+        "sdxl_revision_text_prompts": "SDXL修订文本提示",
+        "sdxl_revision_zero_positive": "SDXL修订零正",
+        "sdxl_simple_example": "SDXL简单",
+        "sdxlturbo_example": "SDXL Turbo"
+      },
+      "Upscaling": {
+        "esrgan_example": "ESRGAN",
+        "hiresfix_esrgan_workflow": "HiresFix ESRGAN工作流",
+        "hiresfix_latent_workflow": "HiresFix潜在工作流",
+        "latent_upscale_different_prompt_model": "潜在升级不同提示模型",
+        "upscale": "升级"
+      },
+      "Video": {
+        "hunyuan_video_text_to_video": "Hunyuan视频文本到视频",
+        "image_to_video": "图像到视频",
+        "ltxv_image_to_video": "LTXV图像到视频",
+        "ltxv_text_to_video": "LTXV文本到视频",
+        "mochi_text_to_video_example": "Mochi文本到视频",
+        "txt_to_image_to_video": "文本到图像到视频"
+      }
     },
     "title": "从模板开始"
   },

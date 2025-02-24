@@ -1,46 +1,41 @@
 <template>
-  <teleport to=".graph-canvas-container">
-    <!-- Load splitter overlay only after comfyApp is ready. -->
-    <!-- If load immediately, the top-level splitter stateKey won't be correctly
-    synced with the stateStorage (localStorage). -->
-    <LiteGraphCanvasSplitterOverlay
-      v-if="comfyAppReady && betaMenuEnabled && !workspaceStore.focusMode"
-    >
-      <template #side-bar-panel>
-        <SideToolbar />
-      </template>
-      <template #bottom-panel>
-        <BottomPanel />
-      </template>
-      <template #graph-canvas-panel>
-        <SecondRowWorkflowTabs
-          v-if="workflowTabsPosition === 'Topbar (2nd-row)'"
-        />
-        <GraphCanvasMenu v-if="canvasMenuEnabled" />
-      </template>
-    </LiteGraphCanvasSplitterOverlay>
-    <TitleEditor />
-    <GraphCanvasMenu v-if="!betaMenuEnabled && canvasMenuEnabled" />
-    <canvas ref="canvasRef" id="graph-canvas" tabindex="1" />
-  </teleport>
+  <!-- Load splitter overlay only after comfyApp is ready. -->
+  <!-- If load immediately, the top-level splitter stateKey won't be correctly
+  synced with the stateStorage (localStorage). -->
+  <LiteGraphCanvasSplitterOverlay
+    v-if="comfyAppReady && betaMenuEnabled && !workspaceStore.focusMode"
+  >
+    <template #side-bar-panel>
+      <SideToolbar />
+    </template>
+    <template #bottom-panel>
+      <BottomPanel />
+    </template>
+    <template #graph-canvas-panel>
+      <SecondRowWorkflowTabs
+        v-if="workflowTabsPosition === 'Topbar (2nd-row)'"
+        class="pointer-events-auto"
+      />
+      <GraphCanvasMenu v-if="canvasMenuEnabled" class="pointer-events-auto" />
+    </template>
+  </LiteGraphCanvasSplitterOverlay>
+  <TitleEditor />
+  <GraphCanvasMenu v-if="!betaMenuEnabled && canvasMenuEnabled" />
+  <canvas
+    ref="canvasRef"
+    id="graph-canvas"
+    tabindex="1"
+    class="w-full h-full touch-none"
+  />
   <NodeSearchboxPopover />
+  <SelectionOverlay v-if="selectionToolboxEnabled">
+    <SelectionToolbox />
+  </SelectionOverlay>
   <NodeTooltip v-if="tooltipEnabled" />
   <NodeBadge />
 </template>
 
 <script setup lang="ts">
-import {
-  CanvasPointer,
-  ContextMenu,
-  DragAndScale,
-  LGraph,
-  LGraphBadge,
-  LGraphCanvas,
-  LGraphGroup,
-  LGraphNode,
-  LLink,
-  LiteGraph
-} from '@comfyorg/litegraph'
 import { computed, onMounted, ref, watch, watchEffect } from 'vue'
 
 import LiteGraphCanvasSplitterOverlay from '@/components/LiteGraphCanvasSplitterOverlay.vue'
@@ -48,42 +43,41 @@ import BottomPanel from '@/components/bottomPanel/BottomPanel.vue'
 import GraphCanvasMenu from '@/components/graph/GraphCanvasMenu.vue'
 import NodeBadge from '@/components/graph/NodeBadge.vue'
 import NodeTooltip from '@/components/graph/NodeTooltip.vue'
+import SelectionOverlay from '@/components/graph/SelectionOverlay.vue'
+import SelectionToolbox from '@/components/graph/SelectionToolbox.vue'
 import TitleEditor from '@/components/graph/TitleEditor.vue'
 import NodeSearchboxPopover from '@/components/searchbox/NodeSearchBoxPopover.vue'
 import SideToolbar from '@/components/sidebar/SideToolbar.vue'
 import SecondRowWorkflowTabs from '@/components/topbar/SecondRowWorkflowTabs.vue'
+import { useChainCallback } from '@/composables/functional/useChainCallback'
+import { useCanvasDrop } from '@/composables/useCanvasDrop'
+import { useContextMenuTranslation } from '@/composables/useContextMenuTranslation'
+import { useCopy } from '@/composables/useCopy'
+import { useGlobalLitegraph } from '@/composables/useGlobalLitegraph'
+import { useLitegraphSettings } from '@/composables/useLitegraphSettings'
+import { usePaste } from '@/composables/usePaste'
+import { useWorkflowPersistence } from '@/composables/useWorkflowPersistence'
 import { CORE_SETTINGS } from '@/constants/coreSettings'
-import { usePragmaticDroppable } from '@/hooks/dndHooks'
-import { useWorkflowPersistence } from '@/hooks/workflowPersistenceHooks'
 import { i18n } from '@/i18n'
 import { api } from '@/scripts/api'
 import { app as comfyApp } from '@/scripts/app'
 import { ChangeTracker } from '@/scripts/changeTracker'
 import { IS_CONTROL_WIDGET, updateControlWidgetLabel } from '@/scripts/widgets'
 import { useColorPaletteService } from '@/services/colorPaletteService'
-import { useLitegraphService } from '@/services/litegraphService'
 import { useWorkflowService } from '@/services/workflowService'
 import { useCommandStore } from '@/stores/commandStore'
 import { useCanvasStore } from '@/stores/graphStore'
-import { ComfyModelDef } from '@/stores/modelStore'
-import {
-  ModelNodeProvider,
-  useModelToNodeStore
-} from '@/stores/modelToNodeStore'
-import { ComfyNodeDefImpl, useNodeDefStore } from '@/stores/nodeDefStore'
+import { useNodeDefStore } from '@/stores/nodeDefStore'
 import { useSettingStore } from '@/stores/settingStore'
 import { useColorPaletteStore } from '@/stores/workspace/colorPaletteStore'
 import { useWorkspaceStore } from '@/stores/workspaceStore'
-import type { RenderedTreeExplorerNode } from '@/types/treeExplorerTypes'
 
 const emit = defineEmits(['ready'])
 const canvasRef = ref<HTMLCanvasElement | null>(null)
-const litegraphService = useLitegraphService()
 const settingStore = useSettingStore()
 const nodeDefStore = useNodeDefStore()
 const workspaceStore = useWorkspaceStore()
 const canvasStore = useCanvasStore()
-const modelToNodeStore = useModelToNodeStore()
 const betaMenuEnabled = computed(
   () => settingStore.get('Comfy.UseNewMenu') !== 'Disabled'
 )
@@ -94,42 +88,9 @@ const canvasMenuEnabled = computed(() =>
   settingStore.get('Comfy.Graph.CanvasMenu')
 )
 const tooltipEnabled = computed(() => settingStore.get('Comfy.EnableTooltips'))
-
-watchEffect(() => {
-  const canvasInfoEnabled = settingStore.get('Comfy.Graph.CanvasInfo')
-  if (canvasStore.canvas) {
-    canvasStore.canvas.show_info = canvasInfoEnabled
-  }
-})
-
-watchEffect(() => {
-  const zoomSpeed = settingStore.get('Comfy.Graph.ZoomSpeed')
-  if (canvasStore.canvas) {
-    canvasStore.canvas.zoom_speed = zoomSpeed
-  }
-})
-
-watchEffect(() => {
-  LiteGraph.snaps_for_comfy = settingStore.get('Comfy.Node.AutoSnapLinkToSlot')
-})
-
-watchEffect(() => {
-  LiteGraph.snap_highlights_node = settingStore.get(
-    'Comfy.Node.SnapHighlightsNode'
-  )
-})
-
-watchEffect(() => {
-  LGraphNode.keepAllLinksOnBypass = settingStore.get(
-    'Comfy.Node.BypassAllLinksOnDelete'
-  )
-})
-
-watchEffect(() => {
-  LiteGraph.middle_click_slot_add_default_node = settingStore.get(
-    'Comfy.Node.MiddleClickRerouteNode'
-  )
-})
+const selectionToolboxEnabled = computed(() =>
+  settingStore.get('Comfy.Canvas.SelectionToolbox')
+)
 
 watchEffect(() => {
   nodeDefStore.showDeprecated = settingStore.get('Comfy.Node.ShowDeprecated')
@@ -151,60 +112,6 @@ watchEffect(() => {
     textarea.focus()
     textarea.blur()
   })
-})
-
-watchEffect(() => {
-  const linkRenderMode = settingStore.get('Comfy.LinkRenderMode')
-  if (canvasStore.canvas) {
-    canvasStore.canvas.links_render_mode = linkRenderMode
-    canvasStore.canvas.setDirty(/* fg */ false, /* bg */ true)
-  }
-})
-
-watchEffect(() => {
-  const linkMarkerShape = settingStore.get('Comfy.Graph.LinkMarkers')
-  const { canvas } = canvasStore
-  if (canvas) {
-    canvas.linkMarkerShape = linkMarkerShape
-    canvas.setDirty(false, true)
-  }
-})
-
-watchEffect(() => {
-  const reroutesEnabled = settingStore.get('Comfy.RerouteBeta')
-  const { canvas } = canvasStore
-  if (canvas) {
-    canvas.reroutesEnabled = reroutesEnabled
-    canvas.setDirty(false, true)
-  }
-})
-
-watchEffect(() => {
-  const maximumFps = settingStore.get('LiteGraph.Canvas.MaximumFps')
-  const { canvas } = canvasStore
-  if (canvas) canvas.maximumFps = maximumFps
-})
-
-watchEffect(() => {
-  CanvasPointer.doubleClickTime = settingStore.get(
-    'Comfy.Pointer.DoubleClickTime'
-  )
-})
-
-watchEffect(() => {
-  CanvasPointer.bufferTime = settingStore.get('Comfy.Pointer.ClickBufferTime')
-})
-
-watchEffect(() => {
-  CanvasPointer.maxClickDrift = settingStore.get('Comfy.Pointer.ClickDrift')
-})
-
-watchEffect(() => {
-  LiteGraph.CANVAS_GRID_SIZE = settingStore.get('Comfy.SnapToGrid.GridSize')
-})
-
-watchEffect(() => {
-  LiteGraph.alwaysSnapToGrid = settingStore.get('pysssss.SnapToGrid')
 })
 
 watch(
@@ -246,72 +153,6 @@ watch(
   }
 )
 
-watchEffect(() => {
-  LiteGraph.context_menu_scaling = settingStore.get(
-    'LiteGraph.ContextMenu.Scaling'
-  )
-})
-
-usePragmaticDroppable(() => canvasRef.value, {
-  getDropEffect: (args): Exclude<DataTransfer['dropEffect'], 'none'> =>
-    args.source.data.type === 'tree-explorer-node' ? 'copy' : 'move',
-  onDrop: (event) => {
-    const loc = event.location.current.input
-    const dndData = event.source.data
-
-    if (dndData.type === 'tree-explorer-node') {
-      const node = dndData.data as RenderedTreeExplorerNode
-      if (node.data instanceof ComfyNodeDefImpl) {
-        const nodeDef = node.data
-        // Add an offset on x to make sure after adding the node, the cursor
-        // is on the node (top left corner)
-        const pos = comfyApp.clientPosToCanvasPos([
-          loc.clientX - 20,
-          loc.clientY
-        ])
-        litegraphService.addNodeOnGraph(nodeDef, { pos })
-      } else if (node.data instanceof ComfyModelDef) {
-        const model = node.data
-        const pos = comfyApp.clientPosToCanvasPos([loc.clientX, loc.clientY])
-        const nodeAtPos = comfyApp.graph.getNodeOnPos(pos[0], pos[1])
-        let targetProvider: ModelNodeProvider | null = null
-        let targetGraphNode: LGraphNode | null = null
-        if (nodeAtPos) {
-          const providers = modelToNodeStore.getAllNodeProviders(
-            model.directory
-          )
-          for (const provider of providers) {
-            if (provider.nodeDef.name === nodeAtPos.comfyClass) {
-              targetGraphNode = nodeAtPos
-              targetProvider = provider
-            }
-          }
-        }
-        if (!targetGraphNode) {
-          const provider = modelToNodeStore.getNodeProvider(model.directory)
-          if (provider) {
-            targetGraphNode = litegraphService.addNodeOnGraph(
-              provider.nodeDef,
-              {
-                pos
-              }
-            )
-            targetProvider = provider
-          }
-        }
-        if (targetGraphNode) {
-          const widget = targetGraphNode.widgets.find(
-            (widget) => widget.name === targetProvider.key
-          )
-          if (widget) {
-            widget.value = model.file_name
-          }
-        }
-      }
-    }
-  }
-})
-
 const loadCustomNodesI18n = async () => {
   try {
     const i18nData = await api.getCustomNodesI18n()
@@ -325,19 +166,14 @@ const loadCustomNodesI18n = async () => {
 
 const comfyAppReady = ref(false)
 const workflowPersistence = useWorkflowPersistence()
+useCanvasDrop(canvasRef)
+useLitegraphSettings()
 
 onMounted(async () => {
-  // Backward compatible
-  // Assign all properties of lg to window
-  window['LiteGraph'] = LiteGraph
-  window['LGraph'] = LGraph
-  window['LLink'] = LLink
-  window['LGraphNode'] = LGraphNode
-  window['LGraphGroup'] = LGraphGroup
-  window['DragAndScale'] = DragAndScale
-  window['LGraphCanvas'] = LGraphCanvas
-  window['ContextMenu'] = ContextMenu
-  window['LGraphBadge'] = LGraphBadge
+  useGlobalLitegraph()
+  useContextMenuTranslation()
+  useCopy()
+  usePaste()
 
   comfyApp.vueAppReady = true
 
@@ -359,6 +195,11 @@ onMounted(async () => {
   window['graph'] = comfyApp.graph
 
   comfyAppReady.value = true
+
+  comfyApp.canvas.onSelectionChange = useChainCallback(
+    comfyApp.canvas.onSelectionChange,
+    () => canvasStore.updateSelectedItems()
+  )
 
   // Load color palette
   colorPaletteStore.customPalettes = settingStore.get(

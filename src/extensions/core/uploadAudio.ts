@@ -1,6 +1,9 @@
 // @ts-strict-ignore
 import type { IWidget } from '@comfyorg/litegraph'
+import type { IStringWidget } from '@comfyorg/litegraph/dist/types/widgets'
 
+import { useNodeDragAndDrop } from '@/composables/node/useNodeDragAndDrop'
+import { useNodeFileInput } from '@/composables/node/useNodeFileInput'
 import type { DOMWidget } from '@/scripts/domWidget'
 import { useToastStore } from '@/stores/toastStore'
 import { ComfyNodeDef } from '@/types/apiTypes'
@@ -37,7 +40,7 @@ function getResourceURL(
 }
 
 async function uploadFile(
-  audioWidget: IWidget,
+  audioWidget: IStringWidget,
   audioUIWidget: DOMWidget<HTMLAudioElement, string>,
   file: File,
   updateNode: boolean,
@@ -151,9 +154,9 @@ app.registerExtension({
     return {
       AUDIOUPLOAD(node, inputName: string) {
         // The widget that allows user to select file.
-        const audioWidget: IWidget = node.widgets.find(
+        const audioWidget = node.widgets.find(
           (w: IWidget) => w.name === 'audio'
-        )
+        ) as IStringWidget
         const audioUIWidget = node.widgets.find(
           (w: IWidget) => w.name === 'audioUI'
         ) as unknown as DOMWidget<HTMLAudioElement, string>
@@ -178,26 +181,34 @@ app.registerExtension({
           }
         }
 
-        const fileInput = document.createElement('input')
-        fileInput.type = 'file'
-        fileInput.accept = 'audio/*'
-        fileInput.style.display = 'none'
-        fileInput.onchange = () => {
-          if (fileInput.files.length) {
-            uploadFile(audioWidget, audioUIWidget, fileInput.files[0], true)
+        const handleUpload = async (files: File[]) => {
+          if (files?.length) {
+            uploadFile(audioWidget, audioUIWidget, files[0], true)
           }
+          return files
         }
+
+        const { openFileSelection } = useNodeFileInput(node, {
+          accept: 'audio/*',
+          onSelect: handleUpload
+        })
+
         // The widget to pop up the upload dialog.
         const uploadWidget = node.addWidget(
           'button',
           inputName,
-          /* value=*/ '',
-          () => {
-            fileInput.click()
-          },
+          '',
+          openFileSelection,
           { serialize: false }
         )
         uploadWidget.label = 'choose file to upload'
+
+        useNodeDragAndDrop(node, {
+          fileFilter: (file) => file.type.startsWith('audio/'),
+          onDrop: handleUpload
+        })
+
+        node.previewMediaType = 'audio'
 
         return { widget: uploadWidget }
       }

@@ -1,15 +1,18 @@
 // @ts-strict-ignore
 import { IWidget } from '@comfyorg/litegraph'
-import { nextTick } from 'vue'
+import { IStringWidget } from '@comfyorg/litegraph/dist/types/widgets'
+import PrimeVue from 'primevue/config'
+import { createApp, h, nextTick, render } from 'vue'
 
+import Load3D from '@/components/load3d/Load3D.vue'
+import Load3DAnimation from '@/components/load3d/Load3DAnimation.vue'
 import Load3DConfiguration from '@/extensions/core/load3d/Load3DConfiguration'
-import Load3d from '@/extensions/core/load3d/Load3d'
 import Load3dAnimation from '@/extensions/core/load3d/Load3dAnimation'
 import Load3dUtils from '@/extensions/core/load3d/Load3dUtils'
+import { api } from '@/scripts/api'
 import { app } from '@/scripts/app'
+import { useLoad3dService } from '@/services/load3dService'
 import { useToastStore } from '@/stores/toastStore'
-
-const containerToLoad3D = new Map()
 
 app.registerExtension({
   name: 'Comfy.Load3D',
@@ -17,57 +20,72 @@ app.registerExtension({
   getCustomWidgets(app) {
     return {
       LOAD_3D(node, inputName) {
-        let load3dNode = app.graph._nodes.filter((wi) => wi.type == 'Load3D')
-
         node.addProperty('Camera Info', '')
 
         const container = document.createElement('div')
-        container.id = `comfy-load-3d-${load3dNode.length}`
         container.classList.add('comfy-load-3d')
 
-        const load3d = new Load3d(container)
+        /* Hold off for now
+        const mountComponent = () => {
+          const vnode = h(Load3D, {
+            node: node,
+            type: 'Load3D'
+          })
 
-        containerToLoad3D.set(container.id, load3d)
-
-        node.onResize = function () {
-          if (load3d) {
-            load3d.handleResize()
-          }
+          render(vnode, container)
         }
+         */
+
+        let controlsApp = createApp(Load3D, {
+          node: node,
+          type: 'Load3D'
+        })
+
+        controlsApp.mount(container)
 
         const origOnRemoved = node.onRemoved
 
         node.onRemoved = function () {
-          if (load3d) {
-            load3d.remove()
+          /*
+          render(null, container)
+
+          container.remove()
+           */
+
+          if (controlsApp) {
+            controlsApp.unmount()
+            controlsApp = null
           }
 
-          containerToLoad3D.delete(container.id)
-
           origOnRemoved?.apply(this, [])
-        }
-
-        node.onDrawBackground = function () {
-          load3d.renderer.domElement.hidden = this.flags.collapsed ?? false
         }
 
         const fileInput = document.createElement('input')
         fileInput.type = 'file'
         fileInput.accept = '.gltf,.glb,.obj,.mtl,.fbx,.stl'
         fileInput.style.display = 'none'
+
         fileInput.onchange = async () => {
           if (fileInput.files?.length) {
             const modelWidget = node.widgets?.find(
               (w: IWidget) => w.name === 'model_file'
-            )
+            ) as IStringWidget
+
             const uploadPath = await Load3dUtils.uploadFile(
-              load3d,
-              fileInput.files[0],
-              fileInput
+              fileInput.files[0]
             ).catch((error) => {
               console.error('File upload failed:', error)
               useToastStore().addAlert('File upload failed')
             })
+
+            const modelUrl = api.apiURL(
+              Load3dUtils.getResourceURL(
+                ...Load3dUtils.splitFilePath(uploadPath),
+                'input'
+              )
+            )
+
+            await useLoad3dService().getLoad3d(node).loadModel(modelUrl)
 
             if (uploadPath && modelWidget) {
               if (!modelWidget.options?.values?.includes(uploadPath)) {
@@ -84,7 +102,8 @@ app.registerExtension({
         })
 
         node.addWidget('button', 'clear', 'clear', () => {
-          load3d.clearModel()
+          useLoad3dService().getLoad3d(node).clearModel()
+
           const modelWidget = node.widgets?.find(
             (w: IWidget) => w.name === 'model_file'
           )
@@ -92,6 +111,8 @@ app.registerExtension({
             modelWidget.value = ''
           }
         })
+
+        //mountComponent()
 
         return {
           widget: node.addDOMWidget(inputName, 'LOAD_3D', container)
@@ -111,58 +132,35 @@ app.registerExtension({
 
     const sceneWidget = node.widgets.find((w: IWidget) => w.name === 'image')
 
-    const container = sceneWidget.element
-
-    const load3d = containerToLoad3D.get(container.id)
-
-    load3d.setNode(node)
+    const load3d = useLoad3dService().getLoad3d(node)
 
     const modelWidget = node.widgets.find(
       (w: IWidget) => w.name === 'model_file'
     )
 
-    const material = node.widgets.find((w: IWidget) => w.name === 'material')
-
-    const lightIntensity = node.widgets.find(
-      (w: IWidget) => w.name === 'light_intensity'
-    )
-
-    const upDirection = node.widgets.find(
-      (w: IWidget) => w.name === 'up_direction'
-    )
-
-    const fov = node.widgets.find((w: IWidget) => w.name === 'fov')
-
     let cameraState = node.properties['Camera Info']
 
     const config = new Load3DConfiguration(load3d)
 
-    config.configure(
-      'input',
-      modelWidget,
-      material,
-      lightIntensity,
-      upDirection,
-      fov,
-      cameraState
-    )
+    const width = node.widgets.find((w: IWidget) => w.name === 'width')
+    const height = node.widgets.find((w: IWidget) => w.name === 'height')
 
-    const w = node.widgets.find((w: IWidget) => w.name === 'width')
-    const h = node.widgets.find((w: IWidget) => w.name === 'height')
+    config.configure('input', modelWidget, cameraState, width, height)
 
-    // @ts-expect-error hacky override
     sceneWidget.serializeValue = async () => {
       node.properties['Camera Info'] = load3d.getCameraState()
 
       const { scene: imageData, mask: maskData } = await load3d.captureScene(
-        w.value,
-        h.value
+        width.value as number,
+        height.value as number
       )
 
       const [data, dataMask] = await Promise.all([
         Load3dUtils.uploadTempImage(imageData, 'scene'),
         Load3dUtils.uploadTempImage(maskData, 'scene_mask')
       ])
+
+      load3d.handleResize()
 
       return {
         image: `threed/${data.name} [temp]`,
@@ -178,40 +176,47 @@ app.registerExtension({
   getCustomWidgets(app) {
     return {
       LOAD_3D_ANIMATION(node, inputName) {
-        let load3dNode = app.graph._nodes.filter(
-          (wi) => wi.type == 'Load3DAnimation'
-        )
-
         node.addProperty('Camera Info', '')
 
         const container = document.createElement('div')
-        container.id = `comfy-load-3d-animation-${load3dNode.length}`
+
         container.classList.add('comfy-load-3d-animation')
 
-        const load3d = new Load3dAnimation(container)
+        /*
+          const mountComponent = () => {
+          const vnode = h(Load3DAnimation, {
+            node: node,
+            type: 'Load3DAnimation'
+          })
 
-        containerToLoad3D.set(container.id, load3d)
-
-        node.onResize = function () {
-          if (load3d) {
-            load3d.handleResize()
-          }
+          render(vnode, container)
         }
+         */
+
+        let controlsApp = createApp(Load3DAnimation, {
+          node: node,
+          type: 'Load3DAnimation'
+        })
+
+        controlsApp.use(PrimeVue)
+
+        controlsApp.mount(container)
 
         const origOnRemoved = node.onRemoved
 
         node.onRemoved = function () {
-          if (load3d) {
-            load3d.remove()
+          /*
+          render(null, container)
+
+          container.remove()
+           */
+
+          if (controlsApp) {
+            controlsApp.unmount()
+            controlsApp = null
           }
 
-          containerToLoad3D.delete(container.id)
-
           origOnRemoved?.apply(this, [])
-        }
-
-        node.onDrawBackground = function () {
-          load3d.renderer.domElement.hidden = this.flags.collapsed ?? false
         }
 
         const fileInput = document.createElement('input')
@@ -222,15 +227,23 @@ app.registerExtension({
           if (fileInput.files?.length) {
             const modelWidget = node.widgets?.find(
               (w: IWidget) => w.name === 'model_file'
-            )
+            ) as IStringWidget
+
             const uploadPath = await Load3dUtils.uploadFile(
-              load3d,
-              fileInput.files[0],
-              fileInput
+              fileInput.files[0]
             ).catch((error) => {
               console.error('File upload failed:', error)
               useToastStore().addAlert('File upload failed')
             })
+
+            const modelUrl = api.apiURL(
+              Load3dUtils.getResourceURL(
+                ...Load3dUtils.splitFilePath(uploadPath),
+                'input'
+              )
+            )
+
+            await useLoad3dService().getLoad3d(node).loadModel(modelUrl)
 
             if (uploadPath && modelWidget) {
               if (!modelWidget.options?.values?.includes(uploadPath)) {
@@ -247,7 +260,7 @@ app.registerExtension({
         })
 
         node.addWidget('button', 'clear', 'clear', () => {
-          load3d.clearModel()
+          useLoad3dService().getLoad3d(node).clearModel()
           const modelWidget = node.widgets?.find(
             (w: IWidget) => w.name === 'model_file'
           )
@@ -255,6 +268,8 @@ app.registerExtension({
             modelWidget.value = ''
           }
         })
+
+        //mountComponent()
 
         return {
           widget: node.addDOMWidget(inputName, 'LOAD_3D_ANIMATION', container)
@@ -268,66 +283,43 @@ app.registerExtension({
 
     const [oldWidth, oldHeight] = node.size
 
-    node.setSize([Math.max(oldWidth, 300), Math.max(oldHeight, 700)])
+    node.setSize([Math.max(oldWidth, 400), Math.max(oldHeight, 700)])
 
     await nextTick()
 
     const sceneWidget = node.widgets.find((w: IWidget) => w.name === 'image')
 
-    const container = sceneWidget.element
-
-    const load3d = containerToLoad3D.get(container.id)
-
-    load3d.setNode(node)
+    const load3d = useLoad3dService().getLoad3d(node) as Load3dAnimation
 
     const modelWidget = node.widgets.find(
       (w: IWidget) => w.name === 'model_file'
     )
 
-    const material = node.widgets.find((w: IWidget) => w.name === 'material')
-
-    const lightIntensity = node.widgets.find(
-      (w: IWidget) => w.name === 'light_intensity'
-    )
-
-    const upDirection = node.widgets.find(
-      (w: IWidget) => w.name === 'up_direction'
-    )
-
-    const fov = node.widgets.find((w: IWidget) => w.name === 'fov')
-
     let cameraState = node.properties['Camera Info']
 
     const config = new Load3DConfiguration(load3d)
 
-    config.configure(
-      'input',
-      modelWidget,
-      material,
-      lightIntensity,
-      upDirection,
-      fov,
-      cameraState
-    )
+    const width = node.widgets.find((w: IWidget) => w.name === 'width')
+    const height = node.widgets.find((w: IWidget) => w.name === 'height')
 
-    const w = node.widgets.find((w: IWidget) => w.name === 'width')
-    const h = node.widgets.find((w: IWidget) => w.name === 'height')
+    config.configure('input', modelWidget, cameraState, width, height)
 
-    // @ts-expect-error hacky override
     sceneWidget.serializeValue = async () => {
       node.properties['Camera Info'] = load3d.getCameraState()
 
       load3d.toggleAnimation(false)
 
       const { scene: imageData, mask: maskData } = await load3d.captureScene(
-        w.value,
-        h.value
+        width.value as number,
+        height.value as number
       )
 
       const [data, dataMask] = await Promise.all([
         Load3dUtils.uploadTempImage(imageData, 'scene'),
         Load3dUtils.uploadTempImage(maskData, 'scene_mask')
       ])
+
+      load3d.handleResize()
 
       return {
         image: `threed/${data.name} [temp]`,
@@ -352,37 +344,46 @@ app.registerExtension({
   getCustomWidgets(app) {
     return {
       PREVIEW_3D(node, inputName) {
-        let load3dNode = app.graph._nodes.filter((wi) => wi.type == 'Preview3D')
-
         const container = document.createElement('div')
-        container.id = `comfy-preview-3d-${load3dNode.length}`
+
         container.classList.add('comfy-preview-3d')
 
-        const load3d = new Load3d(container)
+        /*
+        const mountComponent = () => {
+          const vnode = h(Load3D, {
+            node: node,
+            type: 'Preview3D'
+          })
 
-        containerToLoad3D.set(container.id, load3d)
-
-        node.onResize = function () {
-          if (load3d) {
-            load3d.handleResize()
-          }
+          render(vnode, container)
         }
+         */
+
+        let controlsApp = createApp(Load3D, {
+          node: node,
+          type: 'Preview3D'
+        })
+
+        controlsApp.mount(container)
 
         const origOnRemoved = node.onRemoved
 
         node.onRemoved = function () {
-          if (load3d) {
-            load3d.remove()
-          }
+          /*
+          render(null, container)
 
-          containerToLoad3D.delete(container.id)
+          container.remove()
+           */
+
+          if (controlsApp) {
+            controlsApp.unmount()
+            controlsApp = null
+          }
 
           origOnRemoved?.apply(this, [])
         }
 
-        node.onDrawBackground = function () {
-          load3d.renderer.domElement.hidden = this.flags.collapsed ?? false
-        }
+        //mountComponent()
 
         return {
           widget: node.addDOMWidget(inputName, 'PREVIEW_3D', container)
@@ -396,33 +397,15 @@ app.registerExtension({
 
     const [oldWidth, oldHeight] = node.size
 
-    node.setSize([Math.max(oldWidth, 300), Math.max(oldHeight, 550)])
+    node.setSize([Math.max(oldWidth, 400), Math.max(oldHeight, 550)])
 
     await nextTick()
 
-    const sceneWidget = node.widgets.find((w: IWidget) => w.name === 'image')
-
-    const container = sceneWidget.element
-
-    const load3d = containerToLoad3D.get(container.id)
-
-    load3d.setNode(node)
+    const load3d = useLoad3dService().getLoad3d(node)
 
     const modelWidget = node.widgets.find(
       (w: IWidget) => w.name === 'model_file'
     )
-
-    const material = node.widgets.find((w: IWidget) => w.name === 'material')
-
-    const lightIntensity = node.widgets.find(
-      (w: IWidget) => w.name === 'light_intensity'
-    )
-
-    const upDirection = node.widgets.find(
-      (w: IWidget) => w.name === 'up_direction'
-    )
-
-    const fov = node.widgets.find((w: IWidget) => w.name === 'fov')
 
     const onExecuted = node.onExecuted
 
@@ -443,14 +426,7 @@ app.registerExtension({
 
       const config = new Load3DConfiguration(load3d)
 
-      config.configure(
-        'output',
-        modelWidget,
-        material,
-        lightIntensity,
-        upDirection,
-        fov
-      )
+      config.configure('output', modelWidget)
     }
   }
 })
@@ -470,38 +446,34 @@ app.registerExtension({
   getCustomWidgets(app) {
     return {
       PREVIEW_3D_ANIMATION(node, inputName) {
-        let load3dNode = app.graph._nodes.filter(
-          (wi) => wi.type == 'Preview3DAnimation'
-        )
-
         const container = document.createElement('div')
-        container.id = `comfy-preview-3d-animation-${load3dNode.length}`
+
         container.classList.add('comfy-preview-3d-animation')
 
-        const load3d = new Load3dAnimation(container)
+        let controlsApp = createApp(Load3DAnimation, {
+          node: node,
+          type: 'Preview3DAnimation'
+        })
 
-        containerToLoad3D.set(container.id, load3d)
+        controlsApp.use(PrimeVue)
 
-        node.onResize = function () {
-          if (load3d) {
-            load3d.handleResize()
-          }
-        }
+        controlsApp.mount(container)
 
         const origOnRemoved = node.onRemoved
 
         node.onRemoved = function () {
-          if (load3d) {
-            load3d.remove()
+          /*
+          render(null, container)
+
+          container.remove()
+           */
+
+          if (controlsApp) {
+            controlsApp.unmount()
+            controlsApp = null
           }
 
-          containerToLoad3D.delete(container.id)
-
           origOnRemoved?.apply(this, [])
-        }
-
-        node.onDrawBackground = function () {
-          load3d.renderer.domElement.hidden = this.flags.collapsed ?? false
         }
 
         return {
@@ -524,29 +496,11 @@ app.registerExtension({
 
     await nextTick()
 
-    const sceneWidget = node.widgets.find((w: IWidget) => w.name === 'image')
-
-    const container = sceneWidget.element
-
-    const load3d = containerToLoad3D.get(container.id)
-
-    load3d.setNode(node)
+    const load3d = useLoad3dService().getLoad3d(node)
 
     const modelWidget = node.widgets.find(
       (w: IWidget) => w.name === 'model_file'
     )
-
-    const material = node.widgets.find((w: IWidget) => w.name === 'material')
-
-    const lightIntensity = node.widgets.find(
-      (w: IWidget) => w.name === 'light_intensity'
-    )
-
-    const upDirection = node.widgets.find(
-      (w: IWidget) => w.name === 'up_direction'
-    )
-
-    const fov = node.widgets.find((w: IWidget) => w.name === 'fov')
 
     const onExecuted = node.onExecuted
 
@@ -567,14 +521,7 @@ app.registerExtension({
 
       const config = new Load3DConfiguration(load3d)
 
-      config.configure(
-        'output',
-        modelWidget,
-        material,
-        lightIntensity,
-        upDirection,
-        fov
-      )
+      config.configure('output', modelWidget)
     }
   }
 })

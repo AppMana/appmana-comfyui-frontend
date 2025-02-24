@@ -62,6 +62,9 @@ export class NodeWidgetReference {
     readonly node: NodeReference
   ) {}
 
+  /**
+   * @returns The position of the widget's center
+   */
   async getPosition(): Promise<Position> {
     const pos: [number, number] = await this.node.comfyPage.page.evaluate(
       ([id, index]) => {
@@ -82,6 +85,28 @@ export class NodeWidgetReference {
       x: pos[0],
       y: pos[1]
     }
+  }
+
+  async click() {
+    await this.node.comfyPage.canvas.click({
+      position: await this.getPosition()
+    })
+  }
+
+  async dragHorizontal(delta: number) {
+    const pos = await this.getPosition()
+    const canvas = this.node.comfyPage.canvas
+    const canvasPos = (await canvas.boundingBox())!
+    this.node.comfyPage.dragAndDrop(
+      {
+        x: canvasPos.x + pos.x,
+        y: canvasPos.y + pos.y
+      },
+      {
+        x: canvasPos.x + pos.x + delta,
+        y: canvasPos.y + pos.y
+      }
+    )
   }
 }
 

@@ -364,6 +364,18 @@ export const CORE_SETTINGS: SettingParams[] = [
     defaultValue: 0
   },
   {
+    id: 'LiteGraph.Node.TooltipDelay',
+    name: 'Tooltip Delay',
+    type: 'number',
+    attrs: {
+      min: 100,
+      max: 3000,
+      step: 50
+    },
+    defaultValue: 500,
+    versionAdded: '1.9.0'
+  },
+  {
     id: 'Comfy.EnableTooltips',
     category: ['LiteGraph', 'Node', 'EnableTooltips'],
     name: 'Enable Tooltips',
@@ -654,7 +666,7 @@ export const CORE_SETTINGS: SettingParams[] = [
   },
   {
     id: 'LiteGraph.Canvas.MaximumFps',
-    name: 'Maxium FPS',
+    name: 'Maximum FPS',
     tooltip:
       'The maximum frames per second that the canvas is allowed to render. Caps GPU usage at the cost of smoothness. If 0, the screen refresh rate is used. Default: 0',
     type: 'slider',
@@ -722,5 +734,26 @@ export const CORE_SETTINGS: SettingParams[] = [
     defaultValue: false,
     type: 'boolean',
     versionAdded: '1.8.8'
+  },
+  {
+    id: 'LiteGraph.Canvas.LowQualityRenderingZoomThreshold',
+    name: 'Low quality rendering zoom threshold',
+    tooltip: 'Render low quality shapes when zoomed out',
+    type: 'slider',
+    attrs: {
+      min: 0.1,
+      max: 1,
+      step: 0.01
+    },
+    defaultValue: 0.6,
+    versionAdded: '1.9.1'
+  },
+  {
+    id: 'Comfy.Canvas.SelectionToolbox',
+    category: ['LiteGraph', 'Canvas', 'SelectionToolbox'],
+    name: 'Show selection toolbox',
+    type: 'boolean',
+    defaultValue: true,
+    versionAdded: '1.10.5'
   }
 ]

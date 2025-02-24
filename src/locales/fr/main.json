@@ -1,12 +1,56 @@
 {
+  "clipboard": {
+    "errorMessage": "Échec de la copie dans le presse-papiers",
+    "errorNotSupported": "L'API du presse-papiers n'est pas prise en charge par votre navigateur",
+    "successMessage": "Copié dans le presse-papiers"
+  },
   "color": {
+    "black": "Noir",
     "blue": "Bleu",
+    "brown": "Marron",
     "custom": "Personnalisé",
+    "cyan": "Cyan",
     "default": "Par défaut",
     "green": "Vert",
+    "noColor": "Pas de couleur",
+    "pale_blue": "Bleu pâle",
     "pink": "Rose",
+    "purple": "Violet",
     "red": "Rouge",
     "yellow": "Jaune"
+  },
+  "contextMenu": {
+    " to input": " en entrée",
+    " to widget": " en widget",
+    "Add Group": "Ajouter un Groupe",
+    "Add Group For Selected Nodes": "Ajouter un Groupe pour les Nœuds Sélectionnés",
+    "Add Node": "Ajouter un Nœud",
+    "Bypass": "Contourner",
+    "Clone": "Cloner",
+    "Collapse": "Réduire",
+    "Colors": "Couleurs",
+    "Convert ": "Convertir ",
+    "Convert Input to Widget": "Convertir l'Entrée en Widget",
+    "Convert Widget to Input": "Convertir le Widget en Entrée",
+    "Convert to Group Node": "Convertir en Nœud de Groupe",
+    "Copy (Clipspace)": "Copier (Clipspace)",
+    "Expand": "Développer",
+    "Inputs": "Entrées",
+    "Manage": "Gérer",
+    "Manage Group Nodes": "Gérer les Nœuds de Groupe",
+    "Mode": "Mode",
+    "Node Templates": "Modèles de Nœuds",
+    "Outputs": "Sorties",
+    "Pin": "Épingler",
+    "Properties": "Propriétés",
+    "Properties Panel": "Panneau des Propriétés",
+    "Remove": "Supprimer",
+    "Resize": "Redimensionner",
+    "Save Selected as Template": "Enregistrer la Sélection comme Modèle",
+    "Search": "Recherche",
+    "Shapes": "Formes",
+    "Title": "Titre",
+    "Unpin": "Désépingler"
   },
   "dataTypes": {
     "AUDIO": "AUDIO",
@@ -48,6 +92,11 @@
     "quit": "Quitter",
     "reinstall": "Réinstaller"
   },
+  "desktopUpdate": {
+    "description": "ComfyUI Desktop installe de nouvelles dépendances. Cela peut prendre quelques minutes.",
+    "terminalDefaultMessage": "Toute sortie de console de la mise à jour sera affichée ici.",
+    "title": "Mise à jour de ComfyUI Desktop"
+  },
   "downloadGit": {
     "gitWebsite": "Télécharger git",
     "instructions": "Veuillez télécharger et installer la dernière version pour votre système d'exploitation. Le bouton Télécharger git ci-dessous ouvre la page de téléchargement de git-scm.com.",
@@ -74,6 +123,9 @@
     "comingSoon": "Bientôt disponible",
     "command": "Commande",
     "confirm": "Confirmer",
+    "continue": "Continuer",
+    "control_after_generate": "contrôle après génération",
+    "control_before_generate": "contrôle avant génération",
     "copyToClipboard": "Copier dans le presse-papiers",
     "currentUser": "Utilisateur actuel",
     "customize": "Personnaliser",
@@ -220,6 +272,7 @@
       "allowMetricsDescription": "Aidez à améliorer ComfyUI en envoyant des métriques d'utilisation anonymes. Aucune information personnelle ou contenu de flux de travail ne sera collecté.",
       "autoUpdate": "Mises à jour automatiques",
       "autoUpdateDescription": "Téléchargez et installez automatiquement les mises à jour lorsqu'elles deviennent disponibles. Vous serez toujours informé avant l'installation des mises à jour.",
+      "checkingMirrors": "Vérification de l'accès réseau aux miroirs python...",
       "dataCollectionDialog": {
         "collect": {
           "errorReports": "Message d'erreur et trace de la pile",
@@ -239,7 +292,12 @@
       },
       "errorUpdatingConsent": "Erreur de mise à jour du consentement",
       "errorUpdatingConsentDetail": "Échec de la mise à jour des paramètres de consentement aux métriques",
-      "learnMoreAboutData": "En savoir plus sur la collecte de données"
+      "learnMoreAboutData": "En savoir plus sur la collecte de données",
+      "mirrorSettings": "Paramètres du Miroir",
+      "mirrorsReachable": "L'accès réseau aux miroirs python est bon",
+      "mirrorsUnreachable": "L'accès au réseau à certains miroirs python est mauvais",
+      "pypiMirrorPlaceholder": "Entrez l'URL du miroir PyPI",
+      "pythonMirrorPlaceholder": "Entrez l'URL du miroir Python"
     },
     "systemLocations": "Emplacements système",
     "unhandledError": "Erreur inconnue",
@@ -261,21 +319,42 @@
       "maxLength": "Message trop long"
     }
   },
+  "load3d": {
+    "backgroundColor": "Couleur de fond",
+    "camera": "Caméra",
+    "fov": "FOV",
+    "light": "Lumière",
+    "lightIntensity": "Intensité de la lumière",
+    "loadingModel": "Chargement du modèle 3D...",
+    "materialMode": "Mode Matériel",
+    "model": "Modèle",
+    "previewOutput": "Aperçu de la sortie",
+    "removeBackgroundImage": "Supprimer l'image de fond",
+    "scene": "Scène",
+    "showGrid": "Afficher la grille",
+    "switchCamera": "Changer de caméra",
+    "upDirection": "Direction Haut",
+    "uploadBackgroundImage": "Télécharger l'image de fond"
+  },
   "maintenance": {
     "None": "Aucun",
     "OK": "OK",
     "Skipped": "Ignoré",
     "allOk": "Aucun problème détecté.",
     "confirmTitle": "Êtes-vous sûr ?",
+    "consoleLogs": "Journaux de la console",
     "detected": "Détecté",
     "error": {
+      "cannotContinue": "Impossible de continuer - des erreurs subsistent",
       "defaultDescription": "Une erreur s'est produite lors de l'exécution d'une tâche de maintenance.",
       "taskFailed": "La tâche a échoué.",
       "toastTitle": "Erreur de tâche"
     },
     "refreshing": "Actualisation",
     "showManual": "Afficher les tâches de maintenance",
-    "status": "Statut"
+    "status": "Statut",
+    "terminalDefaultMessage": "Lorsque vous exécutez une commande de dépannage, toute sortie sera affichée ici.",
+    "title": "Maintenance"
   },
   "menu": {
     "autoQueue": "File d'attente automatique",
@@ -316,6 +395,7 @@
     "ComfyUI Forum": "Forum ComfyUI",
     "ComfyUI Issues": "Problèmes de ComfyUI",
     "Convert selected nodes to group node": "Convertir les nœuds sélectionnés en nœud de groupe",
+    "Delete Selected Items": "Supprimer les éléments sélectionnés",
     "Desktop User Guide": "Guide de l'utilisateur de bureau",
     "Duplicate Current Workflow": "Dupliquer le flux de travail actuel",
     "Edit": "Éditer",
@@ -591,9 +671,9 @@
       "ready": "Finalisation...",
       "starting-server": "Démarrage du serveur ComfyUI..."
     },
-    "reinstall": "Réinstaller",
     "reportIssue": "Signaler un problème",
-    "showTerminal": "Afficher le terminal"
+    "showTerminal": "Afficher le terminal",
+    "troubleshoot": "Dépannage"
   },
   "settingsCategories": {
     "About": "À Propos",
@@ -634,6 +714,7 @@
     "Settings": "Paramètres",
     "Sidebar": "Barre Latérale",
     "Tree Explorer": "Explorateur d'Arbre",
+    "UV": "UV",
     "Validation": "Validation",
     "Window": "Fenêtre",
     "Workflow": "Flux de Travail"
@@ -672,6 +753,7 @@
       "deleteFailedTitle": "Échec de la suppression",
       "deleted": "Flux de travail supprimé",
       "dirtyClose": "Les fichiers ci-dessous ont été modifiés. Souhaitez-vous les enregistrer avant de fermer ?",
+      "dirtyCloseHint": "Maintenez Shift pour fermer sans invite",
       "dirtyCloseTitle": "Enregistrer les modifications ?",
       "workflowTreeType": {
         "bookmarks": "Favoris",
@@ -692,10 +774,71 @@
   },
   "templateWorkflows": {
     "template": {
-      "default": "Génération d'images",
-      "flux_schnell": "Flux Schnell",
-      "image2image": "Image à Image",
-      "upscale": "Upscale en 2 passes"
+      "3D": {
+        "stable_zero123_example": "Stable Zero123"
+      },
+      "Area Composition": {
+        "area_composition": "Composition de Zone",
+        "area_composition_reversed": "Composition de Zone Inversée",
+        "area_composition_square_area_for_subject": "Composition de Zone Carrée pour le Sujet"
+      },
+      "Audio": {
+        "stable_audio_example": "Stable Audio"
+      },
+      "Basics": {
+        "default": "Génération d'Image",
+        "embedding_example": "Intégration",
+        "gligen_textbox_example": "Boîte de Texte Gligen",
+        "image2image": "Image à Image",
+        "inpain_model_outpainting": "Modèle Inpaint Outpainting",
+        "inpaint_example": "Inpaint",
+        "lora": "Lora",
+        "lora_multiple": "Lora Multiple"
+      },
+      "ControlNet": {
+        "2_pass_pose_worship": "2 Passes Pose Worship",
+        "controlnet_example": "ControlNet",
+        "depth_controlnet": "Profondeur ControlNet",
+        "depth_t2i_adapter": "Adaptateur Profondeur T2I",
+        "mixing_controlnets": "Mélange de ControlNets"
+      },
+      "Flux": {
+        "flux_canny_model_example": "Flux Canny Model",
+        "flux_depth_lora_example": "Flux Depth Lora",
+        "flux_dev_checkpoint_example": "Flux Dev",
+        "flux_fill_inpaint_example": "Flux Inpaint",
+        "flux_fill_outpaint_example": "Flux Outpaint",
+        "flux_redux_model_example": "Flux Redux Model",
+        "flux_schnell": "Flux Schnell"
+      },
+      "SD3_5": {
+        "sd3_5_large_blur": "SD3.5 Grand Flou",
+        "sd3_5_large_canny_controlnet_example": "SD3.5 Grand Canny ControlNet",
+        "sd3_5_large_depth": "SD3.5 Grande Profondeur",
+        "sd3_5_simple_example": "SD3.5 Simple"
+      },
+      "SDXL": {
+        "sdxl_refiner_prompt_example": "SDXL Refiner Prompt",
+        "sdxl_revision_text_prompts": "Révisions de Texte SDXL",
+        "sdxl_revision_zero_positive": "Révision Zéro Positive SDXL",
+        "sdxl_simple_example": "SDXL Simple",
+        "sdxlturbo_example": "SDXL Turbo"
+      },
+      "Upscaling": {
+        "esrgan_example": "ESRGAN",
+        "hiresfix_esrgan_workflow": "Flux de Travail ESRGAN HiresFix",
+        "hiresfix_latent_workflow": "Flux de Travail Latent HiresFix",
+        "latent_upscale_different_prompt_model": "Modèle d'Agrandissement Latent Différent Prompt",
+        "upscale": "Agrandissement"
+      },
+      "Video": {
+        "hunyuan_video_text_to_video": "Texte à Vidéo Hunyuan",
+        "image_to_video": "Image à Vidéo",
+        "ltxv_image_to_video": "LTXV Image à Vidéo",
+        "ltxv_text_to_video": "LTXV Texte à Vidéo",
+        "mochi_text_to_video_example": "Exemple de Texte à Vidéo Mochi",
+        "txt_to_image_to_video": "Texte à Image à Vidéo"
+      }
     },
     "title": "Commencez avec un modèle"
   },

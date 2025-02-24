@@ -2,6 +2,7 @@ import type { IWidget } from '@comfyorg/litegraph'
 
 import Load3d from '@/extensions/core/load3d/Load3d'
 import Load3dUtils from '@/extensions/core/load3d/Load3dUtils'
+import { MaterialMode } from '@/extensions/core/load3d/interfaces'
 import { api } from '@/scripts/api'
 
 class Load3DConfiguration {
@@ -10,75 +11,42 @@ class Load3DConfiguration {
   configure(
     loadFolder: 'input' | 'output',
     modelWidget: IWidget,
-    material: IWidget,
-    lightIntensity: IWidget,
-    upDirection: IWidget,
-    fov: IWidget,
     cameraState?: any,
-    postModelUpdateFunc?: (load3d: Load3d) => void
+    width: IWidget | null = null,
+    height: IWidget | null = null
   ) {
-    this.setupModelHandling(
-      modelWidget,
-      loadFolder,
-      cameraState,
-      postModelUpdateFunc
-    )
-    this.setupMaterial(material)
-    this.setupLighting(lightIntensity)
-    this.setupDirection(upDirection)
-    this.setupCamera(fov)
+    this.setupModelHandling(modelWidget, loadFolder, cameraState)
+    this.setupTargetSize(width, height)
     this.setupDefaultProperties()
+  }
+
+  private setupTargetSize(width: IWidget | null, height: IWidget | null) {
+    if (width && height) {
+      this.load3d.setTargetSize(width.value as number, height.value as number)
+
+      width.callback = (value: number) => {
+        this.load3d.setTargetSize(value, height.value as number)
+      }
+
+      height.callback = (value: number) => {
+        this.load3d.setTargetSize(width.value as number, value)
+      }
+    }
   }
 
   private setupModelHandling(
     modelWidget: IWidget,
     loadFolder: 'input' | 'output',
-    cameraState?: any,
-    postModelUpdateFunc?: (load3d: Load3d) => void
+    cameraState?: any
   ) {
     const onModelWidgetUpdate = this.createModelUpdateHandler(
       loadFolder,
-      cameraState,
-      postModelUpdateFunc
+      cameraState
     )
     if (modelWidget.value) {
       onModelWidgetUpdate(modelWidget.value)
     }
     modelWidget.callback = onModelWidgetUpdate
-  }
-
-  private setupMaterial(material: IWidget) {
-    material.callback = (value: 'original' | 'normal' | 'wireframe') => {
-      this.load3d.setMaterialMode(value)
-    }
-    this.load3d.setMaterialMode(
-      material.value as 'original' | 'normal' | 'wireframe'
-    )
-  }
-
-  private setupLighting(lightIntensity: IWidget) {
-    lightIntensity.callback = (value: number) => {
-      this.load3d.setLightIntensity(value)
-    }
-    this.load3d.setLightIntensity(lightIntensity.value as number)
-  }
-
-  private setupDirection(upDirection: IWidget) {
-    upDirection.callback = (
-      value: 'original' | '-x' | '+x' | '-y' | '+y' | '-z' | '+z'
-    ) => {
-      this.load3d.setUpDirection(value)
-    }
-    this.load3d.setUpDirection(
-      upDirection.value as 'original' | '-x' | '+x' | '-y' | '+y' | '-z' | '+z'
-    )
-  }
-
-  private setupCamera(fov: IWidget) {
-    fov.callback = (value: number) => {
-      this.load3d.setFOV(value)
-    }
-    this.load3d.setFOV(fov.value as number)
   }
 
   private setupDefaultProperties() {
@@ -89,17 +57,33 @@ class Load3DConfiguration {
     this.load3d.toggleCamera(cameraType)
 
     const showGrid = this.load3d.loadNodeProperty('Show Grid', true)
+
     this.load3d.toggleGrid(showGrid)
+
+    const showPreview = this.load3d.loadNodeProperty('Show Preview', true)
+
+    this.load3d.togglePreview(showPreview)
 
     const bgColor = this.load3d.loadNodeProperty('Background Color', '#282828')
 
     this.load3d.setBackgroundColor(bgColor)
+
+    const lightIntensity = this.load3d.loadNodeProperty('Light Intensity', 5)
+
+    this.load3d.setLightIntensity(lightIntensity)
+
+    const fov = this.load3d.loadNodeProperty('FOV', 35)
+
+    this.load3d.setFOV(fov)
+
+    const backgroundImage = this.load3d.loadNodeProperty('Background Image', '')
+
+    this.load3d.setBackgroundImage(backgroundImage)
   }
 
   private createModelUpdateHandler(
     loadFolder: 'input' | 'output',
-    cameraState?: any,
-    postModelUpdateFunc?: (load3d: Load3d) => void
+    cameraState?: any
   ) {
     let isFirstLoad = true
     return async (value: string | number | boolean | object) => {
@@ -115,9 +99,19 @@ class Load3DConfiguration {
 
       await this.load3d.loadModel(modelUrl, filename)
 
-      if (postModelUpdateFunc) {
-        postModelUpdateFunc(this.load3d)
-      }
+      const upDirection = this.load3d.loadNodeProperty(
+        'Up Direction',
+        'original'
+      )
+
+      this.load3d.setUpDirection(upDirection)
+
+      const materialMode = this.load3d.loadNodeProperty(
+        'Material Mode',
+        'original'
+      )
+
+      this.load3d.setMaterialMode(materialMode)
 
       if (isFirstLoad && cameraState && typeof cameraState === 'object') {
         try {

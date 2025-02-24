@@ -31,7 +31,10 @@
       :title="$t('issueReport.submitErrorReport')"
       error-type="graphExecutionError"
       :extra-fields="[stackTraceField]"
-      :tags="{ exceptionMessage: props.error.exception_message }"
+      :tags="{
+        exceptionMessage: props.error.exception_message,
+        nodeType: props.error.node_type
+      }"
     />
     <div class="action-container">
       <FindIssueButton
@@ -59,7 +62,7 @@ import { useI18n } from 'vue-i18n'
 
 import NoResultsPlaceholder from '@/components/common/NoResultsPlaceholder.vue'
 import FindIssueButton from '@/components/dialog/content/error/FindIssueButton.vue'
-import { useCopyToClipboard } from '@/hooks/clipboardHooks'
+import { useCopyToClipboard } from '@/composables/useCopyToClipboard'
 import { api } from '@/scripts/api'
 import { app } from '@/scripts/app'
 import type { ExecutionErrorWsMessage, SystemStats } from '@/types/apiTypes'
@@ -90,10 +93,7 @@ const stackTraceField = computed<ReportField>(() => {
     label: t('issueReport.stackTrace'),
     value: 'StackTrace',
     optIn: true,
-    getData: () => ({
-      nodeType: props.error.node_type,
-      stackTrace: props.error.traceback?.join('\n')
-    })
+    getData: () => props.error.traceback?.join('\n')
   }
 })
 

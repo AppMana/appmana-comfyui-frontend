@@ -1,12 +1,56 @@
 {
+  "clipboard": {
+    "errorMessage": "Не удалось скопировать в буфер обмена",
+    "errorNotSupported": "API буфера обмена не поддерживается в вашем браузере",
+    "successMessage": "Скопировано в буфер обмена"
+  },
   "color": {
+    "black": "Черный",
     "blue": "Синий",
+    "brown": "Коричневый",
     "custom": "Пользовательский",
+    "cyan": "Голубой",
     "default": "По умолчанию",
     "green": "Зелёный",
+    "noColor": "Без цвета",
+    "pale_blue": "Бледно-синий",
     "pink": "Розовый",
+    "purple": "Фиолетовый",
     "red": "Красный",
     "yellow": "Жёлтый"
+  },
+  "contextMenu": {
+    " to input": " во вход",
+    " to widget": " в виджет",
+    "Add Group": "Добавить группу",
+    "Add Group For Selected Nodes": "Добавить группу для выбранных узлов",
+    "Add Node": "Добавить узел",
+    "Bypass": "Обход",
+    "Clone": "Клонировать",
+    "Collapse": "Свернуть",
+    "Colors": "Цвета",
+    "Convert ": "Преобразовать ",
+    "Convert Input to Widget": "Преобразовать вход в виджет",
+    "Convert Widget to Input": "Преобразовать виджет во вход",
+    "Convert to Group Node": "Преобразовать в групповой узел",
+    "Copy (Clipspace)": "Копировать (Clipspace)",
+    "Expand": "Развернуть",
+    "Inputs": "Входы",
+    "Manage": "Управлять",
+    "Manage Group Nodes": "Управление групповыми узлами",
+    "Mode": "Режим",
+    "Node Templates": "Шаблоны узлов",
+    "Outputs": "Выходы",
+    "Pin": "Закрепить",
+    "Properties": "Свойства",
+    "Properties Panel": "Панель свойств",
+    "Remove": "Удалить",
+    "Resize": "Изменить размер",
+    "Save Selected as Template": "Сохранить выбранное как шаблон",
+    "Search": "Поиск",
+    "Shapes": "Формы",
+    "Title": "Заголовок",
+    "Unpin": "Открепить"
   },
   "dataTypes": {
     "AUDIO": "АУДИО",
@@ -48,6 +92,11 @@
     "quit": "Выйти",
     "reinstall": "Переустановить"
   },
+  "desktopUpdate": {
+    "description": "ComfyUI Desktop устанавливает новые зависимости. Это может занять несколько минут.",
+    "terminalDefaultMessage": "Любой вывод консоли из обновления будет отображаться здесь.",
+    "title": "Обновление ComfyUI Desktop"
+  },
   "downloadGit": {
     "gitWebsite": "Скачать git",
     "instructions": "Пожалуйста, скачайте и установите последнюю версию для вашей операционной системы. Кнопка «Скачать git» ниже открывает страницу загрузок git-scm.com.",
@@ -74,6 +123,9 @@
     "comingSoon": "Скоро будет",
     "command": "Команда",
     "confirm": "Подтвердить",
+    "continue": "Продолжить",
+    "control_after_generate": "управление после генерации",
+    "control_before_generate": "управление до генерации",
     "copyToClipboard": "Скопировать в буфер обмена",
     "currentUser": "Текущий пользователь",
     "customize": "Настроить",
@@ -220,6 +272,7 @@
       "allowMetricsDescription": "Помогите улучшить ComfyUI, отправляя анонимные метрики использования. Личная информация или содержание рабочего процесса не будут собираться.",
       "autoUpdate": "Автоматические обновления",
       "autoUpdateDescription": "Автоматически загружать и устанавливать обновления, когда они становятся доступными. Вы всегда будете уведомлены перед установкой обновлений.",
+      "checkingMirrors": "Проверка доступа к зеркалам python по сети...",
       "dataCollectionDialog": {
         "collect": {
           "errorReports": "Сообщение об ошибке и трассировка стека",
@@ -239,7 +292,12 @@
       },
       "errorUpdatingConsent": "Ошибка обновления согласия",
       "errorUpdatingConsentDetail": "Не удалось обновить настройки согласия на метрики",
-      "learnMoreAboutData": "Узнать больше о сборе данных"
+      "learnMoreAboutData": "Узнать больше о сборе данных",
+      "mirrorSettings": "Настройки зеркала",
+      "mirrorsReachable": "Сетевой доступ к зеркалам python хороший",
+      "mirrorsUnreachable": "Сетевой доступ к некоторым зеркалам python плохой",
+      "pypiMirrorPlaceholder": "Введите URL-зеркало PyPI",
+      "pythonMirrorPlaceholder": "Введите URL-зеркало Python"
     },
     "systemLocations": "Системные места",
     "unhandledError": "Неизвестная ошибка",
@@ -261,21 +319,42 @@
       "maxLength": "Сообщение слишком длинное"
     }
   },
+  "load3d": {
+    "backgroundColor": "Цвет фона",
+    "camera": "Камера",
+    "fov": "Угол обзора",
+    "light": "Свет",
+    "lightIntensity": "Интенсивность света",
+    "loadingModel": "Загрузка 3D модели...",
+    "materialMode": "Режим Материала",
+    "model": "Модель",
+    "previewOutput": "Предварительный просмотр",
+    "removeBackgroundImage": "Удалить фоновое изображение",
+    "scene": "Сцена",
+    "showGrid": "Показать сетку",
+    "switchCamera": "Переключить камеру",
+    "upDirection": "Направление Вверх",
+    "uploadBackgroundImage": "Загрузить фоновое изображение"
+  },
   "maintenance": {
     "None": "Нет",
     "OK": "OK",
     "Skipped": "Пропущено",
     "allOk": "Проблем не обнаружено.",
     "confirmTitle": "Вы уверены?",
+    "consoleLogs": "Консольные журналы",
     "detected": "Обнаружено",
     "error": {
+      "cannotContinue": "Невозможно продолжить - остались ошибки",
       "defaultDescription": "Произошла ошибка при выполнении задачи по обслуживанию.",
       "taskFailed": "Не удалось выполнить задачу.",
       "toastTitle": "Ошибка задачи"
     },
     "refreshing": "Обновление",
     "showManual": "Показать задачи по обслуживанию",
-    "status": "Статус"
+    "status": "Статус",
+    "terminalDefaultMessage": "Когда вы запускаете команду для устранения неполадок, любой вывод будет отображаться здесь.",
+    "title": "Обслуживание"
   },
   "menu": {
     "autoQueue": "Автоочередь",
@@ -316,6 +395,7 @@
     "ComfyUI Forum": "Форум ComfyUI",
     "ComfyUI Issues": "Проблемы ComfyUI",
     "Convert selected nodes to group node": "Преобразовать выбранные ноды в групповую ноду",
+    "Delete Selected Items": "Удалить выбранные элементы",
     "Desktop User Guide": "Руководство пользователя для настольных ПК",
     "Duplicate Current Workflow": "Дублировать текущий рабочий процесс",
     "Edit": "Редактировать",
@@ -591,9 +671,9 @@
       "ready": "Завершение…",
       "starting-server": "Запуск сервера ComfyUI…"
     },
-    "reinstall": "Переустановить",
     "reportIssue": "Сообщить о проблеме",
-    "showTerminal": "Показать терминал"
+    "showTerminal": "Показать терминал",
+    "troubleshoot": "Устранение неполадок"
   },
   "settingsCategories": {
     "About": "О программе",
@@ -634,6 +714,7 @@
     "Settings": "Настройки",
     "Sidebar": "Боковая панель",
     "Tree Explorer": "Дерево проводника",
+    "UV": "UV",
     "Validation": "Валидация",
     "Window": "Окно",
     "Workflow": "Рабочий процесс"
@@ -672,6 +753,7 @@
       "deleteFailedTitle": "Не удалось удалить",
       "deleted": "Рабочий процесс удалён",
       "dirtyClose": "Файлы ниже были изменены. Вы хотите сохранить их перед закрытием?",
+      "dirtyCloseHint": "Удерживайте Shift, чтобы закрыть без подсказки",
       "dirtyCloseTitle": "Сохранить изменения?",
       "workflowTreeType": {
         "bookmarks": "Закладки",
@@ -692,10 +774,71 @@
   },
   "templateWorkflows": {
     "template": {
-      "default": "Генерация изображений",
-      "flux_schnell": "Flux Schnell",
-      "image2image": "Изображение в изображение",
-      "upscale": "2-этапный апскейл"
+      "3D": {
+        "stable_zero123_example": "Stable Zero123"
+      },
+      "Area Composition": {
+        "area_composition": "Композиция области",
+        "area_composition_reversed": "Обратная композиция области",
+        "area_composition_square_area_for_subject": "Композиция области квадратной области для субъекта"
+      },
+      "Audio": {
+        "stable_audio_example": "Stable Audio"
+      },
+      "Basics": {
+        "default": "Генерация изображений",
+        "embedding_example": "Встраивание",
+        "gligen_textbox_example": "Gligen Textbox",
+        "image2image": "Изображение в изображение",
+        "inpain_model_outpainting": "Inpaint Model Outpainting",
+        "inpaint_example": "Inpaint",
+        "lora": "Lora",
+        "lora_multiple": "Lora Multiple"
+      },
+      "ControlNet": {
+        "2_pass_pose_worship": "2 Pass Pose Worship",
+        "controlnet_example": "ControlNet",
+        "depth_controlnet": "Depth ControlNet",
+        "depth_t2i_adapter": "Depth T2I Adapter",
+        "mixing_controlnets": "Mixing ControlNets"
+      },
+      "Flux": {
+        "flux_canny_model_example": "Flux Canny Model",
+        "flux_depth_lora_example": "Flux Depth Lora",
+        "flux_dev_checkpoint_example": "Flux Dev",
+        "flux_fill_inpaint_example": "Flux Inpaint",
+        "flux_fill_outpaint_example": "Flux Outpaint",
+        "flux_redux_model_example": "Flux Redux Model",
+        "flux_schnell": "Flux Schnell"
+      },
+      "SD3_5": {
+        "sd3_5_large_blur": "SD3.5 Большое размытие",
+        "sd3_5_large_canny_controlnet_example": "SD3.5 Большой Canny ControlNet",
+        "sd3_5_large_depth": "SD3.5 Большая глубина",
+        "sd3_5_simple_example": "SD3.5 Простой"
+      },
+      "SDXL": {
+        "sdxl_refiner_prompt_example": "SDXL Refiner Prompt",
+        "sdxl_revision_text_prompts": "SDXL Revision Text Prompts",
+        "sdxl_revision_zero_positive": "SDXL Revision Zero Positive",
+        "sdxl_simple_example": "SDXL Simple",
+        "sdxlturbo_example": "SDXL Turbo"
+      },
+      "Upscaling": {
+        "esrgan_example": "ESRGAN",
+        "hiresfix_esrgan_workflow": "HiresFix ESRGAN Workflow",
+        "hiresfix_latent_workflow": "HiresFix Latent Workflow",
+        "latent_upscale_different_prompt_model": "Latent Upscale Different Prompt Model",
+        "upscale": "Увеличение"
+      },
+      "Video": {
+        "hunyuan_video_text_to_video": "Hunyuan Video Text to Video",
+        "image_to_video": "Изображение в видео",
+        "ltxv_image_to_video": "LTXV Image to Video",
+        "ltxv_text_to_video": "LTXV Text to Video",
+        "mochi_text_to_video_example": "Mochi Text to Video",
+        "txt_to_image_to_video": "Текст в изображение в видео"
+      }
     },
     "title": "Начните с шаблона"
   },

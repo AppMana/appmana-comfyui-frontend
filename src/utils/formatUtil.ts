@@ -1,3 +1,5 @@
+import { ResultItem } from '@/types/apiTypes'
+
 export function formatCamelCase(str: string): string {
   // Check if the string is camel case
   const isCamelCase = /^([A-Z][a-z]*)+$/.test(str)
@@ -211,5 +213,62 @@ export function isValidUrl(url: string): boolean {
     return true
   } catch {
     return false
+  }
+}
+const hasAnnotation = (filepath: string): boolean =>
+  /\[(input|output|temp)\]/i.test(filepath)
+
+const createAnnotation = (filepath: string, rootFolder = 'input'): string =>
+  !hasAnnotation(filepath) && rootFolder !== 'input' ? ` [${rootFolder}]` : ''
+
+const createPath = (filename: string, subfolder = ''): string =>
+  subfolder ? `${subfolder}/${filename}` : filename
+
+/** Creates annotated filepath in format used by folder_paths.py */
+export function createAnnotatedPath(
+  item: string | ResultItem,
+  options: { rootFolder?: string; subfolder?: string } = {}
+): string {
+  const { rootFolder = 'input', subfolder } = options
+  if (typeof item === 'string')
+    return `${createPath(item, subfolder)}${createAnnotation(item, rootFolder)}`
+  return `${createPath(item.filename ?? '', item.subfolder)}${item.type ? createAnnotation(item.type, rootFolder) : ''}`
+}
+
+/**
+ * Parses a filepath into its filename and subfolder components.
+ *
+ * @example
+ * parseFilePath('folder/file.txt')    // → { filename: 'file.txt', subfolder: 'folder' }
+ * parseFilePath('/folder/file.txt')   // → { filename: 'file.txt', subfolder: 'folder' }
+ * parseFilePath('file.txt')           // → { filename: 'file.txt', subfolder: '' }
+ * parseFilePath('folder//file.txt')   // → { filename: 'file.txt', subfolder: 'folder' }
+ *
+ * @param filepath The filepath to parse
+ * @returns Object containing filename and subfolder
+ */
+export function parseFilePath(filepath: string): {
+  filename: string
+  subfolder: string
+} {
+  if (!filepath?.trim()) return { filename: '', subfolder: '' }
+
+  const normalizedPath = filepath
+    .replace(/[\\/]+/g, '/') // Normalize path separators
+    .replace(/^\//, '') // Remove leading slash
+    .replace(/\/$/, '') // Remove trailing slash
+
+  const lastSlashIndex = normalizedPath.lastIndexOf('/')
+
+  if (lastSlashIndex === -1) {
+    return {
+      filename: normalizedPath,
+      subfolder: ''
+    }
+  }
+
+  return {
+    filename: normalizedPath.slice(lastSlashIndex + 1),
+    subfolder: normalizedPath.slice(0, lastSlashIndex)
   }
 }

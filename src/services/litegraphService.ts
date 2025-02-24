@@ -9,15 +9,19 @@ import {
 import { Vector2 } from '@comfyorg/litegraph'
 import { IBaseWidget, IWidget } from '@comfyorg/litegraph/dist/types/widgets'
 
+import { useNodeImage, useNodeVideo } from '@/composables/node/useNodeImage'
 import { st } from '@/i18n'
-import { api } from '@/scripts/api'
 import { ANIM_PREVIEW_WIDGET, ComfyApp, app } from '@/scripts/app'
 import { $el } from '@/scripts/ui'
 import { calculateImageGrid, createImageHost } from '@/scripts/ui/imagePreview'
+import { useCanvasStore } from '@/stores/graphStore'
+import { useNodeOutputStore } from '@/stores/imagePreviewStore'
 import { useToastStore } from '@/stores/toastStore'
-import { ComfyNodeDef, ExecutedWsMessage } from '@/types/apiTypes'
+import { ComfyNodeDef } from '@/types/apiTypes'
 import type { NodeId } from '@/types/comfyWorkflow'
 import { normalizeI18nKey } from '@/utils/formatUtil'
+import { is_all_same_aspect_ratio } from '@/utils/imageUtil'
+import { getImageTop, isImageNode, isVideoNode } from '@/utils/litegraphUtil'
 
 import { useExtensionService } from './extensionService'
 
@@ -27,6 +31,7 @@ import { useExtensionService } from './extensionService'
 export const useLitegraphService = () => {
   const extensionService = useExtensionService()
   const toastStore = useToastStore()
+  const canvasStore = useCanvasStore()
 
   async function registerNodeDef(nodeId: string, nodeData: ComfyNodeDef) {
     const node = class ComfyNode extends LGraphNode {
@@ -77,7 +82,8 @@ export const useLitegraphService = () => {
               )
             }
             if (config.widget) {
-              config.widget.label = st(nameKey, inputName)
+              const fallback = config.widget.label ?? inputName
+              config.widget.label = st(nameKey, fallback)
             }
           } else {
             // Node connection inputs
@@ -139,7 +145,7 @@ export const useLitegraphService = () => {
         const s = this.computeSize()
         s[0] = Math.max(config.minWidth, s[0] * 1.5)
         s[1] = Math.max(config.minHeight, s[1])
-        this.size = s
+        this.setSize(s)
         this.serialize_widgets = true
 
         extensionService.invokeExtensionsAsync('nodeCreated', this)
@@ -337,7 +343,7 @@ export const useLitegraphService = () => {
           })
         }
 
-        if (ComfyApp.isImageNode(this)) {
+        if (isImageNode(this)) {
           options.push({
             content: 'Open in MaskEditor',
             callback: (obj) => {
@@ -359,28 +365,6 @@ export const useLitegraphService = () => {
    * @param {*} node The node to add the draw handler
    */
   function addDrawBackgroundHandler(node: typeof LGraphNode) {
-    function getImageTop(node: LGraphNode) {
-      let shiftY: number
-      if (node.imageOffset != null) {
-        return node.imageOffset
-      } else if (node.widgets?.length) {
-        const w = node.widgets[node.widgets.length - 1]
-        shiftY = w.last_y
-        if (w.computeSize) {
-          shiftY += w.computeSize()[1] + 4
-          // @ts-expect-error computedHeight only exists for DOMWidget
-        } else if (w.computedHeight) {
-          // @ts-expect-error computedHeight only exists for DOMWidget
-          shiftY += w.computedHeight
-        } else {
-          shiftY += LiteGraph.NODE_WIDGET_HEIGHT + 4
-        }
-      } else {
-        return node.computeSize()[1]
-      }
-      return shiftY
-    }
-
     node.prototype.setSizeForImage = function (
       this: LGraphNode,
       force: boolean
@@ -403,70 +387,25 @@ export const useLitegraphService = () => {
     ) {
       if (this.flags.collapsed) return
 
-      const imgURLs: (string[] | string)[] = []
-      let imagesChanged = false
+      const nodeOutputStore = useNodeOutputStore()
 
-      const output: ExecutedWsMessage['output'] = app.nodeOutputs[this.id + '']
-      if (output?.images && this.images !== output.images) {
+      const output = nodeOutputStore.getNodeOutputs(this)
+      const preview = nodeOutputStore.getNodePreviews(this)
+
+      const isNewOutput = output && this.images !== output.images
+      const isNewPreview = preview && this.preview !== preview
+
+      if (isNewPreview) this.preview = preview
+      if (isNewOutput) this.images = output.images
+
+      if (isNewOutput || isNewPreview) {
         this.animatedImages = output?.animated?.find(Boolean)
-        this.images = output.images
-        imagesChanged = true
-        const preview = this.animatedImages ? '' : app.getPreviewFormatParam()
 
-        for (const params of output.images) {
-          const imgUrlPart = new URLSearchParams(params).toString()
-          const rand = app.getRandParam()
-          const imgUrl = api.apiURL(`/view?${imgUrlPart}${preview}${rand}`)
-          imgURLs.push(imgUrl)
-        }
-      }
-
-      const preview = app.nodePreviewImages[this.id + '']
-      if (this.preview !== preview) {
-        this.preview = preview
-        imagesChanged = true
-        if (preview != null) {
-          imgURLs.push(preview)
-        }
-      }
-
-      if (imagesChanged) {
-        this.imageIndex = null
-        if (imgURLs.length > 0) {
-          Promise.all(
-            imgURLs.flat().map((src) => {
-              return new Promise<HTMLImageElement | null>((r) => {
-                const img = new Image()
-                img.onload = () => r(img)
-                img.onerror = () => r(null)
-                img.src = src
-              })
-            })
-          ).then((imgs) => {
-            if (
-              (!output || this.images === output.images) &&
-              (!preview || this.preview === preview)
-            ) {
-              this.imgs = imgs.filter(Boolean)
-              this.setSizeForImage?.()
-              app.graph.setDirtyCanvas(true)
-            }
-          })
+        if (this.animatedImages || isVideoNode(this)) {
+          useNodeVideo(this).showPreview()
         } else {
-          this.imgs = null
+          useNodeImage(this).showPreview()
         }
-      }
-
-      const is_all_same_aspect_ratio = (imgs: HTMLImageElement[]) => {
-        // assume: imgs.length >= 2
-        const ratio = imgs[0].naturalWidth / imgs[0].naturalHeight
-
-        for (let i = 1; i < imgs.length; i++) {
-          const this_ratio = imgs[i].naturalWidth / imgs[i].naturalHeight
-          if (ratio != this_ratio) return false
-        }
-
-        return true
       }
 
       // Nothing to do
@@ -493,11 +432,14 @@ export const useLitegraphService = () => {
             host.el,
             {
               host,
+              // @ts-expect-error `getHeight` of image host returns void instead of number.
               getHeight: host.getHeight,
               onDraw: host.onDraw,
               hideOnZoom: false
             }
-          )
+          ) as IWidget & {
+            options: { host: ReturnType<typeof createImageHost> }
+          }
           widget.serializeValue = () => undefined
           widget.options.host.updateImages(this.imgs)
         }
@@ -530,8 +472,9 @@ export const useLitegraphService = () => {
 
       const shiftY = getImageTop(this)
 
+      const IMAGE_TEXT_SIZE_TEXT_HEIGHT = 15
       const dw = this.size[0]
-      const dh = this.size[1] - shiftY
+      const dh = this.size[1] - shiftY - IMAGE_TEXT_SIZE_TEXT_HEIGHT
 
       if (imageIndex == null) {
         // No image selected; draw thumbnails of all
@@ -642,8 +585,9 @@ export const useLitegraphService = () => {
         return
       }
       // Draw individual
-      let w = this.imgs[imageIndex].naturalWidth
-      let h = this.imgs[imageIndex].naturalHeight
+      const img = this.imgs[imageIndex]
+      let w = img.naturalWidth
+      let h = img.naturalHeight
 
       const scaleX = dw / w
       const scaleY = dh / h
@@ -654,7 +598,14 @@ export const useLitegraphService = () => {
 
       const x = (dw - w) / 2
       const y = (dh - h) / 2 + shiftY
-      ctx.drawImage(this.imgs[imageIndex], x, y, w, h)
+      ctx.drawImage(img, x, y, w, h)
+
+      // Draw image size text below the image
+      ctx.fillStyle = LiteGraph.NODE_TEXT_COLOR
+      ctx.textAlign = 'center'
+      const sizeText = `${Math.round(img.naturalWidth)} × ${Math.round(img.naturalHeight)}`
+      const textY = y + h + 10
+      ctx.fillText(sizeText, x + w / 2, textY)
 
       const drawButton = (
         x: number,
@@ -791,10 +742,23 @@ export const useLitegraphService = () => {
     app.canvas.animateToBounds(graphNode.boundingRect)
   }
 
+  /**
+   * Resets the canvas view to the default
+   */
+  function resetView() {
+    const canvas = canvasStore.canvas
+    if (!canvas) return
+
+    canvas.ds.scale = 1
+    canvas.ds.offset = [0, 0]
+    canvas.setDirty(true, true)
+  }
+
   return {
     registerNodeDef,
     addNodeOnGraph,
     getCanvasCenter,
-    goToNode
+    goToNode,
+    resetView
   }
 }

@@ -1,4 +1,5 @@
 import { LGraphCanvas } from '@comfyorg/litegraph'
+import type { Vector2 } from '@comfyorg/litegraph'
 import { toRaw } from 'vue'
 
 import { t } from '@/i18n'
@@ -187,14 +188,17 @@ export const useWorkflowService = () => {
    */
   const closeWorkflow = async (
     workflow: ComfyWorkflow,
-    options: { warnIfUnsaved: boolean } = { warnIfUnsaved: true }
+    options: { warnIfUnsaved: boolean; hint?: string } = {
+      warnIfUnsaved: true
+    }
   ): Promise<boolean> => {
     if (workflow.isModified && options.warnIfUnsaved) {
       const confirmed = await dialogService.confirm({
         title: t('sideToolbar.workflowTab.dirtyCloseTitle'),
         type: 'dirtyClose',
         message: t('sideToolbar.workflowTab.dirtyClose'),
-        itemList: [workflow.path]
+        itemList: [workflow.path],
+        hint: options.hint
       })
       // Cancel
       if (confirmed === null) return false
@@ -327,7 +331,10 @@ export const useWorkflowService = () => {
   /**
    * Insert the given workflow into the current graph editor.
    */
-  const insertWorkflow = async (workflow: ComfyWorkflow) => {
+  const insertWorkflow = async (
+    workflow: ComfyWorkflow,
+    options: { position?: Vector2 } = {}
+  ) => {
     const loadedWorkflow = await workflow.load()
     const data = loadedWorkflow.initialState
     const old = localStorage.getItem('litegrapheditor_clipboard')
@@ -341,7 +348,7 @@ export const useWorkflowService = () => {
     canvas.reroutesEnabled = app.canvas.reroutesEnabled
     canvas.selectItems()
     canvas.copyToClipboard()
-    app.canvas.pasteFromClipboard()
+    app.canvas.pasteFromClipboard(options)
     if (old !== null) {
       localStorage.setItem('litegrapheditor_clipboard', old)
     }

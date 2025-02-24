@@ -27,7 +27,7 @@ export const DESKTOP_MAINTENANCE_TASKS: Readonly<MaintenanceTask>[] = [
   },
   {
     id: 'git',
-    headerImg: '/assets/images/Git-Logo-White.svg',
+    headerImg: 'assets/images/Git-Logo-White.svg',
     execute: () => openUrl('https://git-scm.com/downloads/'),
     name: 'Download git',
     shortDescription: 'Open the git download page.',
@@ -119,6 +119,7 @@ export const DESKTOP_MAINTENANCE_TASKS: Readonly<MaintenanceTask>[] = [
     description:
       'This will remove the uv cache directory and its contents. All downloaded python packages will need to be downloaded again.',
     confirmText: 'Delete uv cache of python packages?',
+    usesTerminal: true,
     isInstallationFix: true,
     button: {
       icon: PrimeIcons.TRASH,

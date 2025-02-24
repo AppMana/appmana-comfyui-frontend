@@ -31,8 +31,12 @@
 <script setup lang="ts">
 import Button from 'primevue/button'
 import { ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 
-import { usePragmaticDraggable, usePragmaticDroppable } from '@/hooks/dndHooks'
+import {
+  usePragmaticDraggable,
+  usePragmaticDroppable
+} from '@/composables/usePragmaticDragAndDrop'
 import { useWorkflowService } from '@/services/workflowService'
 import { ComfyWorkflow } from '@/stores/workflowStore'
 import { useWorkflowStore } from '@/stores/workflowStore'
@@ -48,6 +52,8 @@ const props = defineProps<{
   workflowOption: WorkflowOption
 }>()
 
+const { t } = useI18n()
+
 const workspaceStore = useWorkspaceStore()
 const workflowStore = useWorkflowStore()
 const workflowTabRef = ref<HTMLElement | null>(null)
@@ -56,7 +62,8 @@ const closeWorkflows = async (options: WorkflowOption[]) => {
   for (const opt of options) {
     if (
       !(await useWorkflowService().closeWorkflow(opt.workflow, {
-        warnIfUnsaved: !workspaceStore.shiftDown
+        warnIfUnsaved: !workspaceStore.shiftDown,
+        hint: t('sideToolbar.workflowTab.dirtyCloseHint')
       }))
     ) {
       // User clicked cancel

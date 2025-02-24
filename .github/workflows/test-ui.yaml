@@ -2,20 +2,17 @@ name: Tests CI
 
 on:
   push:
-    branches:
-      - main
-      - master
+    branches: [ main, master, core/*, desktop/* ]
   pull_request:
-    branches:
-      - main
-      - master
-      - 'dev*'
+    branches: [ main, master, dev*, core/*, desktop/* ]
 
 jobs:
   jest-tests:
     runs-on: ubuntu-latest
     steps:
-    - uses: Comfy-Org/ComfyUI_frontend_setup_action@v2.1
+    - uses: Comfy-Org/ComfyUI_frontend_setup_action@v2.2
+      with:
+        devtools_ref: 7b81139e904519db8e5481899ef36bbb4393cb6b
     - name: Run Jest tests
       run: |
         npm run test:generate
@@ -25,7 +22,9 @@ jobs:
   playwright-tests-chromium:
     runs-on: ubuntu-latest
     steps:
-    - uses: Comfy-Org/ComfyUI_frontend_setup_action@v2.1
+    - uses: Comfy-Org/ComfyUI_frontend_setup_action@v2.2
+      with:
+        devtools_ref: 7b81139e904519db8e5481899ef36bbb4393cb6b
     - name: Install Playwright Browsers
       run: npx playwright install chromium --with-deps
       working-directory: ComfyUI_frontend
@@ -42,7 +41,9 @@ jobs:
   playwright-tests-chromium-2x:
     runs-on: ubuntu-latest
     steps:
-    - uses: Comfy-Org/ComfyUI_frontend_setup_action@v2.1
+    - uses: Comfy-Org/ComfyUI_frontend_setup_action@v2.2
+      with:
+        devtools_ref: 7b81139e904519db8e5481899ef36bbb4393cb6b
     - name: Install Playwright Browsers
       run: npx playwright install chromium --with-deps
       working-directory: ComfyUI_frontend
@@ -59,7 +60,9 @@ jobs:
   playwright-tests-mobile-chrome:
     runs-on: ubuntu-latest
     steps:
-    - uses: Comfy-Org/ComfyUI_frontend_setup_action@v2.1
+    - uses: Comfy-Org/ComfyUI_frontend_setup_action@v2.2
+      with:
+        devtools_ref: 7b81139e904519db8e5481899ef36bbb4393cb6b
     - name: Install Playwright Browsers
       run: npx playwright install chromium --with-deps
       working-directory: ComfyUI_frontend

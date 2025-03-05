@@ -3,12 +3,16 @@ import { type LGraph, LGraphCanvas, LiteGraph } from '@comfyorg/litegraph'
 import { LGraphNode, type NodeId } from '@comfyorg/litegraph/dist/LGraphNode'
 
 import { t } from '@/i18n'
+import {
+  ComfyLink,
+  ComfyNode,
+  ComfyWorkflowJSON
+} from '@/schemas/comfyWorkflowSchema'
+import type { ComfyNodeDef } from '@/schemas/nodeDefSchema'
 import { useDialogService } from '@/services/dialogService'
 import { useNodeDefStore } from '@/stores/nodeDefStore'
 import { useToastStore } from '@/stores/toastStore'
-import type { ComfyNodeDef } from '@/types/apiTypes'
 import { ComfyExtension } from '@/types/comfy'
-import { ComfyLink, ComfyNode, ComfyWorkflowJSON } from '@/types/comfyWorkflow'
 import { deserialiseAndCreate, serialise } from '@/utils/vintageClipboard'
 
 import { api } from '../../scripts/api'
@@ -343,6 +347,7 @@ export class GroupNodeConfig {
 
             const widget = [targetWidget[0], config]
             const res = mergeIfValid(
+              // @ts-expect-error invalid slot type
               {
                 widget
               },
@@ -477,6 +482,7 @@ export class GroupNodeConfig {
       const primitiveConfig = primitiveDef.input.required.value
       const output = { widget: primitiveConfig }
       const config = mergeIfValid(
+        // @ts-expect-error invalid slot type
         output,
         targetWidget,
         false,

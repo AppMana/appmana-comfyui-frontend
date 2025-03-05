@@ -118,6 +118,8 @@
     "add": "追加",
     "back": "戻る",
     "cancel": "キャンセル",
+    "capture": "キャプチャ",
+    "choose_file_to_upload": "アップロードするファイルを選択",
     "close": "閉じる",
     "color": "色",
     "comingSoon": "近日公開",
@@ -333,6 +335,7 @@
     "scene": "シーン",
     "showGrid": "グリッドを表示",
     "switchCamera": "カメラを切り替える",
+    "switchingMaterialMode": "マテリアルモードの切り替え中...",
     "upDirection": "上方向",
     "uploadBackgroundImage": "背景画像をアップロード"
   },
@@ -458,7 +461,6 @@
   "nodeCategories": {
     "3d": "3d",
     "3d_models": "3Dモデル",
-    "DevTools": "デブツール",
     "_for_testing": "_テスト用",
     "advanced": "高度な機能",
     "animation": "アニメーション",
@@ -475,6 +477,7 @@
     "controlnet": "コントロールネット",
     "create": "作成",
     "custom_sampling": "カスタムサンプリング",
+    "debug": "デバッグ",
     "deprecated": "非推奨",
     "flux": "flux",
     "gligen": "グライジェン",
@@ -828,8 +831,7 @@
         "esrgan_example": "ESRGAN",
         "hiresfix_esrgan_workflow": "HiresFix ESRGANワークフロー",
         "hiresfix_latent_workflow": "HiresFix Latentワークフロー",
-        "latent_upscale_different_prompt_model": "Latent Upscale異なるプロンプトモデル",
-        "upscale": "アップスケール"
+        "latent_upscale_different_prompt_model": "Latent Upscale異なるプロンプトモデル"
       },
       "Video": {
         "hunyuan_video_text_to_video": "Hunyuanビデオテキストからビデオへ",

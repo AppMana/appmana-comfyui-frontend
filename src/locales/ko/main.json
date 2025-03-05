@@ -118,6 +118,8 @@
     "add": "추가",
     "back": "뒤로",
     "cancel": "취소",
+    "capture": "캡처",
+    "choose_file_to_upload": "업로드할 파일 선택",
     "close": "닫기",
     "color": "색상",
     "comingSoon": "곧 출시 예정",
@@ -333,6 +335,7 @@
     "scene": "장면",
     "showGrid": "그리드 표시",
     "switchCamera": "카메라 전환",
+    "switchingMaterialMode": "재질 모드 전환 중...",
     "upDirection": "위 방향",
     "uploadBackgroundImage": "배경 이미지 업로드"
   },
@@ -458,7 +461,6 @@
   "nodeCategories": {
     "3d": "3d",
     "3d_models": "3D 모델",
-    "DevTools": "개발자 도구",
     "_for_testing": "_테스트용",
     "advanced": "고급",
     "animation": "애니메이션",
@@ -475,6 +477,7 @@
     "controlnet": "컨트롤넷",
     "create": "생성",
     "custom_sampling": "사용자 정의 샘플링",
+    "debug": "디버그",
     "deprecated": "지원 중단",
     "flux": "flux",
     "gligen": "글리젠",
@@ -828,8 +831,7 @@
         "esrgan_example": "ESRGAN",
         "hiresfix_esrgan_workflow": "HiresFix ESRGAN 워크플로우",
         "hiresfix_latent_workflow": "HiresFix Latent 워크플로우",
-        "latent_upscale_different_prompt_model": "Latent Upscale 다른 프롬프트 모델",
-        "upscale": "업스케일"
+        "latent_upscale_different_prompt_model": "Latent Upscale 다른 프롬프트 모델"
       },
       "Video": {
         "hunyuan_video_text_to_video": "텍스트 -> 비디오 (Hunyuan Video)",

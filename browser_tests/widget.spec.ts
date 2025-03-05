@@ -26,6 +26,33 @@ test.describe('Combo text widget', () => {
     await comfyPage.resizeLoadCheckpointNode(0.8, 1, true)
     await expect(comfyPage.canvas).toHaveScreenshot('resized-to-original.png')
   })
+
+  test('should refresh combo values of optional inputs', async ({
+    comfyPage
+  }) => {
+    const getComboValues = async () =>
+      comfyPage.page.evaluate(() => {
+        return window['app'].graph.nodes
+          .find((node) => node.title === 'Node With Optional Combo Input')
+          .widgets.find((widget) => widget.name === 'optional_combo_input')
+          .options.values
+      })
+
+    await comfyPage.loadWorkflow('optional_combo_input')
+    const initialComboValues = await getComboValues()
+
+    // Focus canvas
+    await comfyPage.page.mouse.click(400, 300)
+
+    // Press R to trigger refresh
+    await comfyPage.page.keyboard.press('r')
+
+    // Wait for nodes' widgets to be updated
+    await comfyPage.nextFrame()
+
+    const refreshedComboValues = await getComboValues()
+    expect(refreshedComboValues).not.toEqual(initialComboValues)
+  })
 })
 
 test.describe('Boolean widget', () => {
@@ -98,5 +125,12 @@ test.describe('Dynamic widget manipulation', () => {
     })
 
     await expect(comfyPage.canvas).toHaveScreenshot('ksampler_widget_added.png')
+  })
+})
+
+test.describe('Load image widget', () => {
+  test('Can load image', async ({ comfyPage }) => {
+    await comfyPage.loadWorkflow('widgets/load_image_widget')
+    await expect(comfyPage.canvas).toHaveScreenshot('load_image_widget.png')
   })
 })

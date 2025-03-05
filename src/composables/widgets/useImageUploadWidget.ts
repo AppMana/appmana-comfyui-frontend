@@ -4,10 +4,12 @@ import { IComboWidget } from '@comfyorg/litegraph/dist/types/widgets'
 import { useNodeImage, useNodeVideo } from '@/composables/node/useNodeImage'
 import { useNodeImageUpload } from '@/composables/node/useNodeImageUpload'
 import { useValueTransform } from '@/composables/useValueTransform'
+import { t } from '@/i18n'
+import type { ResultItem } from '@/schemas/apiSchema'
+import type { InputSpec } from '@/schemas/nodeDefSchema'
 import type { ComfyWidgetConstructor } from '@/scripts/widgets'
 import { useNodeOutputStore } from '@/stores/imagePreviewStore'
 import type { ComfyApp } from '@/types'
-import type { InputSpec, ResultItem } from '@/types/apiTypes'
 import { createAnnotatedPath } from '@/utils/formatUtil'
 import { addToComboValues } from '@/utils/litegraphUtil'
 
@@ -42,9 +44,11 @@ export const useImageUploadWidget = () => {
     const { showPreview } = isVideo ? useNodeVideo(node) : useNodeImage(node)
 
     const fileFilter = isVideo ? isVideoFile : isImageFile
+    // @ts-expect-error InputSpec is not typed correctly
     const fileComboWidget = findFileComboWidget(node, imageInputName)
     const initialFile = `${fileComboWidget.value}`
     const formatPath = (value: InternalFile) =>
+      // @ts-expect-error InputSpec is not typed correctly
       createAnnotatedPath(value, { rootFolder: image_folder })
 
     const transform = (internalValue: InternalValue): ExposedValue => {
@@ -64,6 +68,7 @@ export const useImageUploadWidget = () => {
 
     // Setup file upload handling
     const { openFileSelection } = useNodeImageUpload(node, {
+      // @ts-expect-error InputSpec is not typed correctly
       allow_batch,
       fileFilter,
       accept,
@@ -85,15 +90,11 @@ export const useImageUploadWidget = () => {
         serialize: false
       }
     )
-    uploadWidget.label = 'choose file to upload'
+    uploadWidget.label = t('g.choose_file_to_upload')
 
-    // TODO: Explain this?
-    // @ts-expect-error LGraphNode.callback is not typed
     // Add our own callback to the combo widget to render an image when it changes
-    const cb = node.callback
-    fileComboWidget.callback = function (...args) {
+    fileComboWidget.callback = function () {
       nodeOutputStore.setNodeOutputs(node, fileComboWidget.value)
-      if (cb) return cb.apply(this, args)
     }
 
     // On load if we have a value then render the image
@@ -101,7 +102,7 @@ export const useImageUploadWidget = () => {
     // No change callbacks seem to be fired on initial setting of the value
     requestAnimationFrame(() => {
       nodeOutputStore.setNodeOutputs(node, fileComboWidget.value)
-      showPreview()
+      showPreview({ block: false })
     })
 
     return { widget: uploadWidget }

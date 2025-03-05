@@ -3,8 +3,6 @@ import { defineStore } from 'pinia'
 import { toRaw } from 'vue'
 import { computed, ref } from 'vue'
 
-import { api } from '@/scripts/api'
-import type { ComfyApp } from '@/scripts/app'
 import type {
   ResultItem,
   StatusWsMessageStatus,
@@ -13,8 +11,10 @@ import type {
   TaskPrompt,
   TaskStatus,
   TaskType
-} from '@/types/apiTypes'
-import type { ComfyWorkflowJSON, NodeId } from '@/types/comfyWorkflow'
+} from '@/schemas/apiSchema'
+import type { ComfyWorkflowJSON, NodeId } from '@/schemas/comfyWorkflowSchema'
+import { api } from '@/scripts/api'
+import type { ComfyApp } from '@/scripts/app'
 
 // Task type used in the API.
 export type APITaskType = 'queue' | 'history'
@@ -142,7 +142,15 @@ export class TaskItemImpl {
     this.taskType = taskType
     this.prompt = prompt
     this.status = status
-    this.outputs = outputs ?? {}
+    // Remove animated outputs from the outputs object
+    // outputs.animated is an array of boolean values that indicates if the images
+    // array in the result are animated or not.
+    // The queueStore does not use this information.
+    // It is part of the legacy API response. We should redesign the backend API.
+    // https://github.com/Comfy-Org/ComfyUI_frontend/issues/2739
+    this.outputs = _.mapValues(outputs ?? {}, (nodeOutputs) =>
+      _.omit(nodeOutputs, 'animated')
+    )
     this.flatOutputs = flatOutputs ?? this.calculateFlatOutputs()
   }
 

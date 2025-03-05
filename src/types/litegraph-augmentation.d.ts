@@ -1,10 +1,11 @@
 import '@comfyorg/litegraph'
 import type { LLink, Size } from '@comfyorg/litegraph'
 
+import type { ComfyNodeDef as ComfyNodeDefV2 } from '@/schemas/nodeDef/nodeDefSchemaV2'
+import type { ComfyNodeDef as ComfyNodeDefV1 } from '@/schemas/nodeDefSchema'
 import type { DOMWidget, DOMWidgetOptions } from '@/scripts/domWidget'
-import type { ComfyNodeDef } from '@/types/apiTypes'
 
-import type { NodeId } from './comfyWorkflow'
+import type { NodeId } from '../schemas/comfyWorkflowSchema'
 
 /** ComfyUI extensions of litegraph */
 declare module '@comfyorg/litegraph/dist/types/widgets' {
@@ -17,6 +18,14 @@ declare module '@comfyorg/litegraph/dist/types/widgets' {
      * - If true or undefined, the value will be included in both the API workflow and graph state
      */
     serialize?: boolean
+    /**
+     * Rounding value for numeric float widgets.
+     */
+    round?: number
+    /**
+     * The minimum size of the node if the widget is present.
+     */
+    minNodeSize?: Size
   }
 
   interface IBaseWidget {
@@ -59,7 +68,7 @@ declare module '@comfyorg/litegraph' {
     type?: string
     comfyClass: string
     title: string
-    nodeData?: ComfyNodeDef
+    nodeData?: ComfyNodeDefV1 & ComfyNodeDefV2
     category?: string
     new (): T
   }
@@ -82,10 +91,16 @@ declare module '@comfyorg/litegraph' {
     convertToNodes?(): LGraphNode[]
     recreate?(): Promise<LGraphNode>
     refreshComboInNode?(defs: Record<string, ComfyNodeDef>)
-    /** Used by virtual nodes (primitives) to insert their values into the graph prior to queueing. */
-    applyToGraph?(extraLinks?: LLink[]): void
     /** @deprecated groupNode */
     updateLink?(link: LLink): LLink | null
+    /**
+     * @deprecated primitive node.
+     * Used by virtual nodes (primitives) to insert their values into the graph prior to queueing.
+     * Externally used by
+     * - https://github.com/pythongosssss/ComfyUI-Custom-Scripts/blob/bbda5e52ad580c13ceaa53136d9c2bed9137bd2e/web/js/presetText.js#L160-L182
+     * - https://github.com/Kosinkadink/ComfyUI-VideoHelperSuite/blob/4c7858ddd5126f7293dc3c9f6e0fc4c263cde079/web/js/VHS.core.js#L1889-L1889
+     */
+    applyToGraph?(extraLinks?: LLink[]): void
     onExecutionStart?(): unknown
     /**
      * Callback invoked when the node is dragged over from an external source, i.e.
@@ -149,6 +164,14 @@ declare module '@comfyorg/litegraph' {
     pasteFile?(file: File): void
     /** Callback for pasting multiple files into the node */
     pasteFiles?(files: File[]): void
+  }
+  /**
+   * Only used by the Primitive node. Primitive node is using the widget property
+   * to store/access the widget config.
+   * We should remove this hacky solution once we have a proper solution.
+   */
+  interface INodeOutputSlot {
+    widget?: IWidget
   }
 }
 

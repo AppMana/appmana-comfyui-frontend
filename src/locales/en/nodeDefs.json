@@ -177,7 +177,7 @@
   },
   "CLIPLoader": {
     "display_name": "Load CLIP",
-    "description": "[Recipes]\n\nstable_diffusion: clip-l\nstable_cascade: clip-g\nsd3: t5 / clip-g / clip-l\nstable_audio: t5\nmochi: t5\ncosmos: old t5 xxl",
+    "description": "[Recipes]\n\nstable_diffusion: clip-l\nstable_cascade: clip-g\nsd3: t5 xxl/ clip-g / clip-l\nstable_audio: t5 base\nmochi: t5 xxl\ncosmos: old t5 xxl\nlumina2: gemma 2 2B\nwan: umt5 xxl",
     "inputs": {
       "clip_name": {
         "name": "clip_name"
@@ -312,6 +312,29 @@
       },
       "mt5xl": {
         "name": "mt5xl"
+      }
+    }
+  },
+  "CLIPTextEncodeLumina2": {
+    "display_name": "CLIP Text Encode for Lumina2",
+    "description": "Encodes a system prompt and a user prompt using a CLIP model into an embedding that can be used to guide the diffusion model towards generating specific images.",
+    "inputs": {
+      "system_prompt": {
+        "name": "system_prompt",
+        "tooltip": "Lumina2 provide two types of system prompts:Superior: You are an assistant designed to generate superior images with the superior degree of image-text alignment based on textual prompts or user prompts. Alignment: You are an assistant designed to generate high-quality images with the highest degree of image-text alignment based on textual prompts."
+      },
+      "user_prompt": {
+        "name": "user_prompt",
+        "tooltip": "The text to be encoded."
+      },
+      "clip": {
+        "name": "clip",
+        "tooltip": "The CLIP model used for encoding the text."
+      }
+    },
+    "outputs": {
+      "0": {
+        "tooltip": "A conditioning containing the embedded text used to guide the diffusion model."
       }
     }
   },
@@ -560,6 +583,35 @@
       },
       "y": {
         "name": "y"
+      },
+      "strength": {
+        "name": "strength"
+      }
+    }
+  },
+  "ConditioningSetAreaPercentageVideo": {
+    "display_name": "ConditioningSetAreaPercentageVideo",
+    "inputs": {
+      "conditioning": {
+        "name": "conditioning"
+      },
+      "width": {
+        "name": "width"
+      },
+      "height": {
+        "name": "height"
+      },
+      "temporal": {
+        "name": "temporal"
+      },
+      "x": {
+        "name": "x"
+      },
+      "y": {
+        "name": "y"
+      },
+      "z": {
+        "name": "z"
       },
       "strength": {
         "name": "strength"
@@ -1048,143 +1100,6 @@
       }
     }
   },
-  "DevToolsDeprecatedNode": {
-    "display_name": "Deprecated Node",
-    "description": "A deprecated node"
-  },
-  "DevToolsErrorRaiseNode": {
-    "display_name": "Raise Error",
-    "description": "Raise an error for development purposes"
-  },
-  "DevToolsErrorRaiseNodeWithMessage": {
-    "display_name": "Raise Error with Message",
-    "description": "Raise an error with message for development purposes",
-    "inputs": {
-      "message": {
-        "name": "message"
-      }
-    }
-  },
-  "DevToolsExperimentalNode": {
-    "display_name": "Experimental Node",
-    "description": "A experimental node"
-  },
-  "DevToolsLongComboDropdown": {
-    "display_name": "Long Combo Dropdown",
-    "description": "A long combo dropdown",
-    "inputs": {
-      "option": {
-        "name": "option"
-      }
-    }
-  },
-  "DevToolsNodeWithForceInput": {
-    "display_name": "Node With Force Input",
-    "description": "A node with a forced input",
-    "inputs": {
-      "int_input": {
-        "name": "int_input"
-      },
-      "int_input_widget": {
-        "name": "int_input_widget"
-      },
-      "float_input": {
-        "name": "float_input"
-      }
-    }
-  },
-  "DevToolsNodeWithOnlyOptionalInput": {
-    "display_name": "Node With Only Optional Input",
-    "description": "A node with only optional input",
-    "inputs": {
-      "text": {
-        "name": "text"
-      },
-      "clip": {
-        "name": "clip"
-      }
-    }
-  },
-  "DevToolsNodeWithOptionalInput": {
-    "display_name": "Node With Optional Input",
-    "description": "A node with an optional input",
-    "inputs": {
-      "required_input": {
-        "name": "required_input"
-      },
-      "optional_input": {
-        "name": "optional_input"
-      }
-    }
-  },
-  "DevToolsNodeWithOutputList": {
-    "display_name": "Node With Output List",
-    "description": "A node with an output list",
-    "outputs": {
-      "0": {
-        "name": "INTEGER OUTPUT"
-      },
-      "1": {
-        "name": "INTEGER LIST OUTPUT"
-      }
-    }
-  },
-  "DevToolsNodeWithSeedInput": {
-    "display_name": "Node With Seed Input",
-    "description": "A node with a seed input",
-    "inputs": {
-      "seed": {
-        "name": "seed"
-      }
-    }
-  },
-  "DevToolsNodeWithStringInput": {
-    "display_name": "Node With String Input",
-    "description": "A node with a string input",
-    "inputs": {
-      "string_input": {
-        "name": "string_input"
-      }
-    }
-  },
-  "DevToolsNodeWithUnionInput": {
-    "display_name": "Node With Union Input",
-    "description": "A node with a union input",
-    "inputs": {
-      "string_or_int_input": {
-        "name": "string_or_int_input"
-      },
-      "string_input": {
-        "name": "string_input"
-      },
-      "int_input": {
-        "name": "int_input"
-      }
-    }
-  },
-  "DevToolsObjectPatchNode": {
-    "display_name": "Object Patch Node",
-    "description": "A node that applies an object patch",
-    "inputs": {
-      "model": {
-        "name": "model"
-      },
-      "target_module": {
-        "name": "target_module"
-      },
-      "dummy_float": {
-        "name": "dummy_float"
-      }
-    }
-  },
-  "DevToolsSimpleSlider": {
-    "display_name": "Simple Slider",
-    "inputs": {
-      "value": {
-        "name": "value"
-      }
-    }
-  },
   "DiffControlNetLoader": {
     "display_name": "Load ControlNet Model (diff)",
     "inputs": {
@@ -1429,6 +1344,15 @@
     "inputs": {
       "sigmas": {
         "name": "sigmas"
+      }
+    }
+  },
+  "FluxDisableGuidance": {
+    "display_name": "FluxDisableGuidance",
+    "description": "This node completely disables the guidance embed on Flux and Flux like models",
+    "inputs": {
+      "conditioning": {
+        "name": "conditioning"
       }
     }
   },
@@ -1991,6 +1915,9 @@
       "denoise": {
         "name": "denoise",
         "tooltip": "The amount of denoising applied, lower values will maintain the structure of the initial image allowing for image to image sampling."
+      },
+      "control_after_generate": {
+        "name": "control after generate"
       }
     },
     "outputs": {
@@ -2040,6 +1967,9 @@
       },
       "return_with_leftover_noise": {
         "name": "return_with_leftover_noise"
+      },
+      "control_after_generate": {
+        "name": "control after generate"
       }
     }
   },
@@ -2346,30 +2276,14 @@
       "height": {
         "name": "height"
       },
-      "show_grid": {
-        "name": "show_grid"
-      },
-      "camera_type": {
-        "name": "camera_type"
-      },
-      "view": {
-        "name": "view"
-      },
       "material": {
         "name": "material"
-      },
-      "bg_color": {
-        "name": "bg_color"
-      },
-      "light_intensity": {
-        "name": "light_intensity"
       },
       "up_direction": {
         "name": "up_direction"
       },
-      "fov": {
-        "name": "fov"
-      }
+      "clear": {},
+      "upload 3d model": {}
     },
     "outputs": {
       "0": {
@@ -2398,33 +2312,14 @@
       "height": {
         "name": "height"
       },
-      "show_grid": {
-        "name": "show_grid"
-      },
-      "camera_type": {
-        "name": "camera_type"
-      },
-      "view": {
-        "name": "view"
-      },
       "material": {
         "name": "material"
-      },
-      "bg_color": {
-        "name": "bg_color"
-      },
-      "light_intensity": {
-        "name": "light_intensity"
       },
       "up_direction": {
         "name": "up_direction"
       },
-      "animation_speed": {
-        "name": "animation_speed"
-      },
-      "fov": {
-        "name": "fov"
-      }
+      "clear": {},
+      "upload 3d model": {}
     },
     "outputs": {
       "0": {
@@ -2443,6 +2338,12 @@
     "inputs": {
       "audio": {
         "name": "audio"
+      },
+      "audioUI": {
+        "name": "audioUI"
+      },
+      "upload": {
+        "name": "choose file to upload"
       }
     }
   },
@@ -2451,6 +2352,9 @@
     "inputs": {
       "image": {
         "name": "image"
+      },
+      "upload": {
+        "name": "choose file to upload"
       }
     }
   },
@@ -2462,6 +2366,22 @@
       },
       "channel": {
         "name": "channel"
+      },
+      "upload": {
+        "name": "choose file to upload"
+      }
+    }
+  },
+  "LoadImageOutput": {
+    "display_name": "Load Image (from Outputs)",
+    "description": "Load an image from the output folder. When the refresh button is clicked, the node will update the image list and automatically select the first image, allowing for easy iteration.",
+    "inputs": {
+      "image": {
+        "name": "image"
+      },
+      "refresh": {},
+      "upload": {
+        "name": "choose file to upload"
       }
     }
   },
@@ -2685,6 +2605,17 @@
       }
     }
   },
+  "ModelComputeDtype": {
+    "display_name": "ModelComputeDtype",
+    "inputs": {
+      "model": {
+        "name": "model"
+      },
+      "dtype": {
+        "name": "dtype"
+      }
+    }
+  },
   "ModelMergeAdd": {
     "display_name": "ModelMergeAdd",
     "inputs": {
@@ -2853,6 +2784,256 @@
       },
       "out": {
         "name": "out"
+      }
+    }
+  },
+  "ModelMergeCosmos14B": {
+    "display_name": "ModelMergeCosmos14B",
+    "inputs": {
+      "model1": {
+        "name": "model1"
+      },
+      "model2": {
+        "name": "model2"
+      },
+      "pos_embedder_": {
+        "name": "pos_embedder."
+      },
+      "extra_pos_embedder_": {
+        "name": "extra_pos_embedder."
+      },
+      "x_embedder_": {
+        "name": "x_embedder."
+      },
+      "t_embedder_": {
+        "name": "t_embedder."
+      },
+      "affline_norm_": {
+        "name": "affline_norm."
+      },
+      "blocks_block0_": {
+        "name": "blocks.block0."
+      },
+      "blocks_block1_": {
+        "name": "blocks.block1."
+      },
+      "blocks_block2_": {
+        "name": "blocks.block2."
+      },
+      "blocks_block3_": {
+        "name": "blocks.block3."
+      },
+      "blocks_block4_": {
+        "name": "blocks.block4."
+      },
+      "blocks_block5_": {
+        "name": "blocks.block5."
+      },
+      "blocks_block6_": {
+        "name": "blocks.block6."
+      },
+      "blocks_block7_": {
+        "name": "blocks.block7."
+      },
+      "blocks_block8_": {
+        "name": "blocks.block8."
+      },
+      "blocks_block9_": {
+        "name": "blocks.block9."
+      },
+      "blocks_block10_": {
+        "name": "blocks.block10."
+      },
+      "blocks_block11_": {
+        "name": "blocks.block11."
+      },
+      "blocks_block12_": {
+        "name": "blocks.block12."
+      },
+      "blocks_block13_": {
+        "name": "blocks.block13."
+      },
+      "blocks_block14_": {
+        "name": "blocks.block14."
+      },
+      "blocks_block15_": {
+        "name": "blocks.block15."
+      },
+      "blocks_block16_": {
+        "name": "blocks.block16."
+      },
+      "blocks_block17_": {
+        "name": "blocks.block17."
+      },
+      "blocks_block18_": {
+        "name": "blocks.block18."
+      },
+      "blocks_block19_": {
+        "name": "blocks.block19."
+      },
+      "blocks_block20_": {
+        "name": "blocks.block20."
+      },
+      "blocks_block21_": {
+        "name": "blocks.block21."
+      },
+      "blocks_block22_": {
+        "name": "blocks.block22."
+      },
+      "blocks_block23_": {
+        "name": "blocks.block23."
+      },
+      "blocks_block24_": {
+        "name": "blocks.block24."
+      },
+      "blocks_block25_": {
+        "name": "blocks.block25."
+      },
+      "blocks_block26_": {
+        "name": "blocks.block26."
+      },
+      "blocks_block27_": {
+        "name": "blocks.block27."
+      },
+      "blocks_block28_": {
+        "name": "blocks.block28."
+      },
+      "blocks_block29_": {
+        "name": "blocks.block29."
+      },
+      "blocks_block30_": {
+        "name": "blocks.block30."
+      },
+      "blocks_block31_": {
+        "name": "blocks.block31."
+      },
+      "blocks_block32_": {
+        "name": "blocks.block32."
+      },
+      "blocks_block33_": {
+        "name": "blocks.block33."
+      },
+      "blocks_block34_": {
+        "name": "blocks.block34."
+      },
+      "blocks_block35_": {
+        "name": "blocks.block35."
+      },
+      "final_layer_": {
+        "name": "final_layer."
+      }
+    }
+  },
+  "ModelMergeCosmos7B": {
+    "display_name": "ModelMergeCosmos7B",
+    "inputs": {
+      "model1": {
+        "name": "model1"
+      },
+      "model2": {
+        "name": "model2"
+      },
+      "pos_embedder_": {
+        "name": "pos_embedder."
+      },
+      "extra_pos_embedder_": {
+        "name": "extra_pos_embedder."
+      },
+      "x_embedder_": {
+        "name": "x_embedder."
+      },
+      "t_embedder_": {
+        "name": "t_embedder."
+      },
+      "affline_norm_": {
+        "name": "affline_norm."
+      },
+      "blocks_block0_": {
+        "name": "blocks.block0."
+      },
+      "blocks_block1_": {
+        "name": "blocks.block1."
+      },
+      "blocks_block2_": {
+        "name": "blocks.block2."
+      },
+      "blocks_block3_": {
+        "name": "blocks.block3."
+      },
+      "blocks_block4_": {
+        "name": "blocks.block4."
+      },
+      "blocks_block5_": {
+        "name": "blocks.block5."
+      },
+      "blocks_block6_": {
+        "name": "blocks.block6."
+      },
+      "blocks_block7_": {
+        "name": "blocks.block7."
+      },
+      "blocks_block8_": {
+        "name": "blocks.block8."
+      },
+      "blocks_block9_": {
+        "name": "blocks.block9."
+      },
+      "blocks_block10_": {
+        "name": "blocks.block10."
+      },
+      "blocks_block11_": {
+        "name": "blocks.block11."
+      },
+      "blocks_block12_": {
+        "name": "blocks.block12."
+      },
+      "blocks_block13_": {
+        "name": "blocks.block13."
+      },
+      "blocks_block14_": {
+        "name": "blocks.block14."
+      },
+      "blocks_block15_": {
+        "name": "blocks.block15."
+      },
+      "blocks_block16_": {
+        "name": "blocks.block16."
+      },
+      "blocks_block17_": {
+        "name": "blocks.block17."
+      },
+      "blocks_block18_": {
+        "name": "blocks.block18."
+      },
+      "blocks_block19_": {
+        "name": "blocks.block19."
+      },
+      "blocks_block20_": {
+        "name": "blocks.block20."
+      },
+      "blocks_block21_": {
+        "name": "blocks.block21."
+      },
+      "blocks_block22_": {
+        "name": "blocks.block22."
+      },
+      "blocks_block23_": {
+        "name": "blocks.block23."
+      },
+      "blocks_block24_": {
+        "name": "blocks.block24."
+      },
+      "blocks_block25_": {
+        "name": "blocks.block25."
+      },
+      "blocks_block26_": {
+        "name": "blocks.block26."
+      },
+      "blocks_block27_": {
+        "name": "blocks.block27."
+      },
+      "final_layer_": {
+        "name": "final_layer."
       }
     }
   },
@@ -4308,29 +4489,31 @@
       "model_file": {
         "name": "model_file"
       },
-      "show_grid": {
-        "name": "show_grid"
-      },
-      "camera_type": {
-        "name": "camera_type"
-      },
-      "view": {
-        "name": "view"
-      },
       "material": {
         "name": "material"
-      },
-      "bg_color": {
-        "name": "bg_color"
-      },
-      "light_intensity": {
-        "name": "light_intensity"
       },
       "up_direction": {
         "name": "up_direction"
       },
-      "fov": {
-        "name": "fov"
+      "image": {
+        "name": "image"
+      }
+    }
+  },
+  "Preview3DAnimation": {
+    "display_name": "Preview 3D - Animation",
+    "inputs": {
+      "model_file": {
+        "name": "model_file"
+      },
+      "material": {
+        "name": "material"
+      },
+      "up_direction": {
+        "name": "up_direction"
+      },
+      "image": {
+        "name": "image"
       }
     }
   },
@@ -4339,6 +4522,9 @@
     "inputs": {
       "audio": {
         "name": "audio"
+      },
+      "audioUI": {
+        "name": "audioUI"
       }
     }
   },
@@ -4356,6 +4542,9 @@
     "inputs": {
       "noise_seed": {
         "name": "noise_seed"
+      },
+      "control_after_generate": {
+        "name": "control after generate"
       }
     }
   },
@@ -4378,6 +4567,20 @@
       },
       "batch_size": {
         "name": "batch_size"
+      }
+    }
+  },
+  "RenormCFG": {
+    "display_name": "RenormCFG",
+    "inputs": {
+      "model": {
+        "name": "model"
+      },
+      "cfg_trunc": {
+        "name": "cfg_trunc"
+      },
+      "renorm_cfg": {
+        "name": "renorm_cfg"
       }
     }
   },
@@ -4443,6 +4646,9 @@
       },
       "latent_image": {
         "name": "latent_image"
+      },
+      "control_after_generate": {
+        "name": "control after generate"
       }
     },
     "outputs": {
@@ -4676,6 +4882,9 @@
       },
       "filename_prefix": {
         "name": "filename_prefix"
+      },
+      "audioUI": {
+        "name": "audioUI"
       }
     }
   },
@@ -4709,6 +4918,27 @@
       },
       "filename_prefix": {
         "name": "filename_prefix"
+      }
+    }
+  },
+  "SaveWEBM": {
+    "display_name": "SaveWEBM",
+    "inputs": {
+      "images": {
+        "name": "images"
+      },
+      "filename_prefix": {
+        "name": "filename_prefix"
+      },
+      "codec": {
+        "name": "codec"
+      },
+      "fps": {
+        "name": "fps"
+      },
+      "crf": {
+        "name": "crf",
+        "tooltip": "Higher crf means lower quality with a smaller file size, lower crf means higher quality higher filesize."
       }
     }
   },
@@ -5543,6 +5773,49 @@
       }
     }
   },
+  "WanImageToVideo": {
+    "display_name": "WanImageToVideo",
+    "inputs": {
+      "positive": {
+        "name": "positive"
+      },
+      "negative": {
+        "name": "negative"
+      },
+      "vae": {
+        "name": "vae"
+      },
+      "width": {
+        "name": "width"
+      },
+      "height": {
+        "name": "height"
+      },
+      "length": {
+        "name": "length"
+      },
+      "batch_size": {
+        "name": "batch_size"
+      },
+      "clip_vision_output": {
+        "name": "clip_vision_output"
+      },
+      "start_image": {
+        "name": "start_image"
+      }
+    },
+    "outputs": {
+      "0": {
+        "name": "positive"
+      },
+      "1": {
+        "name": "negative"
+      },
+      "2": {
+        "name": "latent"
+      }
+    }
+  },
   "WebcamCapture": {
     "display_name": "Webcam Capture",
     "inputs": {
@@ -5557,7 +5830,8 @@
       },
       "capture_on_queue": {
         "name": "capture_on_queue"
-      }
+      },
+      "waiting for camera___": {}
     }
   }
 }

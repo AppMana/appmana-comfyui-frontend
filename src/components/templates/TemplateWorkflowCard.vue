@@ -1,38 +1,47 @@
 <template>
-  <Card :data-testid="`template-workflow-${template.name}`" class="w-64">
+  <Card
+    ref="cardRef"
+    :data-testid="`template-workflow-${template.name}`"
+    class="w-64 template-card rounded-2xl overflow-hidden cursor-pointer shadow-[0_10px_15px_-3px_rgba(0,0,0,0.08),0_4px_6px_-4px_rgba(0,0,0,0.05)]"
+    :pt="{
+      body: { class: 'p-0' }
+    }"
+    @click="$emit('loadWorkflow', template.name)"
+  >
     <template #header>
       <div class="flex items-center justify-center">
-        <div class="relative overflow-hidden rounded-t-lg cursor-pointer">
+        <div class="relative overflow-hidden rounded-t-lg">
           <template v-if="template.mediaType === 'audio'">
-            <div class="w-64 h-64 flex items-center justify-center p-4 z-20">
-              <audio
-                controls
-                class="w-full relative z-20"
-                :src="thumbnailSrc"
-                @error="imageError = true"
-                @click.stop
-              />
-            </div>
+            <AudioThumbnail :src="baseThumbnailSrc" />
+          </template>
+          <template v-else-if="template.thumbnailVariant === 'compareSlider'">
+            <CompareSliderThumbnail
+              :base-image-src="baseThumbnailSrc"
+              :overlay-image-src="overlayThumbnailSrc"
+              :alt="title"
+              :is-hovered="isHovered"
+            />
+          </template>
+          <template v-else-if="template.thumbnailVariant === 'hoverDissolve'">
+            <HoverDissolveThumbnail
+              :base-image-src="baseThumbnailSrc"
+              :overlay-image-src="overlayThumbnailSrc"
+              :alt="title"
+              :is-hovered="isHovered"
+            />
           </template>
           <template v-else>
-            <img
-              v-if="!imageError"
-              :src="thumbnailSrc"
+            <DefaultThumbnail
+              :src="baseThumbnailSrc"
               :alt="title"
-              class="w-64 h-64 rounded-t-lg object-cover thumbnail"
-              @error="imageError = true"
+              :is-hovered="isHovered"
+              :hover-zoom="
+                template.thumbnailVariant === 'zoomHover'
+                  ? UPSCALE_ZOOM_SCALE
+                  : DEFAULT_ZOOM_SCALE
+              "
             />
-            <div v-else class="w-64 h-64 content-center text-center">
-              <i class="pi pi-file" style="font-size: 4rem"></i>
-            </div>
           </template>
-          <a @click="$emit('loadWorkflow', template.name)">
-            <div
-              class="absolute top-0 left-0 w-64 h-64 overflow-hidden opacity-0 transition duration-300 ease-in-out hover:opacity-100 bg-opacity-50 bg-black flex items-center justify-center z-10"
-            >
-              <i class="pi pi-play-circle" style="color: white"></i>
-            </div>
-          </a>
           <ProgressSpinner
             v-if="loading"
             class="absolute inset-0 z-1 w-3/12 h-full"
@@ -40,22 +49,44 @@
         </div>
       </div>
     </template>
-    <template #subtitle>
-      <div class="text-center">
-        {{ title }}
+    <template #content>
+      <div class="flex items-center px-4 py-3">
+        <div class="flex-1">
+          <h3
+            class="line-clamp-1 text-lg font-normal text-surface-900 dark:text-surface-100"
+          >
+            {{ title }}
+          </h3>
+          <p class="line-clamp-2 text-sm text-surface-600 dark:text text-muted">
+            {{ template.description.replace(/[-_]/g, ' ') }}
+          </p>
+        </div>
+        <div
+          class="flex md:hidden xl:flex items-center justify-center ml-4 w-10 h-10 rounded-full bg-surface-100"
+        >
+          <i class="pi pi-angle-right text-2xl"></i>
+        </div>
       </div>
     </template>
   </Card>
 </template>
 
 <script setup lang="ts">
+import { useElementHover } from '@vueuse/core'
 import Card from 'primevue/card'
 import ProgressSpinner from 'primevue/progressspinner'
 import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 
+import AudioThumbnail from '@/components/templates/thumbnails/AudioThumbnail.vue'
+import CompareSliderThumbnail from '@/components/templates/thumbnails/CompareSliderThumbnail.vue'
+import DefaultThumbnail from '@/components/templates/thumbnails/DefaultThumbnail.vue'
+import HoverDissolveThumbnail from '@/components/templates/thumbnails/HoverDissolveThumbnail.vue'
 import { TemplateInfo } from '@/types/workflowTemplateTypes'
 import { normalizeI18nKey } from '@/utils/formatUtil'
+
+const UPSCALE_ZOOM_SCALE = 16 // for upscale templates, exaggerate the hover zoom
+const DEFAULT_ZOOM_SCALE = 5
 
 const { sourceModule, categoryTitle, loading, template } = defineProps<{
   sourceModule: string
@@ -66,13 +97,28 @@ const { sourceModule, categoryTitle, loading, template } = defineProps<{
 
 const { t } = useI18n()
 
-const imageError = ref(false)
+const cardRef = ref<HTMLElement | null>(null)
+const isHovered = useElementHover(cardRef)
 
-const thumbnailSrc = computed(() =>
-  sourceModule === 'default'
-    ? `/templates/${template.name}.${template.mediaSubtype}`
-    : `/api/workflow_templates/${sourceModule}/${template.name}.${template.mediaSubtype}`
+const getThumbnailUrl = (index = '') => {
+  const basePath =
+    sourceModule === 'default'
+      ? `/templates/${template.name}`
+      : `/api/workflow_templates/${sourceModule}/${template.name}`
+
+  // For templates from custom nodes, multiple images is not yet supported
+  const indexSuffix = sourceModule === 'default' && index ? `-${index}` : ''
+
+  return `${basePath}${indexSuffix}.${template.mediaSubtype}`
+}
+
+const baseThumbnailSrc = computed(() =>
+  getThumbnailUrl(sourceModule === 'default' ? '1' : '')
 )
+const overlayThumbnailSrc = computed(() =>
+  getThumbnailUrl(sourceModule === 'default' ? '2' : '')
+)
+
 const title = computed(() => {
   return sourceModule === 'default'
     ? t(
@@ -85,10 +131,3 @@ defineEmits<{
   loadWorkflow: [name: string]
 }>()
 </script>
-
-<style lang="css" scoped>
-.p-card {
-  --p-card-body-padding: 10px 0 0 0;
-  overflow: hidden;
-}
-</style>

@@ -1,60 +1,76 @@
 import type { LGraphNode } from '@comfyorg/litegraph'
 import type { IComboWidget } from '@comfyorg/litegraph/dist/types/widgets'
 
-import { addValueControlWidgets } from '@/scripts/widgets'
-import type { ComfyWidgetConstructor } from '@/scripts/widgets'
-import { useWidgetStore } from '@/stores/widgetStore'
-import type { InputSpec } from '@/types/apiTypes'
+import { transformInputSpecV2ToV1 } from '@/schemas/nodeDef/migration'
+import {
+  ComboInputSpec,
+  type InputSpec,
+  isComboInputSpec
+} from '@/schemas/nodeDef/nodeDefSchemaV2'
+import {
+  type ComfyWidgetConstructorV2,
+  addValueControlWidgets
+} from '@/scripts/widgets'
 
 import { useRemoteWidget } from './useRemoteWidget'
 
-export const useComboWidget = () => {
-  const widgetConstructor: ComfyWidgetConstructor = (
-    node: LGraphNode,
-    inputName: string,
-    inputData: InputSpec
-  ) => {
-    const widgetStore = useWidgetStore()
-    const { remote, options } = inputData[1] || {}
-    const defaultValue = widgetStore.getDefaultValue(inputData)
+const getDefaultValue = (inputSpec: ComboInputSpec) => {
+  if (inputSpec.default) return inputSpec.default
+  if (inputSpec.options?.length) return inputSpec.options[0]
+  if (inputSpec.remote) return 'Loading...'
+  return undefined
+}
 
-    const res = {
-      widget: node.addWidget('combo', inputName, defaultValue, () => {}, {
-        values: options ?? inputData[0]
-      }) as IComboWidget
+export const useComboWidget = () => {
+  const widgetConstructor: ComfyWidgetConstructorV2 = (
+    node: LGraphNode,
+    inputSpec: InputSpec
+  ) => {
+    if (!isComboInputSpec(inputSpec)) {
+      throw new Error(`Invalid input data: ${inputSpec}`)
     }
 
-    if (remote) {
+    const comboOptions = inputSpec.options ?? []
+    const defaultValue = getDefaultValue(inputSpec)
+
+    const widget = node.addWidget(
+      'combo',
+      inputSpec.name,
+      defaultValue,
+      () => {},
+      {
+        values: comboOptions
+      }
+    ) as IComboWidget
+
+    if (inputSpec.remote) {
       const remoteWidget = useRemoteWidget({
-        inputData,
+        remoteConfig: inputSpec.remote,
         defaultValue,
         node,
-        widget: res.widget
+        widget
       })
-      if (remote.refresh_button) remoteWidget.addRefreshButton()
+      if (inputSpec.remote.refresh_button) remoteWidget.addRefreshButton()
 
-      const origOptions = res.widget.options
-      res.widget.options = new Proxy(
-        origOptions as Record<string | symbol, any>,
-        {
-          get(target, prop: string | symbol) {
-            if (prop !== 'values') return target[prop]
-            return remoteWidget.getValue()
-          }
+      const origOptions = widget.options
+      widget.options = new Proxy(origOptions as Record<string | symbol, any>, {
+        get(target, prop: string | symbol) {
+          if (prop !== 'values') return target[prop]
+          return remoteWidget.getValue()
         }
-      )
+      })
     }
 
-    if (inputData[1]?.control_after_generate) {
-      res.widget.linkedWidgets = addValueControlWidgets(
+    if (inputSpec.control_after_generate) {
+      widget.linkedWidgets = addValueControlWidgets(
         node,
-        res.widget,
+        widget,
         undefined,
         undefined,
-        inputData
+        transformInputSpecV2ToV1(inputSpec)
       )
     }
-    return res
+    return widget
   }
 
   return widgetConstructor

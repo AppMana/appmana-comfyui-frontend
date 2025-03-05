@@ -118,6 +118,8 @@
     "add": "Добавить",
     "back": "Назад",
     "cancel": "Отмена",
+    "capture": "захват",
+    "choose_file_to_upload": "выберите файл для загрузки",
     "close": "Закрыть",
     "color": "Цвет",
     "comingSoon": "Скоро будет",
@@ -333,6 +335,7 @@
     "scene": "Сцена",
     "showGrid": "Показать сетку",
     "switchCamera": "Переключить камеру",
+    "switchingMaterialMode": "Переключение режима материала...",
     "upDirection": "Направление Вверх",
     "uploadBackgroundImage": "Загрузить фоновое изображение"
   },
@@ -458,7 +461,6 @@
   "nodeCategories": {
     "3d": "3d",
     "3d_models": "3d_модели",
-    "DevTools": "Инструменты_разработчика",
     "_for_testing": "_для_тестирования",
     "advanced": "расширенный",
     "animation": "анимация",
@@ -475,6 +477,7 @@
     "controlnet": "controlnet",
     "create": "создать",
     "custom_sampling": "пользовательский_семплинг",
+    "debug": "отладка",
     "deprecated": "устаревший",
     "flux": "flux",
     "gligen": "gligen",
@@ -828,8 +831,7 @@
         "esrgan_example": "ESRGAN",
         "hiresfix_esrgan_workflow": "HiresFix ESRGAN Workflow",
         "hiresfix_latent_workflow": "HiresFix Latent Workflow",
-        "latent_upscale_different_prompt_model": "Latent Upscale Different Prompt Model",
-        "upscale": "Увеличение"
+        "latent_upscale_different_prompt_model": "Latent Upscale Different Prompt Model"
       },
       "Video": {
         "hunyuan_video_text_to_video": "Hunyuan Video Text to Video",

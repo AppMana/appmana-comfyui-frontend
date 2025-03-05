@@ -1,7 +1,10 @@
 import type { LGraph } from '@comfyorg/litegraph'
 import { LGraphEventMode } from '@comfyorg/litegraph'
 
-import type { ComfyApiWorkflow, ComfyWorkflowJSON } from '@/types/comfyWorkflow'
+import type {
+  ComfyApiWorkflow,
+  ComfyWorkflowJSON
+} from '@/schemas/comfyWorkflowSchema'
 
 /**
  * Converts the current graph workflow for sending to the API.
@@ -17,7 +20,6 @@ export const graphToPrompt = async (
   for (const node of graph.computeExecutionOrder(false)) {
     const innerNodes = node.getInnerNodes ? node.getInnerNodes() : [node]
     for (const innerNode of innerNodes) {
-      // Don't serialize frontend only nodes but let them make changes
       if (innerNode.isVirtualNode) {
         innerNode.applyToGraph?.()
       }
@@ -76,7 +78,10 @@ export const graphToPrompt = async (
         if (!parent) continue
 
         let link = node.getInputLink(i)
-        while (parent.mode === LGraphEventMode.BYPASS || parent.isVirtualNode) {
+        while (
+          parent?.mode === LGraphEventMode.BYPASS ||
+          parent?.isVirtualNode
+        ) {
           if (!link) break
 
           if (parent.isVirtualNode) {
@@ -95,7 +100,7 @@ export const graphToPrompt = async (
             const indexes = [link.origin_slot].concat(parentInputIndexes)
 
             const matchingIndex = indexes.find(
-              (index) => parent.inputs[index]?.type === input.type
+              (index) => parent?.inputs[index]?.type === input.type
             )
             // No input types match
             if (matchingIndex === undefined) break

@@ -13,6 +13,19 @@ import type { ToastMessageOptions } from 'primevue/toast'
 import { reactive } from 'vue'
 
 import { st } from '@/i18n'
+import {
+  type ComfyWorkflowJSON,
+  type ModelFile,
+  type NodeId,
+  validateComfyWorkflow
+} from '@/schemas/comfyWorkflowSchema'
+import {
+  type ComfyNodeDef as ComfyNodeDefV2,
+  isComboInputSpec,
+  isComfyNodeDef as isComfyNodeDefV2
+} from '@/schemas/nodeDef/nodeDefSchemaV2'
+import type { ComfyNodeDef as ComfyNodeDefV1 } from '@/schemas/nodeDefSchema'
+import { getFromWebmFile } from '@/scripts/metadata/ebml'
 import { useDialogService } from '@/services/dialogService'
 import { useExtensionService } from '@/services/extensionService'
 import { useLitegraphService } from '@/services/litegraphService'
@@ -22,20 +35,19 @@ import { useExecutionStore } from '@/stores/executionStore'
 import { useExtensionStore } from '@/stores/extensionStore'
 import { KeyComboImpl, useKeybindingStore } from '@/stores/keybindingStore'
 import { useModelStore } from '@/stores/modelStore'
-import { SYSTEM_NODE_DEFS, useNodeDefStore } from '@/stores/nodeDefStore'
+import {
+  ComfyNodeDefImpl,
+  SYSTEM_NODE_DEFS,
+  useNodeDefStore
+} from '@/stores/nodeDefStore'
 import { useSettingStore } from '@/stores/settingStore'
 import { useToastStore } from '@/stores/toastStore'
 import { useWidgetStore } from '@/stores/widgetStore'
 import { ComfyWorkflow } from '@/stores/workflowStore'
 import { useColorPaletteStore } from '@/stores/workspace/colorPaletteStore'
 import { useWorkspaceStore } from '@/stores/workspaceStore'
-import type { ComfyNodeDef, BinaryPreview } from '@/types/apiTypes'
+import type { BinaryPreview } from '@/types/apiTypes'
 import type { ComfyExtension, MissingNodeType } from '@/types/comfy'
-import {
-  type ComfyWorkflowJSON,
-  type NodeId,
-  validateComfyWorkflow
-} from '@/types/comfyWorkflow'
 import { ExtensionManager } from '@/types/extensionTypes'
 import { ColorAdjustOptions, adjustColor } from '@/utils/colorUtil'
 import { graphToPrompt } from '@/utils/executionUtil'
@@ -839,10 +851,12 @@ export class ComfyApp {
     this.canvas?.draw(true, true)
   }
 
-  private updateVueAppNodeDefs(defs: Record<string, ComfyNodeDef>) {
+  private updateVueAppNodeDefs(
+    defs: Record<string, ComfyNodeDefV1 & ComfyNodeDefV2>
+  ) {
     // Frontend only nodes registered by custom nodes.
     // Example: https://github.com/rgthree/rgthree-comfy/blob/dd534e5384be8cf0c0fa35865afe2126ba75ac55/src_web/comfyui/fast_groups_bypasser.ts#L10
-    const rawDefs = Object.fromEntries(
+    const rawDefs: Record<string, ComfyNodeDefV1> = Object.fromEntries(
       Object.entries(LiteGraph.registered_node_types).map(([name, node]) => [
         name,
         {
@@ -866,7 +880,7 @@ export class ComfyApp {
     }
 
     const nodeDefStore = useNodeDefStore()
-    const nodeDefArray: ComfyNodeDef[] = Object.values(allNodeDefs)
+    const nodeDefArray: ComfyNodeDefV1[] = Object.values(allNodeDefs)
     useExtensionService().invokeExtensions(
       'beforeRegisterVueAppNodeDefs',
       nodeDefArray,
@@ -875,33 +889,27 @@ export class ComfyApp {
     nodeDefStore.updateNodeDefs(nodeDefArray)
   }
 
-  #translateNodeDefs(defs: Record<string, ComfyNodeDef>) {
-    return Object.fromEntries(
-      Object.entries(defs).map(([name, def]) => [
-        name,
-        {
-          ...def,
-          display_name: st(
-            `nodeDefs.${name}.display_name`,
-            def.display_name ?? def.name
-          ),
-          description: def.description
-            ? st(`nodeDefs.${name}.description`, def.description)
-            : undefined,
-          category: def.category
-            .split('/')
-            .map((category) => st(`nodeCategories.${category}`, category))
-            .join('/')
-        }
-      ])
-    )
-  }
+  async #getNodeDefs(): Promise<Record<string, ComfyNodeDefV1>> {
+    const translateNodeDef = (def: ComfyNodeDefV1): ComfyNodeDefV1 => ({
+      ...def,
+      display_name: st(
+        `nodeDefs.${def.name}.display_name`,
+        def.display_name ?? def.name
+      ),
+      description: def.description
+        ? st(`nodeDefs.${def.name}.description`, def.description)
+        : undefined,
+      category: def.category
+        .split('/')
+        .map((category: string) => st(`nodeCategories.${category}`, category))
+        .join('/')
+    })
 
-  async #getNodeDefs() {
-    return this.#translateNodeDefs(
+    return _.mapValues(
       await api.getNodeDefs({
         validate: useSettingStore().get('Comfy.Validation.NodeDefs')
-      })
+      }),
+      (def) => translateNodeDef(def)
     )
   }
 
@@ -919,7 +927,7 @@ export class ComfyApp {
   }
 
   /**
-   * Remove the impl after groupNode jest tests are removed.
+   * Remove the impl after groupNode unit tests are removed.
    * @deprecated Use useWidgetStore().getWidgetType instead
    */
   getWidgetType(inputData, inputName: string) {
@@ -927,8 +935,6 @@ export class ComfyApp {
 
     if (Array.isArray(type)) {
       return 'COMBO'
-    } else if (`${type}:${inputName}` in this.widgets) {
-      return `${type}:${inputName}`
     } else if (type in this.widgets) {
       return type
     } else {
@@ -936,11 +942,11 @@ export class ComfyApp {
     }
   }
 
-  async registerNodeDef(nodeId: string, nodeData: ComfyNodeDef) {
-    return await useLitegraphService().registerNodeDef(nodeId, nodeData)
+  async registerNodeDef(nodeId: string, nodeDef: ComfyNodeDefV1) {
+    return await useLitegraphService().registerNodeDef(nodeId, nodeDef)
   }
 
-  async registerNodesFromDefs(defs: Record<string, ComfyNodeDef>) {
+  async registerNodesFromDefs(defs: Record<string, ComfyNodeDefV1>) {
     await useExtensionService().invokeExtensionsAsync('addCustomNodeDefs', defs)
 
     // Register a node for each definition
@@ -1042,13 +1048,16 @@ export class ComfyApp {
     useWorkflowService().beforeLoadNewGraph()
 
     const missingNodeTypes: MissingNodeType[] = []
-    const missingModels = []
+    const missingModels: ModelFile[] = []
     await useExtensionService().invokeExtensionsAsync(
       'beforeConfigureGraph',
       graphData,
       missingNodeTypes
       // TODO: missingModels
     )
+
+    const embeddedModels: ModelFile[] = []
+
     for (let n of graphData.nodes) {
       // Patch T2IAdapterLoader to ControlNetLoader since they are the same node now
       if (n.type == 'T2IAdapterLoader') n.type = 'ControlNetLoader'
@@ -1061,13 +1070,28 @@ export class ComfyApp {
         missingNodeTypes.push(n.type)
         n.type = sanitizeNodeName(n.type)
       }
+
+      // Collect models metadata from node
+      if (n.properties?.models?.length)
+        embeddedModels.push(...n.properties.models)
     }
+
+    // Merge models from the workflow's root-level 'models' field
+    const workflowSchemaV1Models = graphData.models
+    if (workflowSchemaV1Models?.length)
+      embeddedModels.push(...workflowSchemaV1Models)
+
+    const getModelKey = (model: ModelFile) => model.url || model.hash
+    const validModels = embeddedModels.filter(getModelKey)
+    const uniqueModels = _.uniqBy(validModels, getModelKey)
+
     if (
-      graphData.models &&
+      uniqueModels.length &&
       useSettingStore().get('Comfy.Workflow.ShowMissingModelsWarning')
     ) {
       const modelStore = useModelStore()
-      for (const m of graphData.models) {
+      await modelStore.loadModelFolders()
+      for (const m of uniqueModels) {
         const modelFolder = await modelStore.getLoadedModelFolder(m.directory)
         // @ts-expect-error
         if (!modelFolder) m.directory_invalid = true
@@ -1389,6 +1413,15 @@ export class ComfyApp {
       } else {
         this.showErrorOnFileLoad(file)
       }
+    } else if (file.type === 'video/webm') {
+      const webmInfo = await getFromWebmFile(file)
+      if (webmInfo.workflow) {
+        this.loadGraphData(webmInfo.workflow, true, true, fileName)
+      } else if (webmInfo.prompt) {
+        this.loadApiJson(webmInfo.prompt, fileName)
+      } else {
+        this.showErrorOnFileLoad(file)
+      }
     } else if (
       file.type === 'application/json' ||
       file.name?.endsWith('.json')
@@ -1565,21 +1598,22 @@ export class ComfyApp {
     for (const nodeId in defs) {
       this.registerNodeDef(nodeId, defs[nodeId])
     }
-    for (let nodeNum in this.graph.nodes) {
-      const node = this.graph.nodes[nodeNum]
+    for (const node of this.graph.nodes) {
       const def = defs[node.type]
       // Allow primitive nodes to handle refresh
       node.refreshComboInNode?.(defs)
 
-      if (!def) continue
+      if (!def?.input) continue
 
-      for (const widgetNum in node.widgets) {
-        const widget = node.widgets[widgetNum]
-        if (
-          widget.type == 'combo' &&
-          def['input']['required'][widget.name] !== undefined
-        ) {
-          widget.options.values = def['input']['required'][widget.name][0]
+      for (const widget of node.widgets) {
+        if (widget.type === 'combo') {
+          if (def['input'].required?.[widget.name] !== undefined) {
+            // @ts-expect-error InputSpec is not typed correctly
+            widget.options.values = def['input'].required[widget.name][0]
+          } else if (def['input'].optional?.[widget.name] !== undefined) {
+            // @ts-expect-error InputSpec is not typed correctly
+            widget.options.values = def['input'].optional[widget.name][0]
+          }
         }
       }
     }

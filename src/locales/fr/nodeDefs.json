@@ -252,6 +252,29 @@
       }
     }
   },
+  "CLIPTextEncodeLumina2": {
+    "description": "Encode une invite système et une invite utilisateur à l'aide d'un modèle CLIP en une intégration qui peut être utilisée pour guider le modèle de diffusion vers la génération d'images spécifiques.",
+    "display_name": "CLIP Text Encode pour Lumina2",
+    "inputs": {
+      "clip": {
+        "name": "clip",
+        "tooltip": "Le modèle CLIP utilisé pour encoder le texte."
+      },
+      "system_prompt": {
+        "name": "system_prompt",
+        "tooltip": "Lumina2 propose deux types d'invites système : Supérieur : Vous êtes un assistant conçu pour générer des images supérieures avec le degré supérieur d'alignement image-texte basé sur des invites textuelles ou des invites utilisateur. Alignement : Vous êtes un assistant conçu pour générer des images de haute qualité avec le plus haut degré d'alignement image-texte basé sur des invites textuelles."
+      },
+      "user_prompt": {
+        "name": "user_prompt",
+        "tooltip": "Le texte à encoder."
+      }
+    },
+    "outputs": {
+      "0": {
+        "tooltip": "Une condition contenant le texte intégré utilisé pour guider le modèle de diffusion."
+      }
+    }
+  },
   "CLIPTextEncodePixArtAlpha": {
     "description": "Encode le texte et définit la condition de résolution pour PixArt Alpha. Ne s'applique pas à PixArt Sigma.",
     "display_name": "CLIPTextEncodePixArtAlpha",
@@ -563,6 +586,35 @@
       },
       "y": {
         "name": "y"
+      }
+    }
+  },
+  "ConditioningSetAreaPercentageVideo": {
+    "display_name": "Pourcentage de la zone de conditionnement vidéo",
+    "inputs": {
+      "conditioning": {
+        "name": "conditionnement"
+      },
+      "height": {
+        "name": "hauteur"
+      },
+      "strength": {
+        "name": "force"
+      },
+      "temporal": {
+        "name": "temporel"
+      },
+      "width": {
+        "name": "largeur"
+      },
+      "x": {
+        "name": "x"
+      },
+      "y": {
+        "name": "y"
+      },
+      "z": {
+        "name": "z"
       }
     }
   },
@@ -1048,143 +1100,6 @@
       }
     }
   },
-  "DevToolsDeprecatedNode": {
-    "description": "Un nœud obsolète",
-    "display_name": "Nœud obsolète"
-  },
-  "DevToolsErrorRaiseNode": {
-    "description": "Lever une erreur à des fins de développement",
-    "display_name": "Lever une erreur"
-  },
-  "DevToolsErrorRaiseNodeWithMessage": {
-    "description": "Lever une erreur avec un message à des fins de développement",
-    "display_name": "Lever une erreur avec un message",
-    "inputs": {
-      "message": {
-        "name": "message"
-      }
-    }
-  },
-  "DevToolsExperimentalNode": {
-    "description": "Un nœud expérimental",
-    "display_name": "Nœud expérimental"
-  },
-  "DevToolsLongComboDropdown": {
-    "description": "Un long combo déroulant",
-    "display_name": "Long Combo Dropdown",
-    "inputs": {
-      "option": {
-        "name": "option"
-      }
-    }
-  },
-  "DevToolsNodeWithForceInput": {
-    "description": "Un nœud avec une entrée forcée",
-    "display_name": "Nœud avec entrée forcée",
-    "inputs": {
-      "float_input": {
-        "name": "float_input"
-      },
-      "int_input": {
-        "name": "int_input"
-      },
-      "int_input_widget": {
-        "name": "int_input_widget"
-      }
-    }
-  },
-  "DevToolsNodeWithOnlyOptionalInput": {
-    "description": "Un nœud avec seulement une entrée optionnelle",
-    "display_name": "Nœud avec seulement une entrée optionnelle",
-    "inputs": {
-      "clip": {
-        "name": "clip"
-      },
-      "text": {
-        "name": "text"
-      }
-    }
-  },
-  "DevToolsNodeWithOptionalInput": {
-    "description": "Un nœud avec une entrée optionnelle",
-    "display_name": "Nœud avec entrée optionnelle",
-    "inputs": {
-      "optional_input": {
-        "name": "optional_input"
-      },
-      "required_input": {
-        "name": "required_input"
-      }
-    }
-  },
-  "DevToolsNodeWithOutputList": {
-    "description": "Un nœud avec une liste de sortie",
-    "display_name": "Nœud avec liste de sortie",
-    "outputs": {
-      "0": {
-        "name": "SORTIE ENTIER"
-      },
-      "1": {
-        "name": "SORTIE LISTE ENTIER"
-      }
-    }
-  },
-  "DevToolsNodeWithSeedInput": {
-    "description": "Un nœud avec une entrée de graine",
-    "display_name": "Nœud Avec Entrée de Graine",
-    "inputs": {
-      "seed": {
-        "name": "graine"
-      }
-    }
-  },
-  "DevToolsNodeWithStringInput": {
-    "description": "Un nœud avec une entrée de chaîne",
-    "display_name": "Nœud avec entrée de chaîne",
-    "inputs": {
-      "string_input": {
-        "name": "string_input"
-      }
-    }
-  },
-  "DevToolsNodeWithUnionInput": {
-    "description": "Un nœud avec une entrée d'union",
-    "display_name": "Nœud avec entrée d'union",
-    "inputs": {
-      "int_input": {
-        "name": "int_input"
-      },
-      "string_input": {
-        "name": "string_input"
-      },
-      "string_or_int_input": {
-        "name": "string_or_int_input"
-      }
-    }
-  },
-  "DevToolsObjectPatchNode": {
-    "description": "Un nœud qui applique un patch d'objet",
-    "display_name": "Nœud de Patch d'Objet",
-    "inputs": {
-      "dummy_float": {
-        "name": "flottant_factice"
-      },
-      "model": {
-        "name": "modèle"
-      },
-      "target_module": {
-        "name": "module_cible"
-      }
-    }
-  },
-  "DevToolsSimpleSlider": {
-    "display_name": "Curseur simple",
-    "inputs": {
-      "value": {
-        "name": "valeur"
-      }
-    }
-  },
   "DiffControlNetLoader": {
     "display_name": "Charger le modèle ControlNet (diff)",
     "inputs": {
@@ -1429,6 +1344,15 @@
     "inputs": {
       "sigmas": {
         "name": "sigmas"
+      }
+    }
+  },
+  "FluxDisableGuidance": {
+    "description": "Ce nœud désactive complètement l'intégration de guidage sur les modèles Flux et similaires à Flux",
+    "display_name": "FluxDisableGuidance",
+    "inputs": {
+      "conditioning": {
+        "name": "conditionnement"
       }
     }
   },
@@ -1939,6 +1863,9 @@
         "name": "cfg",
         "tooltip": "L'échelle de guidage sans classificateur équilibre la créativité et l'adhérence à l'invite. Des valeurs plus élevées donnent des images correspondant plus étroitement à l'invite, cependant des valeurs trop élevées auront un impact négatif sur la qualité."
       },
+      "control_after_generate": {
+        "name": "contrôle après génération"
+      },
       "denoise": {
         "name": "denoise",
         "tooltip": "La quantité de débruitage appliquée, des valeurs plus faibles maintiendront la structure de l'image initiale permettant un échantillonnage d'image à image."
@@ -1990,6 +1917,9 @@
       },
       "cfg": {
         "name": "cfg"
+      },
+      "control_after_generate": {
+        "name": "contrôle après génération"
       },
       "end_at_step": {
         "name": "end_at_step"
@@ -2425,14 +2355,7 @@
   "Load3D": {
     "display_name": "Charger 3D",
     "inputs": {
-      "bg_color": {
-        "name": "couleur_de_fond"
-      },
-      "camera_type": {
-        "name": "type_de_caméra"
-      },
-      "fov": {
-        "name": "fov"
+      "clear": {
       },
       "height": {
         "name": "hauteur"
@@ -2440,23 +2363,16 @@
       "image": {
         "name": "image"
       },
-      "light_intensity": {
-        "name": "intensité_de_lumière"
-      },
       "material": {
         "name": "matériel"
       },
       "model_file": {
         "name": "fichier_modèle"
       },
-      "show_grid": {
-        "name": "afficher_grille"
-      },
       "up_direction": {
         "name": "direction_haut"
       },
-      "view": {
-        "name": "vue"
+      "upload 3d model": {
       },
       "width": {
         "name": "largeur"
@@ -2477,17 +2393,7 @@
   "Load3DAnimation": {
     "display_name": "Charger 3D - Animation",
     "inputs": {
-      "animation_speed": {
-        "name": "vitesse_animation"
-      },
-      "bg_color": {
-        "name": "couleur_de_fond"
-      },
-      "camera_type": {
-        "name": "type_de_caméra"
-      },
-      "fov": {
-        "name": "fov"
+      "clear": {
       },
       "height": {
         "name": "hauteur"
@@ -2495,23 +2401,16 @@
       "image": {
         "name": "image"
       },
-      "light_intensity": {
-        "name": "intensité_de_lumière"
-      },
       "material": {
         "name": "matériel"
       },
       "model_file": {
         "name": "fichier_modèle"
       },
-      "show_grid": {
-        "name": "afficher_grille"
-      },
       "up_direction": {
         "name": "direction_haut"
       },
-      "view": {
-        "name": "vue"
+      "upload 3d model": {
       },
       "width": {
         "name": "largeur"
@@ -2534,6 +2433,12 @@
     "inputs": {
       "audio": {
         "name": "audio"
+      },
+      "audioUI": {
+        "name": "audioUI"
+      },
+      "upload": {
+        "name": "choisissez le fichier à télécharger"
       }
     }
   },
@@ -2542,6 +2447,9 @@
     "inputs": {
       "image": {
         "name": "image"
+      },
+      "upload": {
+        "name": "choisissez le fichier à télécharger"
       }
     }
   },
@@ -2553,6 +2461,23 @@
       },
       "image": {
         "name": "image"
+      },
+      "upload": {
+        "name": "choisissez le fichier à télécharger"
+      }
+    }
+  },
+  "LoadImageOutput": {
+    "description": "Chargez une image à partir du dossier de sortie. Lorsque le bouton de rafraîchissement est cliqué, le nœud mettra à jour la liste des images et sélectionnera automatiquement la première image, permettant une itération facile.",
+    "display_name": "Charger l'image (à partir des sorties)",
+    "inputs": {
+      "image": {
+        "name": "image"
+      },
+      "refresh": {
+      },
+      "upload": {
+        "name": "choisissez le fichier à télécharger"
       }
     }
   },
@@ -2682,6 +2607,17 @@
     "inputs": {
       "mask": {
         "name": "masque"
+      }
+    }
+  },
+  "ModelComputeDtype": {
+    "display_name": "ModelComputeDtype",
+    "inputs": {
+      "dtype": {
+        "name": "dtype"
+      },
+      "model": {
+        "name": "modèle"
       }
     }
   },
@@ -2853,6 +2789,256 @@
       },
       "out": {
         "name": "sortie"
+      }
+    }
+  },
+  "ModelMergeCosmos14B": {
+    "display_name": "ModelMergeCosmos14B",
+    "inputs": {
+      "affline_norm_": {
+        "name": "affline_norm."
+      },
+      "blocks_block0_": {
+        "name": "blocks.block0."
+      },
+      "blocks_block10_": {
+        "name": "blocks.block10."
+      },
+      "blocks_block11_": {
+        "name": "blocks.block11."
+      },
+      "blocks_block12_": {
+        "name": "blocks.block12."
+      },
+      "blocks_block13_": {
+        "name": "blocks.block13."
+      },
+      "blocks_block14_": {
+        "name": "blocks.block14."
+      },
+      "blocks_block15_": {
+        "name": "blocks.block15."
+      },
+      "blocks_block16_": {
+        "name": "blocks.block16."
+      },
+      "blocks_block17_": {
+        "name": "blocks.block17."
+      },
+      "blocks_block18_": {
+        "name": "blocks.block18."
+      },
+      "blocks_block19_": {
+        "name": "blocks.block19."
+      },
+      "blocks_block1_": {
+        "name": "blocks.block1."
+      },
+      "blocks_block20_": {
+        "name": "blocks.block20."
+      },
+      "blocks_block21_": {
+        "name": "blocks.block21."
+      },
+      "blocks_block22_": {
+        "name": "blocks.block22."
+      },
+      "blocks_block23_": {
+        "name": "blocks.block23."
+      },
+      "blocks_block24_": {
+        "name": "blocks.block24."
+      },
+      "blocks_block25_": {
+        "name": "blocks.block25."
+      },
+      "blocks_block26_": {
+        "name": "blocks.block26."
+      },
+      "blocks_block27_": {
+        "name": "blocks.block27."
+      },
+      "blocks_block28_": {
+        "name": "blocks.block28."
+      },
+      "blocks_block29_": {
+        "name": "blocks.block29."
+      },
+      "blocks_block2_": {
+        "name": "blocks.block2."
+      },
+      "blocks_block30_": {
+        "name": "blocks.block30."
+      },
+      "blocks_block31_": {
+        "name": "blocks.block31."
+      },
+      "blocks_block32_": {
+        "name": "blocks.block32."
+      },
+      "blocks_block33_": {
+        "name": "blocks.block33."
+      },
+      "blocks_block34_": {
+        "name": "blocks.block34."
+      },
+      "blocks_block35_": {
+        "name": "blocks.block35."
+      },
+      "blocks_block3_": {
+        "name": "blocks.block3."
+      },
+      "blocks_block4_": {
+        "name": "blocks.block4."
+      },
+      "blocks_block5_": {
+        "name": "blocks.block5."
+      },
+      "blocks_block6_": {
+        "name": "blocks.block6."
+      },
+      "blocks_block7_": {
+        "name": "blocks.block7."
+      },
+      "blocks_block8_": {
+        "name": "blocks.block8."
+      },
+      "blocks_block9_": {
+        "name": "blocks.block9."
+      },
+      "extra_pos_embedder_": {
+        "name": "extra_pos_embedder."
+      },
+      "final_layer_": {
+        "name": "couche_finale."
+      },
+      "model1": {
+        "name": "modèle1"
+      },
+      "model2": {
+        "name": "modèle2"
+      },
+      "pos_embedder_": {
+        "name": "pos_embedder."
+      },
+      "t_embedder_": {
+        "name": "t_embedder."
+      },
+      "x_embedder_": {
+        "name": "x_embedder."
+      }
+    }
+  },
+  "ModelMergeCosmos7B": {
+    "display_name": "ModelMergeCosmos7B",
+    "inputs": {
+      "affline_norm_": {
+        "name": "affline_norm."
+      },
+      "blocks_block0_": {
+        "name": "blocks.block0."
+      },
+      "blocks_block10_": {
+        "name": "blocks.block10."
+      },
+      "blocks_block11_": {
+        "name": "blocks.block11."
+      },
+      "blocks_block12_": {
+        "name": "blocks.block12."
+      },
+      "blocks_block13_": {
+        "name": "blocks.block13."
+      },
+      "blocks_block14_": {
+        "name": "blocks.block14."
+      },
+      "blocks_block15_": {
+        "name": "blocks.block15."
+      },
+      "blocks_block16_": {
+        "name": "blocks.block16."
+      },
+      "blocks_block17_": {
+        "name": "blocks.block17."
+      },
+      "blocks_block18_": {
+        "name": "blocks.block18."
+      },
+      "blocks_block19_": {
+        "name": "blocks.block19."
+      },
+      "blocks_block1_": {
+        "name": "blocks.block1."
+      },
+      "blocks_block20_": {
+        "name": "blocks.block20."
+      },
+      "blocks_block21_": {
+        "name": "blocks.block21."
+      },
+      "blocks_block22_": {
+        "name": "blocks.block22."
+      },
+      "blocks_block23_": {
+        "name": "blocks.block23."
+      },
+      "blocks_block24_": {
+        "name": "blocks.block24."
+      },
+      "blocks_block25_": {
+        "name": "blocks.block25."
+      },
+      "blocks_block26_": {
+        "name": "blocks.block26."
+      },
+      "blocks_block27_": {
+        "name": "blocks.block27."
+      },
+      "blocks_block2_": {
+        "name": "blocks.block2."
+      },
+      "blocks_block3_": {
+        "name": "blocks.block3."
+      },
+      "blocks_block4_": {
+        "name": "blocks.block4."
+      },
+      "blocks_block5_": {
+        "name": "blocks.block5."
+      },
+      "blocks_block6_": {
+        "name": "blocks.block6."
+      },
+      "blocks_block7_": {
+        "name": "blocks.block7."
+      },
+      "blocks_block8_": {
+        "name": "blocks.block8."
+      },
+      "blocks_block9_": {
+        "name": "blocks.block9."
+      },
+      "extra_pos_embedder_": {
+        "name": "extra_pos_embedder."
+      },
+      "final_layer_": {
+        "name": "final_layer."
+      },
+      "model1": {
+        "name": "model1"
+      },
+      "model2": {
+        "name": "model2"
+      },
+      "pos_embedder_": {
+        "name": "pos_embedder."
+      },
+      "t_embedder_": {
+        "name": "t_embedder."
+      },
+      "x_embedder_": {
+        "name": "x_embedder."
       }
     }
   },
@@ -4305,17 +4491,8 @@
   "Preview3D": {
     "display_name": "Aperçu 3D",
     "inputs": {
-      "bg_color": {
-        "name": "couleur_de_fond"
-      },
-      "camera_type": {
-        "name": "type_de_camera"
-      },
-      "fov": {
-        "name": "fov"
-      },
-      "light_intensity": {
-        "name": "intensité_de_lumière"
+      "image": {
+        "name": "image"
       },
       "material": {
         "name": "matériel"
@@ -4323,14 +4500,25 @@
       "model_file": {
         "name": "fichier_modèle"
       },
-      "show_grid": {
-        "name": "afficher_grille"
+      "up_direction": {
+        "name": "direction_haut"
+      }
+    }
+  },
+  "Preview3DAnimation": {
+    "display_name": "Aperçu 3D - Animation",
+    "inputs": {
+      "image": {
+        "name": "image"
+      },
+      "material": {
+        "name": "matériel"
+      },
+      "model_file": {
+        "name": "fichier_modèle"
       },
       "up_direction": {
         "name": "direction_haut"
-      },
-      "view": {
-        "name": "vue"
       }
     }
   },
@@ -4339,6 +4527,9 @@
     "inputs": {
       "audio": {
         "name": "audio"
+      },
+      "audioUI": {
+        "name": "audioUI"
       }
     }
   },
@@ -4354,6 +4545,9 @@
   "RandomNoise": {
     "display_name": "BruitAléatoire",
     "inputs": {
+      "control_after_generate": {
+        "name": "contrôle après génération"
+      },
       "noise_seed": {
         "name": "graine_de_bruit"
       }
@@ -4378,6 +4572,20 @@
       },
       "latents": {
         "name": "latents"
+      }
+    }
+  },
+  "RenormCFG": {
+    "display_name": "RenormCFG",
+    "inputs": {
+      "cfg_trunc": {
+        "name": "cfg_trunc"
+      },
+      "model": {
+        "name": "modèle"
+      },
+      "renorm_cfg": {
+        "name": "renorm_cfg"
       }
     }
   },
@@ -4547,6 +4755,9 @@
       },
       "cfg": {
         "name": "cfg"
+      },
+      "control_after_generate": {
+        "name": "contrôle après génération"
       },
       "latent_image": {
         "name": "image_latente"
@@ -4799,6 +5010,9 @@
       "audio": {
         "name": "audio"
       },
+      "audioUI": {
+        "name": "audioUI"
+      },
       "filename_prefix": {
         "name": "préfixe_du_nom_de_fichier"
       }
@@ -4834,6 +5048,27 @@
       },
       "samples": {
         "name": "échantillons"
+      }
+    }
+  },
+  "SaveWEBM": {
+    "display_name": "EnregistrerWEBM",
+    "inputs": {
+      "codec": {
+        "name": "codec"
+      },
+      "crf": {
+        "name": "crf",
+        "tooltip": "Un crf plus élevé signifie une qualité inférieure avec une taille de fichier plus petite, un crf plus bas signifie une qualité supérieure avec une taille de fichier plus grande."
+      },
+      "filename_prefix": {
+        "name": "préfixe_de_nom_de_fichier"
+      },
+      "fps": {
+        "name": "fps"
+      },
+      "images": {
+        "name": "images"
       }
     }
   },
@@ -5518,6 +5753,49 @@
       }
     }
   },
+  "WanImageToVideo": {
+    "display_name": "WanImageVersVidéo",
+    "inputs": {
+      "batch_size": {
+        "name": "taille_du_lot"
+      },
+      "clip_vision_output": {
+        "name": "sortie_vision_clip"
+      },
+      "height": {
+        "name": "hauteur"
+      },
+      "length": {
+        "name": "longueur"
+      },
+      "negative": {
+        "name": "négatif"
+      },
+      "positive": {
+        "name": "positive"
+      },
+      "start_image": {
+        "name": "image_de_départ"
+      },
+      "vae": {
+        "name": "vae"
+      },
+      "width": {
+        "name": "largeur"
+      }
+    },
+    "outputs": {
+      "0": {
+        "name": "positive"
+      },
+      "1": {
+        "name": "négatif"
+      },
+      "2": {
+        "name": "latent"
+      }
+    }
+  },
   "WebcamCapture": {
     "display_name": "Capture Webcam",
     "inputs": {
@@ -5529,6 +5807,8 @@
       },
       "image": {
         "name": "image"
+      },
+      "waiting for camera___": {
       },
       "width": {
         "name": "largeur"

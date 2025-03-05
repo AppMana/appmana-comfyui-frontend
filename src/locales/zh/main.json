@@ -118,6 +118,8 @@
     "add": "添加",
     "back": "返回",
     "cancel": "取消",
+    "capture": "捕获",
+    "choose_file_to_upload": "选择要上传的文件",
     "close": "关闭",
     "color": "颜色",
     "comingSoon": "即将推出",
@@ -333,6 +335,7 @@
     "scene": "场景",
     "showGrid": "显示网格",
     "switchCamera": "切换摄像头",
+    "switchingMaterialMode": "切换材质模式中...",
     "upDirection": "向上方向",
     "uploadBackgroundImage": "上传背景图片"
   },
@@ -458,7 +461,6 @@
   "nodeCategories": {
     "3d": "3d",
     "3d_models": "3D模型",
-    "DevTools": "开发工具",
     "_for_testing": "_用于测试",
     "advanced": "高级",
     "animation": "动画",
@@ -475,6 +477,7 @@
     "controlnet": "ControlNet",
     "create": "创建",
     "custom_sampling": "自定义采样",
+    "debug": "调试",
     "deprecated": "已弃用",
     "flux": "Flux",
     "gligen": "GLIGEN",
@@ -828,8 +831,7 @@
         "esrgan_example": "ESRGAN",
         "hiresfix_esrgan_workflow": "HiresFix ESRGAN工作流",
         "hiresfix_latent_workflow": "HiresFix潜在工作流",
-        "latent_upscale_different_prompt_model": "潜在升级不同提示模型",
-        "upscale": "升级"
+        "latent_upscale_different_prompt_model": "潜在升级不同提示模型"
       },
       "Video": {
         "hunyuan_video_text_to_video": "Hunyuan视频文本到视频",

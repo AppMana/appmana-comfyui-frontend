@@ -1,32 +1,29 @@
-import { createPinia, setActivePinia } from 'pinia'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { useComboWidget } from '@/composables/widgets/useComboWidget'
-import type { InputSpec } from '@/types/apiTypes'
+import type { InputSpec } from '@/schemas/nodeDef/nodeDefSchemaV2'
 
-jest.mock('@/scripts/widgets', () => ({
-  addValueControlWidgets: jest.fn()
+vi.mock('@/scripts/widgets', () => ({
+  addValueControlWidgets: vi.fn()
 }))
 
 describe('useComboWidget', () => {
   beforeEach(() => {
-    setActivePinia(createPinia())
-    jest.clearAllMocks()
+    vi.clearAllMocks()
   })
 
   it('should handle undefined spec', () => {
     const constructor = useComboWidget()
     const mockNode = {
-      addWidget: jest.fn().mockReturnValue({ options: {} } as any)
+      addWidget: vi.fn().mockReturnValue({ options: {} } as any)
     }
 
-    const inputSpec: InputSpec = ['COMBO', undefined]
+    const inputSpec: InputSpec = {
+      type: 'COMBO',
+      name: 'inputName'
+    }
 
-    const widget = constructor(
-      mockNode as any,
-      'inputName',
-      inputSpec,
-      undefined as any
-    )
+    const widget = constructor(mockNode as any, inputSpec)
 
     expect(mockNode.addWidget).toHaveBeenCalledWith(
       'combo',
@@ -34,11 +31,9 @@ describe('useComboWidget', () => {
       undefined, // default value
       expect.any(Function), // callback
       expect.objectContaining({
-        values: 'COMBO'
+        values: []
       })
     )
-    expect(widget).toEqual({
-      widget: { options: {} }
-    })
+    expect(widget).toEqual({ options: {} })
   })
 })

@@ -118,6 +118,8 @@
     "add": "Ajouter",
     "back": "Retour",
     "cancel": "Annuler",
+    "capture": "capture",
+    "choose_file_to_upload": "choisissez le fichier à télécharger",
     "close": "Fermer",
     "color": "Couleur",
     "comingSoon": "Bientôt disponible",
@@ -333,6 +335,7 @@
     "scene": "Scène",
     "showGrid": "Afficher la grille",
     "switchCamera": "Changer de caméra",
+    "switchingMaterialMode": "Changement de mode de matériau...",
     "upDirection": "Direction Haut",
     "uploadBackgroundImage": "Télécharger l'image de fond"
   },
@@ -458,7 +461,6 @@
   "nodeCategories": {
     "3d": "3d",
     "3d_models": "modèles_3d",
-    "DevTools": "OutilsDeDéveloppement",
     "_for_testing": "_pour_test",
     "advanced": "avancé",
     "animation": "animation",
@@ -475,6 +477,7 @@
     "controlnet": "controlnet",
     "create": "créer",
     "custom_sampling": "échantillonnage_personnalisé",
+    "debug": "débogage",
     "deprecated": "déprécié",
     "flux": "flux",
     "gligen": "gligen",
@@ -828,8 +831,7 @@
         "esrgan_example": "ESRGAN",
         "hiresfix_esrgan_workflow": "Flux de Travail ESRGAN HiresFix",
         "hiresfix_latent_workflow": "Flux de Travail Latent HiresFix",
-        "latent_upscale_different_prompt_model": "Modèle d'Agrandissement Latent Différent Prompt",
-        "upscale": "Agrandissement"
+        "latent_upscale_different_prompt_model": "Modèle d'Agrandissement Latent Différent Prompt"
       },
       "Video": {
         "hunyuan_video_text_to_video": "Texte à Vidéo Hunyuan",

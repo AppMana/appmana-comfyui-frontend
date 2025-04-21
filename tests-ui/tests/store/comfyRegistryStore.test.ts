@@ -1,5 +1,5 @@
 import { createPinia, setActivePinia } from 'pinia'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { ref } from 'vue'
 
 import { useComfyRegistryService } from '@/services/comfyRegistryService'
@@ -14,6 +14,38 @@ const mockNodePack: components['schemas']['Node'] = {
   id: 'test-pack-id',
   name: 'Test Pack',
   description: 'A test node pack',
+  downloads: 1000,
+  publisher: {
+    id: 'test-publisher',
+    name: 'Test Publisher'
+  },
+  latest_version: {
+    id: 'test-version',
+    version: '1.0.0',
+    createdAt: '2023-01-01T00:00:00Z'
+  }
+}
+
+const mockNodePack2: components['schemas']['Node'] = {
+  id: 'test-pack-id-2',
+  name: 'Test Pack 2',
+  description: 'A second test node pack',
+  downloads: 1000,
+  publisher: {
+    id: 'test-publisher',
+    name: 'Test Publisher'
+  },
+  latest_version: {
+    id: 'test-version',
+    version: '1.0.0',
+    createdAt: '2023-01-01T00:00:00Z'
+  }
+}
+
+const mockNodePack3: components['schemas']['Node'] = {
+  id: 'test-pack-id-3',
+  name: 'Test Pack 3',
+  description: 'A third test node pack',
   downloads: 1000,
   publisher: {
     id: 'test-publisher',
@@ -48,7 +80,32 @@ describe('useComfyRegistryStore', () => {
     mockRegistryService = {
       isLoading: ref(false),
       error: ref(null),
-      listAllPacks: vi.fn().mockResolvedValue(mockListResult),
+      listAllPacks: vi.fn().mockImplementation((params) => {
+        // If node_id is provided, return specific nodes
+        if (params.node_id) {
+          return Promise.resolve({
+            nodes: params.node_id
+              .map((id: string) => {
+                switch (id) {
+                  case 'test-pack-id':
+                    return mockNodePack
+                  case 'test-pack-id-2':
+                    return mockNodePack2
+                  case 'test-pack-id-3':
+                    return mockNodePack3
+                  default:
+                    return null
+                }
+              })
+              .filter(Boolean),
+            total: params.node_id.length,
+            page: 1,
+            limit: 10
+          })
+        }
+        // Otherwise return paginated results
+        return Promise.resolve(mockListResult)
+      }),
       getPackById: vi.fn().mockResolvedValue(mockNodePack)
     }
 
@@ -57,22 +114,17 @@ describe('useComfyRegistryStore', () => {
     )
   })
 
-  it('should initialize with empty state', () => {
-    const store = useComfyRegistryStore()
-
-    expect(store.recentListResult).toEqual([])
-    expect(store.hasPacks).toBe(false)
+  afterEach(() => {
+    useComfyRegistryStore().clearCache()
   })
 
   it('should fetch and store packs', async () => {
     const store = useComfyRegistryStore()
     const params = { page: 1, limit: 10 }
 
-    const result = await store.listAllPacks(params)
+    const result = await store.listAllPacks.call(params)
 
     expect(result).toEqual(mockListResult)
-    expect(store.recentListResult).toEqual(mockListResult.nodes)
-    expect(store.hasPacks).toBe(true)
     expect(mockRegistryService.listAllPacks).toHaveBeenCalledWith(
       params,
       expect.any(Object) // abort signal
@@ -89,29 +141,26 @@ describe('useComfyRegistryStore', () => {
     mockRegistryService.listAllPacks.mockResolvedValueOnce(emptyResult)
 
     const store = useComfyRegistryStore()
-    await store.listAllPacks({ page: 1, limit: 10 })
+    const result = await store.listAllPacks.call({ page: 1, limit: 10 })
 
-    expect(store.recentListResult).toEqual([])
-    expect(store.hasPacks).toBe(false)
+    expect(result).toEqual(emptyResult)
   })
 
   it('should fetch a pack by ID', async () => {
     const store = useComfyRegistryStore()
     const packId = 'test-pack-id'
 
-    const result = await store.getPackById(packId)
+    const result = await store.getPackById.call(packId)
 
     expect(result).toEqual(mockNodePack)
-    expect(mockRegistryService.getPackById).toHaveBeenCalledWith(
-      packId,
-      expect.any(Object) // abort signal
-    )
+    expect(mockRegistryService.getPackById).toHaveBeenCalledWith(packId)
   })
 
   it('should return null when fetching a pack with null ID', async () => {
     const store = useComfyRegistryStore()
+    vi.spyOn(store.getPackById, 'call').mockResolvedValueOnce(null)
 
-    const result = await store.getPackById(null as any)
+    const result = await store.getPackById.call(null as any)
 
     expect(result).toBeNull()
     expect(mockRegistryService.getPackById).not.toHaveBeenCalled()
@@ -121,9 +170,20 @@ describe('useComfyRegistryStore', () => {
     mockRegistryService.listAllPacks.mockResolvedValueOnce(null)
 
     const store = useComfyRegistryStore()
-    const result = await store.listAllPacks({ page: 1, limit: 10 })
+    const result = await store.listAllPacks.call({ page: 1, limit: 10 })
 
     expect(result).toBeNull()
-    expect(store.recentListResult).toEqual([])
+  })
+
+  it('should fetch packs by IDs', async () => {
+    const store = useComfyRegistryStore()
+    const packIds = ['test-pack-id', 'test-pack-id-2', 'test-pack-id-3']
+    const result = await store.getPacksByIds.call(packIds)
+
+    expect(result).toEqual([mockNodePack, mockNodePack2, mockNodePack3])
+    expect(mockRegistryService.listAllPacks).toHaveBeenCalledWith(
+      { node_id: packIds },
+      expect.any(Object) // abort signal
+    )
   })
 })

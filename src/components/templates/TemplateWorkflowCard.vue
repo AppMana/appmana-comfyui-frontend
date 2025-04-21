@@ -2,7 +2,7 @@
   <Card
     ref="cardRef"
     :data-testid="`template-workflow-${template.name}`"
-    class="w-64 template-card rounded-2xl overflow-hidden cursor-pointer shadow-[0_10px_15px_-3px_rgba(0,0,0,0.08),0_4px_6px_-4px_rgba(0,0,0,0.05)]"
+    class="w-64 template-card rounded-2xl overflow-hidden cursor-pointer shadow-elevation-2 dark-theme:bg-dark-elevation-1"
     :pt="{
       body: { class: 'p-0' }
     }"
@@ -52,19 +52,17 @@
     <template #content>
       <div class="flex items-center px-4 py-3">
         <div class="flex-1">
-          <h3
-            class="line-clamp-1 text-lg font-normal text-surface-900 dark:text-surface-100"
-          >
+          <h3 class="line-clamp-1 text-lg font-normal" :title="title">
             {{ title }}
           </h3>
-          <p class="line-clamp-2 text-sm text-surface-600 dark:text text-muted">
-            {{ template.description.replace(/[-_]/g, ' ') }}
+          <p class="line-clamp-2 text-sm text-muted" :title="description">
+            {{ description }}
           </p>
         </div>
         <div
-          class="flex md:hidden xl:flex items-center justify-center ml-4 w-10 h-10 rounded-full bg-surface-100"
+          class="flex md:hidden xl:flex items-center justify-center ml-4 w-10 h-10 rounded-full"
         >
-          <i class="pi pi-angle-right text-2xl"></i>
+          <i class="pi pi-angle-right text-2xl" />
         </div>
       </div>
     </template>
@@ -76,12 +74,13 @@ import { useElementHover } from '@vueuse/core'
 import Card from 'primevue/card'
 import ProgressSpinner from 'primevue/progressspinner'
 import { computed, ref } from 'vue'
-import { useI18n } from 'vue-i18n'
 
 import AudioThumbnail from '@/components/templates/thumbnails/AudioThumbnail.vue'
 import CompareSliderThumbnail from '@/components/templates/thumbnails/CompareSliderThumbnail.vue'
 import DefaultThumbnail from '@/components/templates/thumbnails/DefaultThumbnail.vue'
 import HoverDissolveThumbnail from '@/components/templates/thumbnails/HoverDissolveThumbnail.vue'
+import { st } from '@/i18n'
+import { api } from '@/scripts/api'
 import { TemplateInfo } from '@/types/workflowTemplateTypes'
 import { normalizeI18nKey } from '@/utils/formatUtil'
 
@@ -95,16 +94,14 @@ const { sourceModule, categoryTitle, loading, template } = defineProps<{
   template: TemplateInfo
 }>()
 
-const { t } = useI18n()
-
 const cardRef = ref<HTMLElement | null>(null)
 const isHovered = useElementHover(cardRef)
 
 const getThumbnailUrl = (index = '') => {
   const basePath =
     sourceModule === 'default'
-      ? `/templates/${template.name}`
-      : `/api/workflow_templates/${sourceModule}/${template.name}`
+      ? api.fileURL(`/templates/${template.name}`)
+      : api.apiURL(`/workflow_templates/${sourceModule}/${template.name}`)
 
   // For templates from custom nodes, multiple images is not yet supported
   const indexSuffix = sourceModule === 'default' && index ? `-${index}` : ''
@@ -120,12 +117,16 @@ const overlayThumbnailSrc = computed(() =>
 )
 
 const title = computed(() => {
+  const fallback = template.title ?? template.name ?? `${sourceModule} Template`
   return sourceModule === 'default'
-    ? t(
-        `templateWorkflows.template.${normalizeI18nKey(categoryTitle)}.${normalizeI18nKey(template.name)}`
+    ? st(
+        `templateWorkflows.template.${normalizeI18nKey(categoryTitle)}.${normalizeI18nKey(template.name)}`,
+        fallback
       )
-    : template.name ?? `${sourceModule} Template`
+    : fallback
 })
+
+const description = computed(() => template.description.replace(/[-_]/g, ' '))
 
 defineEmits<{
   loadWorkflow: [name: string]

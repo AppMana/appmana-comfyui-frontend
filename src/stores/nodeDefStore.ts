@@ -1,7 +1,7 @@
 import type { LGraphNode } from '@comfyorg/litegraph'
 import axios from 'axios'
+import _ from 'lodash'
 import { defineStore } from 'pinia'
-import type { TreeNode } from 'primevue/treenode'
 import { computed, ref } from 'vue'
 
 import { transformNodeDefV1ToV2 } from '@/schemas/nodeDef/migration'
@@ -15,18 +15,19 @@ import type {
   ComfyNodeDef as ComfyNodeDefV1,
   ComfyOutputTypesSpec as ComfyOutputSpecV1
 } from '@/schemas/nodeDefSchema'
-import {
-  NodeSearchService,
-  type SearchAuxScore
-} from '@/services/nodeSearchService'
+import { NodeSearchService } from '@/services/nodeSearchService'
 import {
   type NodeSource,
   NodeSourceType,
   getNodeSource
 } from '@/types/nodeSource'
+import type { TreeNode } from '@/types/treeExplorerTypes'
+import type { FuseSearchable, SearchAuxScore } from '@/utils/fuseUtil'
 import { buildTree } from '@/utils/treeUtil'
 
-export class ComfyNodeDefImpl implements ComfyNodeDefV1, ComfyNodeDefV2 {
+export class ComfyNodeDefImpl
+  implements ComfyNodeDefV1, ComfyNodeDefV2, FuseSearchable
+{
   // ComfyNodeDef fields (V1)
   readonly name: string
   readonly display_name: string
@@ -69,7 +70,41 @@ export class ComfyNodeDefImpl implements ComfyNodeDefV1, ComfyNodeDefV2 {
   // ComfyNodeDefImpl fields
   readonly nodeSource: NodeSource
 
-  constructor(obj: ComfyNodeDefV1) {
+  /**
+   * @internal
+   * Migrate default input options to forceInput.
+   */
+  static #migrateDefaultInput(nodeDef: ComfyNodeDefV1): ComfyNodeDefV1 {
+    const def = _.cloneDeep(nodeDef)
+    def.input ??= {}
+    // For required inputs, now we have the input socket always present. Specifying
+    // it now has no effect.
+    for (const [name, spec] of Object.entries(def.input.required ?? {})) {
+      const inputOptions = spec[1]
+      if (inputOptions && inputOptions.defaultInput) {
+        console.warn(
+          `Use of defaultInput on required input ${nodeDef.python_module}:${nodeDef.name}:${name} is deprecated. Please drop the defaultInput option.`
+        )
+      }
+    }
+    // For optional inputs, defaultInput is used to distinguish the null state.
+    // We migrate it to forceInput. One example is the "seed_override" input usage.
+    // User can connect the socket to override the seed.
+    for (const [name, spec] of Object.entries(def.input.optional ?? {})) {
+      const inputOptions = spec[1]
+      if (inputOptions && inputOptions.defaultInput) {
+        console.warn(
+          `Use of defaultInput on optional input ${nodeDef.python_module}:${nodeDef.name}:${name} is deprecated. Please use forceInput instead.`
+        )
+        inputOptions.forceInput = true
+      }
+    }
+    return def
+  }
+
+  constructor(def: ComfyNodeDefV1) {
+    const obj = ComfyNodeDefImpl.#migrateDefaultInput(def)
+
     /**
      * Assign extra fields to `this` for compatibility with group node feature.
      * TODO: Remove this once group node feature is removed.

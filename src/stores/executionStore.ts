@@ -3,30 +3,40 @@ import { computed, ref } from 'vue'
 
 import type {
   ExecutedWsMessage,
-  ExecutingWsMessage,
   ExecutionCachedWsMessage,
+  ExecutionErrorWsMessage,
   ExecutionStartWsMessage,
-  ProgressWsMessage,
-  StatusWsMessage
+  NodeError,
+  ProgressWsMessage
 } from '@/schemas/apiSchema'
 import type {
   ComfyNode,
-  ComfyWorkflowJSON
+  ComfyWorkflowJSON,
+  NodeId
 } from '@/schemas/comfyWorkflowSchema'
 import { api } from '@/scripts/api'
 
 import { ComfyWorkflow } from './workflowStore'
 
 export interface QueuedPrompt {
-  nodes: Record<string, boolean>
+  /**
+   * The nodes that are queued to be executed. The key is the node id and the
+   * value is a boolean indicating if the node has been executed.
+   */
+  nodes: Record<NodeId, boolean>
+  /**
+   * The workflow that is queued to be executed
+   */
   workflow?: ComfyWorkflow
 }
 
 export const useExecutionStore = defineStore('execution', () => {
   const clientId = ref<string | null>(null)
   const activePromptId = ref<string | null>(null)
-  const queuedPrompts = ref<Record<string, QueuedPrompt>>({})
-  const executingNodeId = ref<string | null>(null)
+  const queuedPrompts = ref<Record<NodeId, QueuedPrompt>>({})
+  const lastNodeErrors = ref<Record<NodeId, NodeError> | null>(null)
+  const lastExecutionError = ref<ExecutionErrorWsMessage | null>(null)
+  const executingNodeId = ref<NodeId | null>(null)
   const executingNode = computed<ComfyNode | null>(() => {
     if (!executingNodeId.value) return null
 
@@ -48,11 +58,7 @@ export const useExecutionStore = defineStore('execution', () => {
   const _executingNodeProgress = ref<ProgressWsMessage | null>(null)
   const executingNodeProgress = computed(() =>
     _executingNodeProgress.value
-      ? Math.round(
-          (_executingNodeProgress.value.value /
-            _executingNodeProgress.value.max) *
-            100
-        )
+      ? _executingNodeProgress.value.value / _executingNodeProgress.value.max
       : null
   )
 
@@ -76,7 +82,7 @@ export const useExecutionStore = defineStore('execution', () => {
     if (!activePrompt.value) return 0
     const total = totalNodesToExecute.value
     const done = nodesExecuted.value
-    return Math.round((done / total) * 100)
+    return done / total
   })
 
   function bindExecutionEvents() {
@@ -92,6 +98,10 @@ export const useExecutionStore = defineStore('execution', () => {
     api.addEventListener('executing', handleExecuting as EventListener)
     api.addEventListener('progress', handleProgress as EventListener)
     api.addEventListener('status', handleStatus as EventListener)
+    api.addEventListener(
+      'execution_error',
+      handleExecutionError as EventListener
+    )
   }
 
   function unbindExecutionEvents() {
@@ -107,9 +117,14 @@ export const useExecutionStore = defineStore('execution', () => {
     api.removeEventListener('executing', handleExecuting as EventListener)
     api.removeEventListener('progress', handleProgress as EventListener)
     api.removeEventListener('status', handleStatus as EventListener)
+    api.removeEventListener(
+      'execution_error',
+      handleExecutionError as EventListener
+    )
   }
 
   function handleExecutionStart(e: CustomEvent<ExecutionStartWsMessage>) {
+    lastExecutionError.value = null
     activePromptId.value = e.detail.prompt_id
     queuedPrompts.value[activePromptId.value] ??= { nodes: {} }
   }
@@ -126,7 +141,7 @@ export const useExecutionStore = defineStore('execution', () => {
     activePrompt.value.nodes[e.detail.node] = true
   }
 
-  function handleExecuting(e: CustomEvent<ExecutingWsMessage>) {
+  function handleExecuting(e: CustomEvent<NodeId | null>) {
     // Clear the current node progress when a new node starts executing
     _executingNodeProgress.value = null
 
@@ -136,8 +151,8 @@ export const useExecutionStore = defineStore('execution', () => {
       // Seems sometimes nodes that are cached fire executing but not executed
       activePrompt.value.nodes[executingNodeId.value] = true
     }
-    executingNodeId.value = e.detail ? String(e.detail) : null
-    if (!executingNodeId.value) {
+    executingNodeId.value = e.detail
+    if (executingNodeId.value === null) {
       if (activePromptId.value) {
         delete queuedPrompts.value[activePromptId.value]
       }
@@ -149,13 +164,17 @@ export const useExecutionStore = defineStore('execution', () => {
     _executingNodeProgress.value = e.detail
   }
 
-  function handleStatus(e: CustomEvent<StatusWsMessage>) {
+  function handleStatus() {
     if (api.clientId) {
       clientId.value = api.clientId
 
       // Once we've received the clientId we no longer need to listen
       api.removeEventListener('status', handleStatus as EventListener)
     }
+  }
+
+  function handleExecutionError(e: CustomEvent<ExecutionErrorWsMessage>) {
+    lastExecutionError.value = e.detail
   }
 
   function storePrompt({
@@ -186,14 +205,49 @@ export const useExecutionStore = defineStore('execution', () => {
   return {
     isIdle,
     clientId,
+    /**
+     * The id of the prompt that is currently being executed
+     */
     activePromptId,
+    /**
+     * The queued prompts
+     */
     queuedPrompts,
+    /**
+     * The node errors from the previous execution.
+     */
+    lastNodeErrors,
+    /**
+     * The error from the previous execution.
+     */
+    lastExecutionError,
+    /**
+     * The id of the node that is currently being executed
+     */
     executingNodeId,
+    /**
+     * The prompt that is currently being executed
+     */
     activePrompt,
+    /**
+     * The total number of nodes to execute
+     */
     totalNodesToExecute,
+    /**
+     * The number of nodes that have been executed
+     */
     nodesExecuted,
+    /**
+     * The progress of the execution
+     */
     executionProgress,
+    /**
+     * The node that is currently being executed
+     */
     executingNode,
+    /**
+     * The progress of the executing node (if the node reports progress)
+     */
     executingNodeProgress,
     bindExecutionEvents,
     unbindExecutionEvents,

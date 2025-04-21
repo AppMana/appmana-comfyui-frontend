@@ -9,7 +9,6 @@ import type { ResultItem } from '@/schemas/apiSchema'
 import type { InputSpec } from '@/schemas/nodeDefSchema'
 import type { ComfyWidgetConstructor } from '@/scripts/widgets'
 import { useNodeOutputStore } from '@/stores/imagePreviewStore'
-import type { ComfyApp } from '@/types'
 import { createAnnotatedPath } from '@/utils/formatUtil'
 import { addToComboValues } from '@/utils/litegraphUtil'
 
@@ -32,13 +31,13 @@ export const useImageUploadWidget = () => {
   const widgetConstructor: ComfyWidgetConstructor = (
     node: LGraphNode,
     inputName: string,
-    inputData: InputSpec,
-    app: ComfyApp
+    inputData: InputSpec
   ) => {
     const inputOptions = inputData[1] ?? {}
     const { imageInputName, allow_batch, image_folder = 'input' } = inputOptions
     const nodeOutputStore = useNodeOutputStore()
 
+    const isAnimated = !!inputOptions.animated_image_upload
     const isVideo = !!inputOptions.video_upload
     const accept = isVideo ? ACCEPTED_VIDEO_TYPES : ACCEPTED_IMAGE_TYPES
     const { showPreview } = isVideo ? useNodeVideo(node) : useNodeImage(node)
@@ -94,14 +93,19 @@ export const useImageUploadWidget = () => {
 
     // Add our own callback to the combo widget to render an image when it changes
     fileComboWidget.callback = function () {
-      nodeOutputStore.setNodeOutputs(node, fileComboWidget.value)
+      nodeOutputStore.setNodeOutputs(node, fileComboWidget.value, {
+        isAnimated
+      })
+      node.graph?.setDirtyCanvas(true)
     }
 
     // On load if we have a value then render the image
     // The value isnt set immediately so we need to wait a moment
     // No change callbacks seem to be fired on initial setting of the value
     requestAnimationFrame(() => {
-      nodeOutputStore.setNodeOutputs(node, fileComboWidget.value)
+      nodeOutputStore.setNodeOutputs(node, fileComboWidget.value, {
+        isAnimated
+      })
       showPreview({ block: false })
     })
 

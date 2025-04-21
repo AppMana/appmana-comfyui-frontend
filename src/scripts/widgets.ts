@@ -20,6 +20,7 @@ import { useSettingStore } from '@/stores/settingStore'
 
 import type { ComfyApp } from './app'
 import './domWidget'
+import './errorNodeWidgets'
 
 export type ComfyWidgetConstructorV2 = (
   node: LGraphNode,
@@ -74,7 +75,7 @@ export function addValueControlWidget(
   node: LGraphNode,
   targetWidget: IWidget,
   defaultValue?: string,
-  values?: unknown,
+  _values?: unknown,
   widgetName?: string,
   inputData?: InputSpec
 ): IWidget {
@@ -222,11 +223,11 @@ export function addValueControlWidgets(
       }
     } else {
       //number
-      let { min = 0, max = 1, step = 1 } = targetWidget.options
+      let { min = 0, max = 1, step2 = 1 } = targetWidget.options
       // limit to something that javascript can handle
       max = Math.min(1125899906842624, max)
       min = Math.max(-1125899906842624, min)
-      let range = (max - min) / (step / 10)
+      let range = (max - min) / step2
 
       //adjust values based on valueControl Behaviour
       switch (v) {
@@ -234,15 +235,14 @@ export function addValueControlWidgets(
           break
         case 'increment':
           // @ts-expect-error targetWidget.value can be number or string
-          targetWidget.value += step / 10
+          targetWidget.value += step2
           break
         case 'decrement':
           // @ts-expect-error targetWidget.value can be number or string
-          targetWidget.value -= step / 10
+          targetWidget.value -= step2
           break
         case 'randomize':
-          targetWidget.value =
-            Math.floor(Math.random() * range) * (step / 10) + min
+          targetWidget.value = Math.floor(Math.random() * range) * step2 + min
           break
         default:
           break

@@ -1,10 +1,11 @@
 import * as THREE from 'three'
 import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader'
-import { GLTF, GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader'
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader'
 import { MTLLoader } from 'three/examples/jsm/loaders/MTLLoader'
 import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader'
 import { STLLoader } from 'three/examples/jsm/loaders/STLLoader'
 
+import { t } from '@/i18n'
 import { useToastStore } from '@/stores/toastStore'
 
 import {
@@ -47,16 +48,27 @@ export class LoaderManager implements LoaderManagerInterface {
 
       this.modelManager.clearModel()
 
+      this.modelManager.originalURL = url
+
       let fileExtension: string | undefined
       if (originalFileName) {
         fileExtension = originalFileName.split('.').pop()?.toLowerCase()
+
+        this.modelManager.originalFileName =
+          originalFileName.split('/').pop()?.split('.')[0] || 'model'
       } else {
         const filename = new URLSearchParams(url.split('?')[1]).get('filename')
         fileExtension = filename?.split('.').pop()?.toLowerCase()
+
+        if (filename) {
+          this.modelManager.originalFileName = filename.split('.')[0] || 'model'
+        } else {
+          this.modelManager.originalFileName = 'model'
+        }
       }
 
       if (!fileExtension) {
-        useToastStore().addAlert('Could not determine file type')
+        useToastStore().addAlert(t('toastMessages.couldNotDetermineFileType'))
         return
       }
 
@@ -70,7 +82,7 @@ export class LoaderManager implements LoaderManagerInterface {
     } catch (error) {
       this.eventManager.emitEvent('modelLoadingEnd', null)
       console.error('Error loading model:', error)
-      useToastStore().addAlert('Error loading model')
+      useToastStore().addAlert(t('toastMessages.errorLoadingModel'))
     }
   }
 

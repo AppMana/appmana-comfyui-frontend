@@ -1,4 +1,7 @@
 {
+  "Comfy-Desktop_CheckForUpdates": {
+    "label": "检查更新"
+  },
   "Comfy-Desktop_Folders_OpenCustomNodesFolder": {
     "label": "打开自定义节点文件夹"
   },
@@ -43,6 +46,9 @@
   },
   "Comfy_Canvas_ResetView": {
     "label": "重置视图"
+  },
+  "Comfy_Canvas_Resize": {
+    "label": "调整选定节点的大小"
   },
   "Comfy_Canvas_ToggleLinkVisibility": {
     "label": "切换链接可见性"
@@ -124,6 +130,12 @@
   },
   "Comfy_LoadDefaultWorkflow": {
     "label": "加载默认工作流"
+  },
+  "Comfy_Manager_CustomNodesManager": {
+    "label": "自定义节点管理器"
+  },
+  "Comfy_Manager_ToggleManagerProgressDialog": {
+    "label": "切换进度对话框"
   },
   "Comfy_NewBlankWorkflow": {
     "label": "新建空白工作流"

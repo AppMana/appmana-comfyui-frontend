@@ -1,65 +1,113 @@
-// @ts-strict-ignore
 import { IWidget } from '@comfyorg/litegraph'
 import { IStringWidget } from '@comfyorg/litegraph/dist/types/widgets'
-import PrimeVue from 'primevue/config'
-import { createApp, h, nextTick, render } from 'vue'
+import { nextTick } from 'vue'
 
 import Load3D from '@/components/load3d/Load3D.vue'
 import Load3DAnimation from '@/components/load3d/Load3DAnimation.vue'
 import Load3DConfiguration from '@/extensions/core/load3d/Load3DConfiguration'
 import Load3dAnimation from '@/extensions/core/load3d/Load3dAnimation'
 import Load3dUtils from '@/extensions/core/load3d/Load3dUtils'
+import { t } from '@/i18n'
+import { CustomInputSpec } from '@/schemas/nodeDef/nodeDefSchemaV2'
 import { api } from '@/scripts/api'
-import { app } from '@/scripts/app'
+import { ComponentWidgetImpl, addWidget } from '@/scripts/domWidget'
+import { useExtensionService } from '@/services/extensionService'
 import { useLoad3dService } from '@/services/load3dService'
 import { useToastStore } from '@/stores/toastStore'
 
-app.registerExtension({
+useExtensionService().registerExtension({
   name: 'Comfy.Load3D',
-
-  getCustomWidgets(app) {
+  settings: [
+    {
+      id: 'Comfy.Load3D.ShowGrid',
+      category: ['3D', 'Scene', 'Initial Grid Visibility'],
+      name: 'Initial Grid Visibility',
+      tooltip:
+        'Controls whether the grid is visible by default when a new 3D widget is created. This default can still be toggled individually for each widget after creation.',
+      type: 'boolean',
+      defaultValue: true,
+      experimental: true
+    },
+    {
+      id: 'Comfy.Load3D.ShowPreview',
+      category: ['3D', 'Scene', 'Initial Preview Visibility'],
+      name: 'Initial Preview Visibility',
+      tooltip:
+        'Controls whether the preview screen is visible by default when a new 3D widget is created. This default can still be toggled individually for each widget after creation.',
+      type: 'boolean',
+      defaultValue: true,
+      experimental: true
+    },
+    {
+      id: 'Comfy.Load3D.BackgroundColor',
+      category: ['3D', 'Scene', 'Initial Background Color'],
+      name: 'Initial Background Color',
+      tooltip:
+        'Controls the default background color of the 3D scene. This setting determines the background appearance when a new 3D widget is created, but can be adjusted individually for each widget after creation.',
+      type: 'color',
+      defaultValue: '282828',
+      experimental: true
+    },
+    {
+      id: 'Comfy.Load3D.CameraType',
+      category: ['3D', 'Camera', 'Initial Camera Type'],
+      name: 'Initial Camera Type',
+      tooltip:
+        'Controls whether the camera is perspective or orthographic by default when a new 3D widget is created. This default can still be toggled individually for each widget after creation.',
+      type: 'combo',
+      options: ['perspective', 'orthographic'],
+      defaultValue: 'perspective',
+      experimental: true
+    },
+    {
+      id: 'Comfy.Load3D.LightIntensity',
+      category: ['3D', 'Light', 'Initial Light Intensity'],
+      name: 'Initial Light Intensity',
+      tooltip:
+        'Sets the default brightness level of lighting in the 3D scene. This value determines how intensely lights illuminate objects when a new 3D widget is created, but can be adjusted individually for each widget after creation.',
+      type: 'number',
+      defaultValue: 3,
+      experimental: true
+    },
+    {
+      id: 'Comfy.Load3D.LightIntensityMaximum',
+      category: ['3D', 'Light', 'Light Intensity Maximum'],
+      name: 'Light Intensity Maximum',
+      tooltip:
+        'Sets the maximum allowable light intensity value for 3D scenes. This defines the upper brightness limit that can be set when adjusting lighting in any 3D widget.',
+      type: 'number',
+      defaultValue: 10,
+      experimental: true
+    },
+    {
+      id: 'Comfy.Load3D.LightIntensityMinimum',
+      category: ['3D', 'Light', 'Light Intensity Minimum'],
+      name: 'Light Intensity Minimum',
+      tooltip:
+        'Sets the minimum allowable light intensity value for 3D scenes. This defines the lower brightness limit that can be set when adjusting lighting in any 3D widget.',
+      type: 'number',
+      defaultValue: 1,
+      experimental: true
+    },
+    {
+      id: 'Comfy.Load3D.LightAdjustmentIncrement',
+      category: ['3D', 'Light', 'Light Adjustment Increment'],
+      name: 'Light Adjustment Increment',
+      tooltip:
+        'Controls the increment size when adjusting light intensity in 3D scenes. A smaller step value allows for finer control over lighting adjustments, while a larger value results in more noticeable changes per adjustment.',
+      type: 'slider',
+      attrs: {
+        min: 0.1,
+        max: 1,
+        step: 0.1
+      },
+      defaultValue: 0.5,
+      experimental: true
+    }
+  ],
+  getCustomWidgets() {
     return {
-      LOAD_3D(node, inputName) {
-        node.addProperty('Camera Info', '')
-
-        const container = document.createElement('div')
-        container.classList.add('comfy-load-3d')
-
-        /* Hold off for now
-        const mountComponent = () => {
-          const vnode = h(Load3D, {
-            node: node,
-            type: 'Load3D'
-          })
-
-          render(vnode, container)
-        }
-         */
-
-        let controlsApp = createApp(Load3D, {
-          node: node,
-          type: 'Load3D'
-        })
-
-        controlsApp.mount(container)
-
-        const origOnRemoved = node.onRemoved
-
-        node.onRemoved = function () {
-          /*
-          render(null, container)
-
-          container.remove()
-           */
-
-          if (controlsApp) {
-            controlsApp.unmount()
-            controlsApp = null
-          }
-
-          origOnRemoved?.apply(this, [])
-        }
-
+      LOAD_3D(node) {
         const fileInput = document.createElement('input')
         fileInput.type = 'file'
         fileInput.accept = '.gltf,.glb,.obj,.mtl,.fbx,.stl'
@@ -71,11 +119,13 @@ app.registerExtension({
               (w: IWidget) => w.name === 'model_file'
             ) as IStringWidget
 
+            node.properties['Texture'] = undefined
+
             const uploadPath = await Load3dUtils.uploadFile(
               fileInput.files[0]
             ).catch((error) => {
               console.error('File upload failed:', error)
-              useToastStore().addAlert('File upload failed')
+              useToastStore().addAlert(t('toastMessages.fileUploadFailed'))
             })
 
             const modelUrl = api.apiURL(
@@ -85,7 +135,7 @@ app.registerExtension({
               )
             )
 
-            await useLoad3dService().getLoad3d(node).loadModel(modelUrl)
+            await useLoad3dService().getLoad3d(node)?.loadModel(modelUrl)
 
             if (uploadPath && modelWidget) {
               if (!modelWidget.options?.values?.includes(uploadPath)) {
@@ -102,21 +152,36 @@ app.registerExtension({
         })
 
         node.addWidget('button', 'clear', 'clear', () => {
-          useLoad3dService().getLoad3d(node).clearModel()
+          useLoad3dService().getLoad3d(node)?.clearModel()
 
           const modelWidget = node.widgets?.find(
             (w: IWidget) => w.name === 'model_file'
           )
           if (modelWidget) {
             modelWidget.value = ''
+
+            node.properties['Texture'] = undefined
           }
         })
 
-        //mountComponent()
-
-        return {
-          widget: node.addDOMWidget(inputName, 'LOAD_3D', container)
+        const inputSpec: CustomInputSpec = {
+          name: 'image',
+          type: 'Load3D',
+          isAnimation: false,
+          isPreview: false
         }
+
+        const widget = new ComponentWidgetImpl({
+          node,
+          name: inputSpec.name,
+          component: Load3D,
+          inputSpec,
+          options: {}
+        })
+
+        addWidget(node, widget)
+
+        return { widget }
       }
     }
   },
@@ -130,95 +195,64 @@ app.registerExtension({
 
     await nextTick()
 
-    const sceneWidget = node.widgets.find((w: IWidget) => w.name === 'image')
-
     const load3d = useLoad3dService().getLoad3d(node)
 
-    const modelWidget = node.widgets.find(
-      (w: IWidget) => w.name === 'model_file'
-    )
+    if (load3d) {
+      let cameraState = node.properties['Camera Info']
 
-    let cameraState = node.properties['Camera Info']
+      const config = new Load3DConfiguration(load3d)
 
-    const config = new Load3DConfiguration(load3d)
-
-    const width = node.widgets.find((w: IWidget) => w.name === 'width')
-    const height = node.widgets.find((w: IWidget) => w.name === 'height')
-
-    config.configure('input', modelWidget, cameraState, width, height)
-
-    sceneWidget.serializeValue = async () => {
-      node.properties['Camera Info'] = load3d.getCameraState()
-
-      const { scene: imageData, mask: maskData } = await load3d.captureScene(
-        width.value as number,
-        height.value as number
+      const modelWidget = node.widgets?.find(
+        (w: IWidget) => w.name === 'model_file'
       )
+      const width = node.widgets?.find((w: IWidget) => w.name === 'width')
+      const height = node.widgets?.find((w: IWidget) => w.name === 'height')
+      const sceneWidget = node.widgets?.find((w: IWidget) => w.name === 'image')
 
-      const [data, dataMask] = await Promise.all([
-        Load3dUtils.uploadTempImage(imageData, 'scene'),
-        Load3dUtils.uploadTempImage(maskData, 'scene_mask')
-      ])
+      if (modelWidget && width && height && sceneWidget) {
+        config.configure('input', modelWidget, cameraState, width, height)
 
-      load3d.handleResize()
+        sceneWidget.serializeValue = async () => {
+          node.properties['Camera Info'] = load3d.getCameraState()
 
-      return {
-        image: `threed/${data.name} [temp]`,
-        mask: `threed/${dataMask.name} [temp]`
+          const {
+            scene: imageData,
+            mask: maskData,
+            normal: normalData,
+            lineart: lineartData
+          } = await load3d.captureScene(
+            width.value as number,
+            height.value as number
+          )
+
+          const [data, dataMask, dataNormal, dataLineart] = await Promise.all([
+            Load3dUtils.uploadTempImage(imageData, 'scene'),
+            Load3dUtils.uploadTempImage(maskData, 'scene_mask'),
+            Load3dUtils.uploadTempImage(normalData, 'scene_normal'),
+            Load3dUtils.uploadTempImage(lineartData, 'scene_lineart')
+          ])
+
+          load3d.handleResize()
+
+          return {
+            image: `threed/${data.name} [temp]`,
+            mask: `threed/${dataMask.name} [temp]`,
+            normal: `threed/${dataNormal.name} [temp]`,
+            lineart: `threed/${dataLineart.name} [temp]`,
+            camera_info: node.properties['Camera Info']
+          }
+        }
       }
     }
   }
 })
 
-app.registerExtension({
+useExtensionService().registerExtension({
   name: 'Comfy.Load3DAnimation',
 
-  getCustomWidgets(app) {
+  getCustomWidgets() {
     return {
-      LOAD_3D_ANIMATION(node, inputName) {
-        node.addProperty('Camera Info', '')
-
-        const container = document.createElement('div')
-
-        container.classList.add('comfy-load-3d-animation')
-
-        /*
-          const mountComponent = () => {
-          const vnode = h(Load3DAnimation, {
-            node: node,
-            type: 'Load3DAnimation'
-          })
-
-          render(vnode, container)
-        }
-         */
-
-        let controlsApp = createApp(Load3DAnimation, {
-          node: node,
-          type: 'Load3DAnimation'
-        })
-
-        controlsApp.use(PrimeVue)
-
-        controlsApp.mount(container)
-
-        const origOnRemoved = node.onRemoved
-
-        node.onRemoved = function () {
-          /*
-          render(null, container)
-
-          container.remove()
-           */
-
-          if (controlsApp) {
-            controlsApp.unmount()
-            controlsApp = null
-          }
-
-          origOnRemoved?.apply(this, [])
-        }
-
+      LOAD_3D_ANIMATION(node) {
         const fileInput = document.createElement('input')
         fileInput.type = 'file'
         fileInput.accept = '.fbx,glb,gltf'
@@ -233,7 +267,7 @@ app.registerExtension({
               fileInput.files[0]
             ).catch((error) => {
               console.error('File upload failed:', error)
-              useToastStore().addAlert('File upload failed')
+              useToastStore().addAlert(t('toastMessages.fileUploadFailed'))
             })
 
             const modelUrl = api.apiURL(
@@ -243,7 +277,7 @@ app.registerExtension({
               )
             )
 
-            await useLoad3dService().getLoad3d(node).loadModel(modelUrl)
+            await useLoad3dService().getLoad3d(node)?.loadModel(modelUrl)
 
             if (uploadPath && modelWidget) {
               if (!modelWidget.options?.values?.includes(uploadPath)) {
@@ -260,7 +294,8 @@ app.registerExtension({
         })
 
         node.addWidget('button', 'clear', 'clear', () => {
-          useLoad3dService().getLoad3d(node).clearModel()
+          useLoad3dService().getLoad3d(node)?.clearModel()
+
           const modelWidget = node.widgets?.find(
             (w: IWidget) => w.name === 'model_file'
           )
@@ -269,11 +304,24 @@ app.registerExtension({
           }
         })
 
-        //mountComponent()
-
-        return {
-          widget: node.addDOMWidget(inputName, 'LOAD_3D_ANIMATION', container)
+        const inputSpec: CustomInputSpec = {
+          name: 'image',
+          type: 'Load3DAnimation',
+          isAnimation: true,
+          isPreview: false
         }
+
+        const widget = new ComponentWidgetImpl({
+          node,
+          name: inputSpec.name,
+          component: Load3DAnimation,
+          inputSpec,
+          options: {}
+        })
+
+        addWidget(node, widget)
+
+        return { widget }
       }
     }
   },
@@ -287,108 +335,88 @@ app.registerExtension({
 
     await nextTick()
 
-    const sceneWidget = node.widgets.find((w: IWidget) => w.name === 'image')
+    const sceneWidget = node.widgets?.find((w: IWidget) => w.name === 'image')
 
     const load3d = useLoad3dService().getLoad3d(node) as Load3dAnimation
 
-    const modelWidget = node.widgets.find(
+    const modelWidget = node.widgets?.find(
       (w: IWidget) => w.name === 'model_file'
     )
 
     let cameraState = node.properties['Camera Info']
 
-    const config = new Load3DConfiguration(load3d)
+    const width = node.widgets?.find((w: IWidget) => w.name === 'width')
+    const height = node.widgets?.find((w: IWidget) => w.name === 'height')
 
-    const width = node.widgets.find((w: IWidget) => w.name === 'width')
-    const height = node.widgets.find((w: IWidget) => w.name === 'height')
+    if (modelWidget && width && height && sceneWidget) {
+      const config = new Load3DConfiguration(load3d)
 
-    config.configure('input', modelWidget, cameraState, width, height)
+      config.configure('input', modelWidget, cameraState, width, height)
 
-    sceneWidget.serializeValue = async () => {
-      node.properties['Camera Info'] = load3d.getCameraState()
+      sceneWidget.serializeValue = async () => {
+        node.properties['Camera Info'] = load3d.getCameraState()
 
-      load3d.toggleAnimation(false)
+        load3d.toggleAnimation(false)
 
-      const { scene: imageData, mask: maskData } = await load3d.captureScene(
-        width.value as number,
-        height.value as number
-      )
+        const {
+          scene: imageData,
+          mask: maskData,
+          normal: normalData
+        } = await load3d.captureScene(
+          width.value as number,
+          height.value as number
+        )
 
-      const [data, dataMask] = await Promise.all([
-        Load3dUtils.uploadTempImage(imageData, 'scene'),
-        Load3dUtils.uploadTempImage(maskData, 'scene_mask')
-      ])
+        const [data, dataMask, dataNormal] = await Promise.all([
+          Load3dUtils.uploadTempImage(imageData, 'scene'),
+          Load3dUtils.uploadTempImage(maskData, 'scene_mask'),
+          Load3dUtils.uploadTempImage(normalData, 'scene_normal')
+        ])
 
-      load3d.handleResize()
+        load3d.handleResize()
 
-      return {
-        image: `threed/${data.name} [temp]`,
-        mask: `threed/${dataMask.name} [temp]`
+        return {
+          image: `threed/${data.name} [temp]`,
+          mask: `threed/${dataMask.name} [temp]`,
+          normal: `threed/${dataNormal.name} [temp]`,
+          camera_info: node.properties['Camera Info']
+        }
       }
     }
   }
 })
 
-app.registerExtension({
+useExtensionService().registerExtension({
   name: 'Comfy.Preview3D',
 
-  async beforeRegisterNodeDef(nodeType, nodeData) {
-    if (
-      // @ts-expect-error ComfyNode
-      ['Preview3D'].includes(nodeType.comfyClass)
-    ) {
+  async beforeRegisterNodeDef(_nodeType, nodeData) {
+    if ('Preview3D' === nodeData.name) {
       // @ts-expect-error InputSpec is not typed correctly
       nodeData.input.required.image = ['PREVIEW_3D']
     }
   },
 
-  getCustomWidgets(app) {
+  getCustomWidgets() {
     return {
-      PREVIEW_3D(node, inputName) {
-        const container = document.createElement('div')
-
-        container.classList.add('comfy-preview-3d')
-
-        /*
-        const mountComponent = () => {
-          const vnode = h(Load3D, {
-            node: node,
-            type: 'Preview3D'
-          })
-
-          render(vnode, container)
+      PREVIEW_3D(node) {
+        const inputSpec: CustomInputSpec = {
+          name: 'image',
+          type: 'Preview3D',
+          isAnimation: false,
+          isPreview: true
         }
-         */
 
-        let controlsApp = createApp(Load3D, {
-          node: node,
-          type: 'Preview3D'
+        const widget = new ComponentWidgetImpl({
+          node,
+          name: inputSpec.name,
+          component: Load3D,
+          inputSpec,
+          options: {}
         })
 
-        controlsApp.mount(container)
+        addWidget(node, widget)
 
-        const origOnRemoved = node.onRemoved
-
-        node.onRemoved = function () {
-          /*
-          render(null, container)
-
-          container.remove()
-           */
-
-          if (controlsApp) {
-            controlsApp.unmount()
-            controlsApp = null
-          }
-
-          origOnRemoved?.apply(this, [])
-        }
-
-        //mountComponent()
-
-        return {
-          widget: node.addDOMWidget(inputName, 'PREVIEW_3D', container)
-        }
+        return { widget }
       }
     }
   },
@@ -402,89 +430,69 @@ app.registerExtension({
 
     await nextTick()
 
-    const load3d = useLoad3dService().getLoad3d(node)
-
-    const modelWidget = node.widgets.find(
-      (w: IWidget) => w.name === 'model_file'
-    )
-
     const onExecuted = node.onExecuted
 
     node.onExecuted = function (message: any) {
-      onExecuted?.apply(this, arguments)
+      onExecuted?.apply(this, arguments as any)
 
-      let filePath = message.model_file[0]
+      let filePath = message.result[0]
 
       if (!filePath) {
-        const msg = 'unable to get model file path.'
-
+        const msg = t('toastMessages.unableToGetModelFilePath')
         console.error(msg)
-
         useToastStore().addAlert(msg)
       }
 
-      modelWidget.value = filePath.replaceAll('\\', '/')
+      const load3d = useLoad3dService().getLoad3d(node)
 
-      const config = new Load3DConfiguration(load3d)
+      let cameraState = message.result[1]
 
-      config.configure('output', modelWidget)
+      const modelWidget = node.widgets?.find(
+        (w: IWidget) => w.name === 'model_file'
+      )
+
+      if (load3d && modelWidget) {
+        modelWidget.value = filePath.replaceAll('\\', '/')
+
+        const config = new Load3DConfiguration(load3d)
+
+        config.configure('output', modelWidget, cameraState)
+      }
     }
   }
 })
 
-app.registerExtension({
+useExtensionService().registerExtension({
   name: 'Comfy.Preview3DAnimation',
 
-  async beforeRegisterNodeDef(nodeType, nodeData) {
-    if (
-      // @ts-expect-error ComfyNode
-      ['Preview3DAnimation'].includes(nodeType.comfyClass)
-    ) {
+  async beforeRegisterNodeDef(_nodeType, nodeData) {
+    if ('Preview3DAnimation' === nodeData.name) {
       // @ts-expect-error InputSpec is not typed correctly
       nodeData.input.required.image = ['PREVIEW_3D_ANIMATION']
     }
   },
 
-  getCustomWidgets(app) {
+  getCustomWidgets() {
     return {
-      PREVIEW_3D_ANIMATION(node, inputName) {
-        const container = document.createElement('div')
+      PREVIEW_3D_ANIMATION(node) {
+        const inputSpec: CustomInputSpec = {
+          name: 'image',
+          type: 'Preview3DAnimation',
+          isAnimation: true,
+          isPreview: true
+        }
 
-        container.classList.add('comfy-preview-3d-animation')
-
-        let controlsApp = createApp(Load3DAnimation, {
-          node: node,
-          type: 'Preview3DAnimation'
+        const widget = new ComponentWidgetImpl({
+          node,
+          name: inputSpec.name,
+          component: Load3DAnimation,
+          inputSpec,
+          options: {}
         })
 
-        controlsApp.use(PrimeVue)
+        addWidget(node, widget)
 
-        controlsApp.mount(container)
-
-        const origOnRemoved = node.onRemoved
-
-        node.onRemoved = function () {
-          /*
-          render(null, container)
-
-          container.remove()
-           */
-
-          if (controlsApp) {
-            controlsApp.unmount()
-            controlsApp = null
-          }
-
-          origOnRemoved?.apply(this, [])
-        }
-
-        return {
-          widget: node.addDOMWidget(
-            inputName,
-            'PREVIEW_3D_ANIMATION',
-            container
-          )
-        }
+        return { widget }
       }
     }
   },
@@ -498,32 +506,33 @@ app.registerExtension({
 
     await nextTick()
 
-    const load3d = useLoad3dService().getLoad3d(node)
-
-    const modelWidget = node.widgets.find(
-      (w: IWidget) => w.name === 'model_file'
-    )
-
     const onExecuted = node.onExecuted
 
     node.onExecuted = function (message: any) {
-      onExecuted?.apply(this, arguments)
+      onExecuted?.apply(this, arguments as any)
 
-      let filePath = message.model_file[0]
+      let filePath = message.result[0]
 
       if (!filePath) {
-        const msg = 'unable to get model file path.'
-
+        const msg = t('toastMessages.unableToGetModelFilePath')
         console.error(msg)
-
         useToastStore().addAlert(msg)
       }
 
-      modelWidget.value = filePath.replaceAll('\\', '/')
+      let cameraState = message.result[1]
 
-      const config = new Load3DConfiguration(load3d)
+      const load3d = useLoad3dService().getLoad3d(node)
 
-      config.configure('output', modelWidget)
+      const modelWidget = node.widgets?.find(
+        (w: IWidget) => w.name === 'model_file'
+      )
+      if (load3d && modelWidget) {
+        modelWidget.value = filePath.replaceAll('\\', '/')
+
+        const config = new Load3DConfiguration(load3d)
+
+        config.configure('output', modelWidget, cameraState)
+      }
     }
   }
 })

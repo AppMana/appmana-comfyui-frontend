@@ -1,40 +1,42 @@
 <template>
   <Load3DScene
-    :node="node"
-    :type="type"
-    :backgroundColor="backgroundColor"
-    :showGrid="showGrid"
-    :lightIntensity="lightIntensity"
-    :fov="fov"
-    :cameraType="cameraType"
-    :showPreview="showPreview"
-    :extraListeners="animationListeners"
-    :backgroundImage="backgroundImage"
-    :upDirection="upDirection"
-    :materialMode="materialMode"
-    @materialModeChange="listenMaterialModeChange"
-    @backgroundColorChange="listenBackgroundColorChange"
-    @lightIntensityChange="listenLightIntensityChange"
-    @fovChange="listenFOVChange"
-    @cameraTypeChange="listenCameraTypeChange"
-    @showGridChange="listenShowGridChange"
-    @showPreviewChange="listenShowPreviewChange"
     ref="load3DSceneRef"
+    :node="node"
+    :input-spec="inputSpec"
+    :background-color="backgroundColor"
+    :show-grid="showGrid"
+    :light-intensity="lightIntensity"
+    :fov="fov"
+    :camera-type="cameraType"
+    :show-preview="showPreview"
+    :extra-listeners="animationListeners"
+    :background-image="backgroundImage"
+    :up-direction="upDirection"
+    :material-mode="materialMode"
+    @material-mode-change="listenMaterialModeChange"
+    @background-color-change="listenBackgroundColorChange"
+    @light-intensity-change="listenLightIntensityChange"
+    @fov-change="listenFOVChange"
+    @camera-type-change="listenCameraTypeChange"
+    @show-grid-change="listenShowGridChange"
+    @show-preview-change="listenShowPreviewChange"
   />
 </template>
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 
 import Load3DScene from '@/components/load3d/Load3DScene.vue'
+import Load3dAnimation from '@/extensions/core/load3d/Load3dAnimation'
 import {
   CameraType,
   MaterialMode,
   UpDirection
 } from '@/extensions/core/load3d/interfaces'
+import { CustomInputSpec } from '@/schemas/nodeDef/nodeDefSchemaV2'
 
 const props = defineProps<{
   node: any
-  type: 'Load3DAnimation' | 'Preview3DAnimation'
+  inputSpec: CustomInputSpec
   backgroundColor: string
   showGrid: boolean
   lightIntensity: number
@@ -62,7 +64,7 @@ const upDirection = ref(props.upDirection)
 const materialMode = ref(props.materialMode)
 const showFOVButton = ref(props.showFOVButton)
 const showLightIntensityButton = ref(props.showLightIntensityButton)
-const load3DSceneRef = ref(null)
+const load3DSceneRef = ref<InstanceType<typeof Load3DScene> | null>(null)
 
 watch(
   () => props.cameraType,
@@ -123,21 +125,24 @@ watch(
 watch(
   () => props.playing,
   (newValue) => {
-    load3DSceneRef.value.load3d.toggleAnimation(newValue)
+    const load3d = load3DSceneRef.value?.load3d as Load3dAnimation | null
+    load3d?.toggleAnimation(newValue)
   }
 )
 
 watch(
   () => props.selectedSpeed,
   (newValue) => {
-    load3DSceneRef.value.load3d.setAnimationSpeed(newValue)
+    const load3d = load3DSceneRef.value?.load3d as Load3dAnimation | null
+    load3d?.setAnimationSpeed(newValue)
   }
 )
 
 watch(
   () => props.selectedAnimation,
   (newValue) => {
-    load3DSceneRef.value.load3d.updateSelectedAnimation(newValue)
+    const load3d = load3DSceneRef.value?.load3d as Load3dAnimation | null
+    load3d?.updateSelectedAnimation(newValue)
   }
 )
 
@@ -182,4 +187,8 @@ const animationListeners = {
     emit('animationListChange', newValue)
   }
 }
+
+defineExpose({
+  load3DSceneRef
+})
 </script>

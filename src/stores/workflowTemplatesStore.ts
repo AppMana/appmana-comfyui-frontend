@@ -2,11 +2,13 @@ import { groupBy } from 'lodash'
 import { defineStore } from 'pinia'
 import { computed, ref, shallowRef } from 'vue'
 
+import { st } from '@/i18n'
 import { api } from '@/scripts/api'
 import type {
   TemplateGroup,
   WorkflowTemplates
 } from '@/types/workflowTemplateTypes'
+import { normalizeI18nKey } from '@/utils/formatUtil'
 
 export const useWorkflowTemplatesStore = defineStore(
   'workflowTemplates',
@@ -17,7 +19,13 @@ export const useWorkflowTemplatesStore = defineStore(
 
     const groupedTemplates = computed<TemplateGroup[]>(() => {
       const allTemplates = [
-        ...coreTemplates.value,
+        ...coreTemplates.value.map((template) => ({
+          ...template,
+          title: st(
+            `templateWorkflows.category.${normalizeI18nKey(template.title)}`,
+            template.title ?? template.moduleName
+          )
+        })),
         ...Object.entries(customTemplates.value).map(
           ([moduleName, templates]) => ({
             moduleName,
@@ -33,8 +41,13 @@ export const useWorkflowTemplatesStore = defineStore(
       ]
 
       return Object.entries(
-        groupBy(allTemplates, (t) =>
-          t.moduleName === 'default' ? 'ComfyUI Examples' : 'Custom Nodes'
+        groupBy(allTemplates, (template) =>
+          template.moduleName === 'default'
+            ? st(
+                'templateWorkflows.category.ComfyUI Examples',
+                'ComfyUI Examples'
+              )
+            : st('templateWorkflows.category.Custom Nodes', 'Custom Nodes')
         )
       ).map(([label, modules]) => ({ label, modules }))
     })

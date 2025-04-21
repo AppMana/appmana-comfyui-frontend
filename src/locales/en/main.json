@@ -20,8 +20,10 @@
     "about": "About",
     "add": "Add",
     "confirm": "Confirm",
+    "confirmed": "Confirmed",
     "reset": "Reset",
-    "resetKeybindingsTooltip": "Reset keybindings to default",
+    "resetAll": "Reset All",
+    "resetAllKeybindingsTooltip": "Reset all keybindings to default",
     "customizeFolder": "Customize Folder",
     "icon": "Icon",
     "color": "Color",
@@ -40,12 +42,14 @@
     "delete": "Delete",
     "rename": "Rename",
     "save": "Save",
+    "saving": "Saving",
     "no": "No",
     "cancel": "Cancel",
     "close": "Close",
     "back": "Back",
     "next": "Next",
     "install": "Install",
+    "installing": "Installing",
     "overwrite": "Overwrite",
     "customize": "Customize",
     "experimental": "BETA",
@@ -78,7 +82,93 @@
     "control_after_generate": "control after generate",
     "control_before_generate": "control before generate",
     "choose_file_to_upload": "choose file to upload",
-    "capture": "capture"
+    "capture": "capture",
+    "nodes": "Nodes",
+    "community": "Community",
+    "all": "All",
+    "update": "Update",
+    "updated": "Updated",
+    "resultsCount": "Found {count} Results",
+    "status": "Status",
+    "description": "Description",
+    "name": "Name",
+    "category": "Category",
+    "sort": "Sort",
+    "source": "Source",
+    "filter": "Filter",
+    "apply": "Apply",
+    "enabled": "Enabled",
+    "installed": "Installed",
+    "restart": "Restart",
+    "missing": "Missing",
+    "inProgress": "In progress",
+    "completed": "Completed",
+    "interrupted": "Interrupted",
+    "enabling": "Enabling",
+    "disabling": "Disabling",
+    "updating": "Updating",
+    "migrate": "Migrate",
+    "updateAvailable": "Update Available",
+    "login": "Login",
+    "learnMore": "Learn more",
+    "amount": "Amount"
+  },
+  "manager": {
+    "title": "Custom Nodes Manager",
+    "failed": "Failed ({count})",
+    "noNodesFound": "No nodes found",
+    "noNodesFoundDescription": "The pack's nodes either could not be parsed, or the pack is a frontend extension only and doesn't have any nodes.",
+    "installationQueue": "Installation Queue",
+    "changingVersion": "Changing version from {from} to {to}",
+    "dependencies": "Dependencies",
+    "inWorkflow": "In Workflow",
+    "infoPanelEmpty": "Click an item to see the info",
+    "restartToApplyChanges": "To apply changes, please restart ComfyUI",
+    "loadingVersions": "Loading versions...",
+    "selectVersion": "Select Version",
+    "downloads": "Downloads",
+    "repository": "Repository",
+    "uninstall": "Uninstall",
+    "uninstalling": "Uninstalling",
+    "update": "Update",
+    "uninstallSelected": "Uninstall Selected",
+    "updatingAllPacks": "Updating all packages",
+    "license": "License",
+    "nightlyVersion": "Nightly",
+    "latestVersion": "Latest",
+    "createdBy": "Created By",
+    "totalNodes": "Total Nodes",
+    "discoverCommunityContent": "Discover community-made Node Packs, Extensions, and more...",
+    "errorConnecting": "Error connecting to the Comfy Node Registry.",
+    "noResultsFound": "No results found matching your search.",
+    "tryDifferentSearch": "Please try a different search query.",
+    "tryAgainLater": "Please try again later.",
+    "nodePack": "Node Pack",
+    "searchPlaceholder": "Search",
+    "version": "Version",
+    "lastUpdated": "Last Updated",
+    "noDescription": "No description available",
+    "installSelected": "Install Selected",
+    "packsSelected": "Packs Selected",
+    "status": {
+      "active": "Active",
+      "pending": "Pending",
+      "flagged": "Flagged",
+      "deleted": "Deleted",
+      "banned": "Banned",
+      "unknown": "Unknown"
+    },
+    "sort": {
+      "downloads": "Most Popular",
+      "publisher": "Publisher",
+      "created": "Newest",
+      "updated": "Updated Recently"
+    },
+    "filter": {
+      "nodePack": "Node Pack",
+      "enabled": "Enabled",
+      "disabled": "Disabled"
+    }
   },
   "issueReport": {
     "submitErrorReport": "Submit Error Report (Optional)",
@@ -129,8 +219,6 @@
     "Shapes": "Shapes",
     "Bypass": "Bypass",
     "Copy (Clipspace)": "Copy (Clipspace)",
-    "Convert Widget to Input": "Convert Widget to Input",
-    "Convert Input to Widget": "Convert Input to Widget",
     "Add Node": "Add Node",
     "Add Group": "Add Group",
     "Convert to Group Node": "Convert to Group Node",
@@ -139,9 +227,6 @@
     "Save Selected as Template": "Save Selected as Template",
     "Node Templates": "Node Templates",
     "Manage": "Manage",
-    "Convert ": "Convert ",
-    " to input": " to input",
-    " to widget": " to widget",
     "Search": "Search"
   },
   "icon": {
@@ -197,9 +282,11 @@
     "pathExists": "Directory already exists - please ensure you have backed up all data",
     "cannotWrite": "Unable to write to the selected path",
     "insufficientFreeSpace": "Insufficient space - minimum free space",
+    "isOneDrive": "OneDrive is not supported. Please install ComfyUI in another location.",
+    "nonDefaultDrive": "Please install ComfyUI on your system drive (eg. C:\\). Drives with different file systems may cause unpredicable issues. Models and other files can be stored on other drives after installation.",
     "parentMissing": "Path does not exist - create the containing directory first",
     "unhandledError": "Unknown error",
-    "installLocationDescription": "Select the directory for ComfyUI's user data. A python environment will be installed to the selected location. Please make sure the selected disk has enough space (~15GB) left.",
+    "installLocationDescription": "Select the directory for ComfyUI's user data. A python environment will be installed to the selected location.",
     "installLocationTooltip": "ComfyUI's user data directory. Stores:\n- Python Environment\n- Models\n- Custom nodes\n",
     "appDataLocationTooltip": "ComfyUI's app data directory. Stores:\n- Logs\n- Server configs",
     "appPathLocationTooltip": "ComfyUI's app asset directory. Stores the ComfyUI code and assets",
@@ -347,9 +434,9 @@
     "instantTooltip": "The workflow will be queued instantly after a generation finishes",
     "onChange": "On Change",
     "onChangeTooltip": "The workflow will be queued once a change is made",
-    "queueWorkflow": "Queue workflow (Shift to queue at front)",
-    "queueWorkflowFront": "Queue workflow at front",
-    "queue": "Queue",
+    "runWorkflow": "Run workflow (Shift to queue at front)",
+    "runWorkflowFront": "Run workflow (Queue at front)",
+    "run": "Run",
     "execute": "Execute",
     "interrupt": "Cancel current run",
     "refresh": "Refresh node definitions",
@@ -369,6 +456,19 @@
   },
   "templateWorkflows": {
     "title": "Get Started with a Template",
+    "category": {
+      "ComfyUI Examples": "ComfyUI Examples",
+      "Custom Nodes": "Custom Nodes",
+      "Basics": "Basics",
+      "Flux": "Flux",
+      "ControlNet": "ControlNet",
+      "Upscaling": "Upscaling",
+      "Video": "Video",
+      "Image": "Image",
+      "Area Composition": "Area Composition",
+      "3D": "3D",
+      "Audio": "Audio"
+    },
     "template": {
       "Flux": {
         "flux_dev_checkpoint_example": "Flux Dev",
@@ -390,7 +490,7 @@
         "inpain_model_outpainting": "Outpaint"
       },
       "ControlNet": {
-        "controlnet_example": "ControlNet",
+        "controlnet_example": "Scribble ControlNet",
         "2_pass_pose_worship": "Pose ControlNet 2 Pass",
         "depth_controlnet": "Depth ControlNet",
         "depth_t2i_adapter": "Depth T2I Adapter",
@@ -403,25 +503,30 @@
         "latent_upscale_different_prompt_model": "Latent Upscale Different Prompt Model"
       },
       "Video": {
+        "text_to_video_wan": "Wan 2.1 Text to Video",
+        "image_to_video_wan": "Wan 2.1 Image to Video",
         "image_to_video": "SVD Image to Video",
         "txt_to_image_to_video": "SVD Text to Image to Video",
         "ltxv_image_to_video": "LTXV Image to Video",
         "ltxv_text_to_video": "LTXV Text to Video",
         "mochi_text_to_video_example": "Mochi Text to Video",
-        "hunyuan_video_text_to_video": "Hunyuan Video Text to Video"
+        "hunyuan_video_text_to_video": "Hunyuan Video Text to Video",
+        "wan2_1_fun_inp": "Wan 2.1 Inpainting",
+        "wan2_1_fun_control": "Wan 2.1 ControlNet"
       },
-      "SD3_5": {
+      "Image": {
         "sd3_5_simple_example": "SD3.5 Simple",
         "sd3_5_large_canny_controlnet_example": "SD3.5 Large Canny ControlNet",
         "sd3_5_large_depth": "SD3.5 Large Depth",
-        "sd3_5_large_blur": "SD3.5 Large Blur"
-      },
-      "SDXL": {
+        "sd3_5_large_blur": "SD3.5 Large Blur",
         "sdxl_simple_example": "SDXL Simple",
         "sdxl_refiner_prompt_example": "SDXL Refiner Prompt",
         "sdxl_revision_text_prompts": "SDXL Revision Text Prompts",
         "sdxl_revision_zero_positive": "SDXL Revision Zero Positive",
-        "sdxlturbo_example": "SDXL Turbo"
+        "sdxlturbo_example": "SDXL Turbo",
+        "hidream_i1_dev": "HiDream I1 Dev",
+        "hidream_i1_fast": "HiDream I1 Fast",
+        "hidream_i1_full": "HiDream I1 Full"
       },
       "Area Composition": {
         "area_composition": "Area Composition",
@@ -429,7 +534,10 @@
         "area_composition_square_area_for_subject": "Area Composition Square Area for Subject"
       },
       "3D": {
-        "stable_zero123_example": "Stable Zero123"
+        "stable_zero123_example": "Stable Zero123",
+        "hunyuan3d-non-multiview-train": "Hunyuan3D 2.0",
+        "hunyuan-3d-multiview-elf": "Hunyuan3D 2.0 MV",
+        "hunyuan-3d-turbo": "Hunyuan3D 2.0 MV Turbo"
       },
       "Audio": {
         "stable_audio_example": "Stable Audio"
@@ -466,10 +574,36 @@
     "cancel": "Cancel Download",
     "cancelled": "Cancelled"
   },
+  "maskEditor": {
+    "Invert": "Invert",
+    "Clear": "Clear",
+    "Brush Settings": "Brush Settings",
+    "Brush Shape": "Brush Shape",
+    "Thickness": "Thickness",
+    "Opacity": "Opacity",
+    "Hardness": "Hardness",
+    "Smoothing Precision": "Smoothing Precision",
+    "Reset to Default": "Reset to Default",
+    "Paint Bucket Settings": "Paint Bucket Settings",
+    "Tolerance": "Tolerance",
+    "Fill Opacity": "Fill Opacity",
+    "Color Select Settings": "Color Select Settings",
+    "Selection Opacity": "Selection Opacity",
+    "Live Preview": "Live Preview",
+    "Apply to Whole Image": "Apply to Whole Image",
+    "Method": "Method",
+    "Stop at mask": "Stop at mask",
+    "Mask Tolerance": "Mask Tolerance",
+    "Layers": "Layers",
+    "Mask Layer": "Mask Layer",
+    "Mask Opacity": "Mask Opacity",
+    "Image Layer": "Image Layer"
+  },
   "menuLabels": {
     "Workflow": "Workflow",
     "Edit": "Edit",
     "Help": "Help",
+    "Check for Updates": "Check for Updates",
     "Open Custom Nodes Folder": "Open Custom Nodes Folder",
     "Open Inputs Folder": "Open Inputs Folder",
     "Open Logs Folder": "Open Logs Folder",
@@ -485,6 +619,7 @@
     "Delete Selected Items": "Delete Selected Items",
     "Fit view to selected nodes": "Fit view to selected nodes",
     "Reset View": "Reset View",
+    "Resize Selected Nodes": "Resize Selected Nodes",
     "Canvas Toggle Link Visibility": "Canvas Toggle Link Visibility",
     "Canvas Toggle Lock": "Canvas Toggle Lock",
     "Pin/Unpin Selected Items": "Pin/Unpin Selected Items",
@@ -512,6 +647,8 @@
     "ComfyUI Issues": "ComfyUI Issues",
     "Interrupt": "Interrupt",
     "Load Default Workflow": "Load Default Workflow",
+    "Custom Nodes Manager": "Custom Nodes Manager",
+    "Toggle Progress Dialog": "Toggle Progress Dialog",
     "New": "New",
     "Clipspace": "Clipspace",
     "Open": "Open",
@@ -567,7 +704,6 @@
     "BrushAdjustment": "Brush Adjustment",
     "NewEditor": "New Editor",
     "ModelLibrary": "Model Library",
-    "NodeInputConversionSubmenus": "Node Input Conversion Submenus",
     "NodeLibrary": "Node Library",
     "Node Search Box": "Node Search Box",
     "Pointer": "Pointer",
@@ -585,7 +721,13 @@
     "EditTokenWeight": "Edit Token Weight",
     "CustomColorPalettes": "Custom Color Palettes",
     "UV": "UV",
-    "ContextMenu": "Context Menu"
+    "ContextMenu": "Context Menu",
+    "Reroute": "Reroute",
+    "Load 3D": "Load 3D",
+    "Camera": "Camera",
+    "Scene": "Scene",
+    "3D": "3D",
+    "Light": "Light"
   },
   "serverConfigItems": {
     "listen": {
@@ -743,22 +885,22 @@
     "latent": "latent",
     "video": "video",
     "audio": "audio",
+    "3d": "3d",
     "ltxv": "ltxv",
     "sd3": "sd3",
     "sigmas": "sigmas",
     "model_patches": "model_patches",
     "unet": "unet",
     "gligen": "gligen",
+    "video_models": "video_models",
     "postprocessing": "postprocessing",
     "transform": "transform",
     "batch": "batch",
-    "video_models": "video_models",
     "upscaling": "upscaling",
     "instructpix2pix": "instructpix2pix",
     "compositing": "compositing",
     "samplers": "samplers",
     "operations": "operations",
-    "3d": "3d",
     "debug": "debug",
     "model": "model",
     "model_specific": "model_specific",
@@ -795,6 +937,7 @@
     "LOAD_3D": "LOAD_3D",
     "LOAD_3D_ANIMATION": "LOAD_3D_ANIMATION",
     "MASK": "MASK",
+    "MESH": "MESH",
     "MODEL": "MODEL",
     "NOISE": "NOISE",
     "PHOTOMAKER": "PHOTOMAKER",
@@ -805,6 +948,7 @@
     "TIMESTEPS_RANGE": "TIMESTEPS_RANGE",
     "UPSCALE_MODEL": "UPSCALE_MODEL",
     "VAE": "VAE",
+    "VOXEL": "VOXEL",
     "WEBCAM": "WEBCAM"
   },
   "maintenance": {
@@ -832,10 +976,28 @@
     "missingModels": "Missing Models",
     "missingModelsMessage": "When loading the graph, the following models were not found"
   },
+  "errorDialog": {
+    "defaultTitle": "An error occurred",
+    "loadWorkflowTitle": "Loading aborted due to error reloading workflow data",
+    "noStackTrace": "No stacktrace available",
+    "extensionFileHint": "This may be due to the following script",
+    "promptExecutionError": "Prompt execution failed"
+  },
+  "apiNodesSignInDialog": {
+    "title": "Sign In Required to Use API Nodes",
+    "message": "This workflow contains API Nodes, which require you to be signed in to your account in order to run."
+  },
+  "apiNodesCostBreakdown": {
+    "title": "API Node(s)",
+    "costPerRun": "Cost per run",
+    "totalCost": "Total Cost"
+  },
   "desktopUpdate": {
     "title": "Updating ComfyUI Desktop",
     "description": "ComfyUI Desktop is installing new dependencies.  This may take a few minutes.",
-    "terminalDefaultMessage": "Any console output from the update will be shown here."
+    "terminalDefaultMessage": "Any console output from the update will be shown here.",
+    "updateFoundTitle": "Update Found (v{version})",
+    "updateAvailableMessage": "An update is available. Do you want to restart and update now?"
   },
   "clipboard": {
     "successMessage": "Copied to clipboard",
@@ -858,6 +1020,103 @@
     "model": "Model",
     "camera": "Camera",
     "light": "Light",
-    "switchingMaterialMode": "Switching Material Mode..."
+    "switchingMaterialMode": "Switching Material Mode...",
+    "edgeThreshold": "Edge Threshold",
+    "export": "Export",
+    "exportModel": "Export Model",
+    "exportingModel": "Exporting model...",
+    "uploadTexture": "Upload Texture",
+    "applyingTexture": "Applying Texture...",
+    "materialModes": {
+      "normal": "Normal",
+      "wireframe": "Wireframe",
+      "original": "Original",
+      "depth": "Depth"
+    }
+  },
+  "toastMessages": {
+    "no3dScene": "No 3D scene to apply texture",
+    "failedToApplyTexture": "Failed to apply texture",
+    "no3dSceneToExport": "No 3D scene to export",
+    "failedToExportModel": "Failed to export model as {format}",
+    "fileLoadError": "Unable to find workflow in {fileName}",
+    "dropFileError": "Unable to process dropped item: {error}",
+    "interrupted": "Execution has been interrupted",
+    "pendingTasksDeleted": "Pending tasks deleted",
+    "nothingToGroup": "Nothing to group",
+    "pleaseSelectNodesToGroup": "Please select the nodes (or other groups) to create a group for",
+    "emptyCanvas": "Empty canvas",
+    "fileUploadFailed": "File upload failed",
+    "unableToGetModelFilePath": "Unable to get model file path",
+    "couldNotDetermineFileType": "Could not determine file type",
+    "errorLoadingModel": "Error loading model",
+    "failedToDownloadFile": "Failed to download file",
+    "updateRequested": "Update requested",
+    "nodeDefinitionsUpdated": "Node definitions updated",
+    "errorSaveSetting": "Error saving setting {id}: {err}",
+    "errorCopyImage": "Error copying image: {error}",
+    "noTemplatesToExport": "No templates to export",
+    "failedToFetchLogs": "Failed to fetch server logs",
+    "migrateToLitegraphReroute": "Reroute nodes will be removed in future versions. Click to migrate to litegraph-native reroute."
+  },
+  "auth": {
+    "login": {
+      "title": "Log in to your account",
+      "newUser": "New here?",
+      "signUp": "Sign up",
+      "emailLabel": "Email",
+      "emailPlaceholder": "Enter your email",
+      "passwordLabel": "Password",
+      "passwordPlaceholder": "Enter your password",
+      "confirmPasswordLabel": "Confirm Password",
+      "confirmPasswordPlaceholder": "Enter the same password again",
+      "forgotPassword": "Forgot password?",
+      "loginButton": "Log in",
+      "orContinueWith": "Or continue with",
+      "loginWithGoogle": "Log in with Google",
+      "loginWithGithub": "Log in with Github",
+      "termsText": "By clicking \"Next\" or \"Sign Up\", you agree to our",
+      "termsLink": "Terms of Use",
+      "andText": "and",
+      "privacyLink": "Privacy Policy",
+      "success": "Login successful",
+      "failed": "Login failed"
+    },
+    "signup": {
+      "title": "Create an account",
+      "alreadyHaveAccount": "Already have an account?",
+      "emailLabel": "Email",
+      "emailPlaceholder": "Enter your email",
+      "passwordLabel": "Password",
+      "passwordPlaceholder": "Enter new password",
+      "signUpButton": "Sign up",
+      "signIn": "Sign in",
+      "signUpWithGoogle": "Sign up with Google",
+      "signUpWithGithub": "Sign up with Github"
+    }
+  },
+  "validation": {
+    "invalidEmail": "Invalid email address",
+    "required": "Required",
+    "minLength": "Must be at least {length} characters",
+    "maxLength": "Must be no more than {length} characters",
+    "password": {
+      "requirements": "Password requirements",
+      "minLength": "Must be between 8 and 32 characters",
+      "uppercase": "Must contain at least one uppercase letter",
+      "lowercase": "Must contain at least one lowercase letter",
+      "number": "Must contain at least one number",
+      "special": "Must contain at least one special character",
+      "match": "Passwords must match"
+    }
+  },
+  "credits": {
+    "credits": "Credits",
+    "yourCreditBalance": "Your credit balance",
+    "purchaseCredits": "Purchase Credits",
+    "creditsHistory": "Credits History",
+    "paymentDetails": "Payment Details",
+    "faqs": "FAQs",
+    "messageSupport": "Message Support"
   }
 }

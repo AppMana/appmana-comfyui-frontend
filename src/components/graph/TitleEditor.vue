@@ -5,8 +5,8 @@
     :style="inputStyle"
   >
     <EditableText
-      :isEditing="showInput"
-      :modelValue="editedTitle"
+      :is-editing="showInput"
+      :model-value="editedTitle"
       @edit="onEdit"
     />
   </div>
@@ -87,7 +87,7 @@ const canvasEventHandler = (event: LiteGraphCanvasEvent) => {
     }
 
     const group: LGraphGroup = event.detail.group
-    const [x, y] = group.pos
+    const [_, y] = group.pos
 
     const e = event.detail.originalEvent
     const relativeY = e.canvasY - y
@@ -101,7 +101,7 @@ const canvasEventHandler = (event: LiteGraphCanvasEvent) => {
     }
 
     const node: LGraphNode = event.detail.node
-    const [x, y] = node.pos
+    const [_, y] = node.pos
 
     const e = event.detail.originalEvent
     const relativeY = e.canvasY - y

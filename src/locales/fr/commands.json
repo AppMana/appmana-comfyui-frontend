@@ -1,4 +1,7 @@
 {
+  "Comfy-Desktop_CheckForUpdates": {
+    "label": "Vérifier les mises à jour"
+  },
   "Comfy-Desktop_Folders_OpenCustomNodesFolder": {
     "label": "Ouvrir le dossier des nœuds personnalisés"
   },
@@ -43,6 +46,9 @@
   },
   "Comfy_Canvas_ResetView": {
     "label": "Réinitialiser la vue"
+  },
+  "Comfy_Canvas_Resize": {
+    "label": "Redimensionner les nœuds sélectionnés"
   },
   "Comfy_Canvas_ToggleLinkVisibility": {
     "label": "Basculer la visibilité du lien sur le canevas"
@@ -124,6 +130,12 @@
   },
   "Comfy_LoadDefaultWorkflow": {
     "label": "Charger le flux de travail par défaut"
+  },
+  "Comfy_Manager_CustomNodesManager": {
+    "label": "Gestionnaire de Nœuds Personnalisés"
+  },
+  "Comfy_Manager_ToggleManagerProgressDialog": {
+    "label": "Basculer la boîte de dialogue de progression"
   },
   "Comfy_NewBlankWorkflow": {
     "label": "Nouveau flux de travail vierge"

@@ -42,11 +42,11 @@ describe('UrlInput', () => {
     })
 
     const input = wrapper.find('input')
-    await input.setValue('https://test.com')
+    await input.setValue('https://test.com/')
     await input.trigger('blur')
 
     expect(wrapper.emitted('update:modelValue')?.[0]).toEqual([
-      'https://test.com'
+      'https://test.com/'
     ])
   })
 
@@ -60,7 +60,7 @@ describe('UrlInput', () => {
         })
     })
 
-    wrapper.setProps({ modelValue: 'https://test.com' })
+    await wrapper.setProps({ modelValue: 'https://test.com' })
     await nextTick()
     await nextTick()
 
@@ -74,7 +74,7 @@ describe('UrlInput', () => {
       validateUrlFn: () => Promise.resolve(true)
     })
 
-    wrapper.setProps({ modelValue: 'https://test.com' })
+    await wrapper.setProps({ modelValue: 'https://test.com' })
     await nextTick()
     await nextTick()
 
@@ -88,7 +88,7 @@ describe('UrlInput', () => {
       validateUrlFn: () => Promise.resolve(false)
     })
 
-    wrapper.setProps({ modelValue: 'https://test.com' })
+    await wrapper.setProps({ modelValue: 'https://test.com' })
     await nextTick()
     await nextTick()
 
@@ -141,18 +141,70 @@ describe('UrlInput', () => {
       }
     })
 
-    wrapper.setProps({ modelValue: 'https://test.com' })
+    await wrapper.setProps({ modelValue: 'https://test.com' })
     await nextTick()
     await nextTick()
 
     // Trigger multiple validations in quick succession
-    wrapper.find('.pi-spinner').trigger('click')
-    wrapper.find('.pi-spinner').trigger('click')
-    wrapper.find('.pi-spinner').trigger('click')
+    await wrapper.find('.pi-spinner').trigger('click')
+    await wrapper.find('.pi-spinner').trigger('click')
+    await wrapper.find('.pi-spinner').trigger('click')
 
     await nextTick()
     await nextTick()
 
     expect(validationCount).toBe(1) // Only the initial validation should occur
+  })
+
+  describe('input cleaning functionality', () => {
+    it('trims whitespace when user types', async () => {
+      const wrapper = mountComponent({
+        modelValue: '',
+        placeholder: 'Enter URL'
+      })
+
+      const input = wrapper.find('input')
+
+      // Test leading whitespace
+      await input.setValue('  https://leading-space.com')
+      await input.trigger('input')
+      await nextTick()
+      expect(wrapper.vm.internalValue).toBe('https://leading-space.com')
+
+      // Test trailing whitespace
+      await input.setValue('https://trailing-space.com  ')
+      await input.trigger('input')
+      await nextTick()
+      expect(wrapper.vm.internalValue).toBe('https://trailing-space.com')
+
+      // Test both leading and trailing whitespace
+      await input.setValue('  https://both-spaces.com  ')
+      await input.trigger('input')
+      await nextTick()
+      expect(wrapper.vm.internalValue).toBe('https://both-spaces.com')
+
+      // Test whitespace in the middle of the URL
+      await input.setValue('https:// middle-space.com')
+      await input.trigger('input')
+      await nextTick()
+      expect(wrapper.vm.internalValue).toBe('https://middle-space.com')
+    })
+
+    it('trims whitespace when value set externally', async () => {
+      const wrapper = mountComponent({
+        modelValue: '  https://initial-value.com  ',
+        placeholder: 'Enter URL'
+      })
+
+      // Check initial value is trimmed
+      expect(wrapper.vm.internalValue).toBe('https://initial-value.com')
+
+      // Update props with whitespace
+      await wrapper.setProps({ modelValue: '  https://updated-value.com  ' })
+      await nextTick()
+
+      // Check updated value is trimmed
+      expect(wrapper.vm.internalValue).toBe('https://updated-value.com')
+    })
   })
 })

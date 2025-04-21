@@ -1,5 +1,5 @@
 <template>
-  <div ref="container" class="w-full h-full relative">
+  <div ref="container" class="w-full h-full relative comfy-load-3d">
     <LoadingOverlay ref="loadingOverlayRef" />
   </div>
 </template>
@@ -17,11 +17,12 @@ import {
   UpDirection
 } from '@/extensions/core/load3d/interfaces'
 import { t } from '@/i18n'
+import type { CustomInputSpec } from '@/schemas/nodeDef/nodeDefSchemaV2'
 import { useLoad3dService } from '@/services/load3dService'
 
 const props = defineProps<{
-  node: any
-  type: 'Load3D' | 'Load3DAnimation' | 'Preview3D' | 'Preview3DAnimation'
+  node: LGraphNode
+  inputSpec: CustomInputSpec
   backgroundColor: string
   showGrid: boolean
   lightIntensity: number
@@ -31,6 +32,7 @@ const props = defineProps<{
   backgroundImage: string
   upDirection: UpDirection
   materialMode: MaterialMode
+  edgeThreshold?: number
   extraListeners?: Record<string, (value: any) => void>
 }>()
 
@@ -51,15 +53,25 @@ const eventConfig = {
   backgroundImageChange: (value: string) =>
     emit('backgroundImageChange', value),
   upDirectionChange: (value: string) => emit('upDirectionChange', value),
+  edgeThresholdChange: (value: number) => emit('edgeThresholdChange', value),
   modelLoadingStart: () =>
     loadingOverlayRef.value?.startLoading(t('load3d.loadingModel')),
   modelLoadingEnd: () => loadingOverlayRef.value?.endLoading(),
   materialLoadingStart: () =>
     loadingOverlayRef.value?.startLoading(t('load3d.switchingMaterialMode')),
-  materialLoadingEnd: () => loadingOverlayRef.value?.endLoading()
+  materialLoadingEnd: () => loadingOverlayRef.value?.endLoading(),
+  exportLoadingStart: (message: string) => {
+    loadingOverlayRef.value?.startLoading(message || t('load3d.exportingModel'))
+  },
+  exportLoadingEnd: () => {
+    loadingOverlayRef.value?.endLoading()
+  },
+  textureLoadingStart: () =>
+    loadingOverlayRef.value?.startLoading(t('load3d.applyingTexture')),
+  textureLoadingEnd: () => loadingOverlayRef.value?.endLoading()
 } as const
 
-watchEffect(() => {
+watchEffect(async () => {
   if (load3d.value) {
     const rawLoad3d = toRaw(load3d.value)
 
@@ -69,7 +81,7 @@ watchEffect(() => {
     rawLoad3d.setFOV(props.fov)
     rawLoad3d.toggleCamera(props.cameraType)
     rawLoad3d.togglePreview(props.showPreview)
-    rawLoad3d.setBackgroundImage(props.backgroundImage)
+    await rawLoad3d.setBackgroundImage(props.backgroundImage)
     rawLoad3d.setUpDirection(props.upDirection)
   }
 })
@@ -85,6 +97,18 @@ watch(
   }
 )
 
+watch(
+  () => props.edgeThreshold,
+  (newValue) => {
+    if (load3d.value) {
+      const rawLoad3d = toRaw(load3d.value)
+
+      // @ts-expect-error fixme ts strict error
+      rawLoad3d.setEdgeThreshold(newValue)
+    }
+  }
+)
+
 const emit = defineEmits<{
   (e: 'materialModeChange', materialMode: string): void
   (e: 'backgroundColorChange', color: string): void
@@ -95,6 +119,7 @@ const emit = defineEmits<{
   (e: 'showPreviewChange', showPreview: boolean): void
   (e: 'backgroundImageChange', backgroundImage: string): void
   (e: 'upDirectionChange', upDirection: string): void
+  (e: 'edgeThresholdChange', threshold: number): void
 }>()
 
 const handleEvents = (action: 'add' | 'remove') => {
@@ -116,8 +141,9 @@ const handleEvents = (action: 'add' | 'remove') => {
 onMounted(() => {
   load3d.value = useLoad3dService().registerLoad3d(
     node.value as LGraphNode,
+    // @ts-expect-error fixme ts strict error
     container.value,
-    props.type
+    props.inputSpec
   )
   handleEvents('add')
 })

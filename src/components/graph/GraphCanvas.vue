@@ -22,8 +22,8 @@
   <TitleEditor />
   <GraphCanvasMenu v-if="!betaMenuEnabled && canvasMenuEnabled" />
   <canvas
-    ref="canvasRef"
     id="graph-canvas"
+    ref="canvasRef"
     tabindex="1"
     class="w-full h-full touch-none"
   />
@@ -33,13 +33,16 @@
   </SelectionOverlay>
   <NodeTooltip v-if="tooltipEnabled" />
   <NodeBadge />
+  <DomWidgets />
 </template>
 
 <script setup lang="ts">
+import type { LGraphNode } from '@comfyorg/litegraph'
 import { computed, onMounted, ref, watch, watchEffect } from 'vue'
 
 import LiteGraphCanvasSplitterOverlay from '@/components/LiteGraphCanvasSplitterOverlay.vue'
 import BottomPanel from '@/components/bottomPanel/BottomPanel.vue'
+import DomWidgets from '@/components/graph/DomWidgets.vue'
 import GraphCanvasMenu from '@/components/graph/GraphCanvasMenu.vue'
 import NodeBadge from '@/components/graph/NodeBadge.vue'
 import NodeTooltip from '@/components/graph/NodeTooltip.vue'
@@ -56,16 +59,19 @@ import { useCopy } from '@/composables/useCopy'
 import { useGlobalLitegraph } from '@/composables/useGlobalLitegraph'
 import { useLitegraphSettings } from '@/composables/useLitegraphSettings'
 import { usePaste } from '@/composables/usePaste'
+import { useWorkflowAutoSave } from '@/composables/useWorkflowAutoSave'
 import { useWorkflowPersistence } from '@/composables/useWorkflowPersistence'
 import { CORE_SETTINGS } from '@/constants/coreSettings'
 import { i18n } from '@/i18n'
-import { api } from '@/scripts/api'
+import type { NodeId } from '@/schemas/comfyWorkflowSchema'
+import { UnauthorizedError, api } from '@/scripts/api'
 import { app as comfyApp } from '@/scripts/app'
 import { ChangeTracker } from '@/scripts/changeTracker'
 import { IS_CONTROL_WIDGET, updateControlWidgetLabel } from '@/scripts/widgets'
 import { useColorPaletteService } from '@/services/colorPaletteService'
 import { useWorkflowService } from '@/services/workflowService'
 import { useCommandStore } from '@/stores/commandStore'
+import { useExecutionStore } from '@/stores/executionStore'
 import { useCanvasStore } from '@/stores/graphStore'
 import { useNodeDefStore } from '@/stores/nodeDefStore'
 import { useSettingStore } from '@/stores/settingStore'
@@ -78,6 +84,7 @@ const settingStore = useSettingStore()
 const nodeDefStore = useNodeDefStore()
 const workspaceStore = useWorkspaceStore()
 const canvasStore = useCanvasStore()
+const executionStore = useExecutionStore()
 const betaMenuEnabled = computed(
   () => settingStore.get('Comfy.UseNewMenu') !== 'Disabled'
 )
@@ -104,7 +111,9 @@ watchEffect(() => {
 
 watchEffect(() => {
   const spellcheckEnabled = settingStore.get('Comfy.TextareaWidget.Spellcheck')
-  const textareas = document.querySelectorAll('textarea.comfy-multiline-input')
+  const textareas = document.querySelectorAll<HTMLTextAreaElement>(
+    'textarea.comfy-multiline-input'
+  )
 
   textareas.forEach((textarea: HTMLTextAreaElement) => {
     textarea.spellcheck = spellcheckEnabled
@@ -122,6 +131,7 @@ watch(
     for (const n of comfyApp.graph.nodes) {
       if (!n.widgets) continue
       for (const w of n.widgets) {
+        // @ts-expect-error fixme ts strict error
         if (w[IS_CONTROL_WIDGET]) {
           updateControlWidgetLabel(w)
           if (w.linkedWidgets) {
@@ -140,16 +150,65 @@ const colorPaletteService = useColorPaletteService()
 const colorPaletteStore = useColorPaletteStore()
 watch(
   [() => canvasStore.canvas, () => settingStore.get('Comfy.ColorPalette')],
-  ([canvas, currentPaletteId]) => {
+  async ([canvas, currentPaletteId]) => {
     if (!canvas) return
 
-    colorPaletteService.loadColorPalette(currentPaletteId)
+    await colorPaletteService.loadColorPalette(currentPaletteId)
   }
 )
 watch(
   () => colorPaletteStore.activePaletteId,
-  (newValue) => {
-    settingStore.set('Comfy.ColorPalette', newValue)
+  async (newValue) => {
+    await settingStore.set('Comfy.ColorPalette', newValue)
+  }
+)
+
+// Update the progress of the executing node
+watch(
+  () =>
+    [executionStore.executingNodeId, executionStore.executingNodeProgress] as [
+      NodeId | null,
+      number | null
+    ],
+  ([executingNodeId, executingNodeProgress]) => {
+    for (const node of comfyApp.graph.nodes) {
+      if (node.id == executingNodeId) {
+        node.progress = executingNodeProgress ?? undefined
+      } else {
+        node.progress = undefined
+      }
+    }
+  }
+)
+
+// Update node slot errors
+watch(
+  () => executionStore.lastNodeErrors,
+  (lastNodeErrors) => {
+    const removeSlotError = (node: LGraphNode) => {
+      for (const slot of node.inputs) {
+        delete slot.hasErrors
+      }
+      for (const slot of node.outputs) {
+        delete slot.hasErrors
+      }
+    }
+
+    for (const node of comfyApp.graph.nodes) {
+      removeSlotError(node)
+      const nodeErrors = lastNodeErrors?.[node.id]
+      if (!nodeErrors) continue
+      for (const error of nodeErrors.errors) {
+        if (error.extra_info && error.extra_info.input_name) {
+          const inputIndex = node.findInputSlot(error.extra_info.input_name)
+          if (inputIndex !== -1) {
+            node.inputs[inputIndex].hasErrors = true
+          }
+        }
+      }
+    }
+
+    comfyApp.canvas.draw(true, true)
   }
 )
 
@@ -166,6 +225,7 @@ const loadCustomNodesI18n = async () => {
 
 const comfyAppReady = ref(false)
 const workflowPersistence = useWorkflowPersistence()
+// @ts-expect-error fixme ts strict error
 useCanvasDrop(canvasRef)
 useLitegraphSettings()
 
@@ -174,6 +234,7 @@ onMounted(async () => {
   useContextMenuTranslation()
   useCopy()
   usePaste()
+  useWorkflowAutoSave()
 
   comfyApp.vueAppReady = true
 
@@ -182,16 +243,32 @@ onMounted(async () => {
   // some listeners of litegraph canvas.
   ChangeTracker.init(comfyApp)
   await loadCustomNodesI18n()
-  await settingStore.loadSettingValues()
+  try {
+    await settingStore.loadSettingValues()
+  } catch (error) {
+    if (error instanceof UnauthorizedError) {
+      console.log(
+        'Failed loading user settings, user unauthorized, cleaning local Comfy.userId'
+      )
+      localStorage.removeItem('Comfy.userId')
+      localStorage.removeItem('Comfy.userName')
+      window.location.reload()
+    } else {
+      throw error
+    }
+  }
   CORE_SETTINGS.forEach((setting) => {
     settingStore.addSetting(setting)
   })
+  // @ts-expect-error fixme ts strict error
   await comfyApp.setup(canvasRef.value)
   canvasStore.canvas = comfyApp.canvas
   canvasStore.canvas.render_canvas_border = false
   workspaceStore.spinner = false
 
+  // @ts-expect-error fixme ts strict error
   window['app'] = comfyApp
+  // @ts-expect-error fixme ts strict error
   window['graph'] = comfyApp.graph
 
   comfyAppReady.value = true
@@ -215,7 +292,7 @@ onMounted(async () => {
     () => settingStore.get('Comfy.Locale'),
     async () => {
       await useCommandStore().execute('Comfy.RefreshNodeDefinitions')
-      useWorkflowService().reloadCurrentWorkflow()
+      await useWorkflowService().reloadCurrentWorkflow()
     }
   )
 

@@ -6,6 +6,8 @@ import type {
   ComfyWorkflowJSON
 } from '@/schemas/comfyWorkflowSchema'
 
+import { compressWidgetInputSlots } from './litegraphUtil'
+
 /**
  * Converts the current graph workflow for sending to the API.
  * Note: Node widgets are updated before serialization to prepare queueing.
@@ -38,6 +40,10 @@ export const graphToPrompt = async (
     }
   }
 
+  compressWidgetInputSlots(workflow)
+  workflow.extra ??= {}
+  workflow.extra.frontendVersion = __COMFYUI_FRONTEND_VERSION__
+
   const output: ComfyApiWorkflow = {}
   // Process nodes in order of execution
   for (const outerNode of graph.computeExecutionOrder(false)) {
@@ -66,9 +72,19 @@ export const graphToPrompt = async (
         for (const [i, widget] of widgets.entries()) {
           if (!widget.name || widget.options?.serialize === false) continue
 
-          inputs[widget.name] = widget.serializeValue
+          const widgetValue = widget.serializeValue
             ? await widget.serializeValue(node, i)
             : widget.value
+          // By default, Array values are reserved to represent node connections.
+          // We need to wrap the array as an object to avoid the misinterpretation
+          // of the array as a node connection.
+          // The backend automatically unwraps the object to an array during
+          // execution.
+          inputs[widget.name] = Array.isArray(widgetValue)
+            ? {
+                __value__: widgetValue
+              }
+            : widgetValue
         }
       }
 

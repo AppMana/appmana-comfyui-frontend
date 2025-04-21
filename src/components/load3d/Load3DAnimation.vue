@@ -1,64 +1,69 @@
 <template>
-  <div class="relative w-full h-full">
+  <div
+    class="relative w-full h-full"
+    @mouseenter="handleMouseEnter"
+    @mouseleave="handleMouseLeave"
+  >
     <Load3DAnimationScene
+      ref="load3DAnimationSceneRef"
       :node="node"
-      :type="type"
-      :backgroundColor="backgroundColor"
-      :showGrid="showGrid"
-      :lightIntensity="lightIntensity"
+      :input-spec="inputSpec"
+      :background-color="backgroundColor"
+      :show-grid="showGrid"
+      :light-intensity="lightIntensity"
       :fov="fov"
-      :cameraType="cameraType"
-      :showPreview="showPreview"
-      :showFOVButton="showFOVButton"
-      :showLightIntensityButton="showLightIntensityButton"
+      :camera-type="cameraType"
+      :show-preview="showPreview"
+      :show-f-o-v-button="showFOVButton"
+      :show-light-intensity-button="showLightIntensityButton"
       :playing="playing"
-      :selectedSpeed="selectedSpeed"
-      :selectedAnimation="selectedAnimation"
-      :backgroundImage="backgroundImage"
-      :upDirection="upDirection"
-      :materialMode="materialMode"
-      @materialModeChange="listenMaterialModeChange"
-      @backgroundColorChange="listenBackgroundColorChange"
-      @lightIntensityChange="listenLightIntensityChange"
-      @fovChange="listenFOVChange"
-      @cameraTypeChange="listenCameraTypeChange"
-      @showGridChange="listenShowGridChange"
-      @showPreviewChange="listenShowPreviewChange"
-      @backgroundImageChange="listenBackgroundImageChange"
-      @animationListChange="animationListChange"
-      @upDirectionChange="listenUpDirectionChange"
+      :selected-speed="selectedSpeed"
+      :selected-animation="selectedAnimation"
+      :background-image="backgroundImage"
+      :up-direction="upDirection"
+      :material-mode="materialMode"
+      @material-mode-change="listenMaterialModeChange"
+      @background-color-change="listenBackgroundColorChange"
+      @light-intensity-change="listenLightIntensityChange"
+      @fov-change="listenFOVChange"
+      @camera-type-change="listenCameraTypeChange"
+      @show-grid-change="listenShowGridChange"
+      @show-preview-change="listenShowPreviewChange"
+      @background-image-change="listenBackgroundImageChange"
+      @animation-list-change="animationListChange"
+      @up-direction-change="listenUpDirectionChange"
     />
     <div class="absolute top-0 left-0 w-full h-full pointer-events-none">
       <Load3DControls
-        :backgroundColor="backgroundColor"
-        :showGrid="showGrid"
-        :showPreview="showPreview"
-        :lightIntensity="lightIntensity"
-        :showLightIntensityButton="showLightIntensityButton"
+        :input-spec="inputSpec"
+        :background-color="backgroundColor"
+        :show-grid="showGrid"
+        :show-preview="showPreview"
+        :light-intensity="lightIntensity"
+        :show-light-intensity-button="showLightIntensityButton"
         :fov="fov"
-        :showFOVButton="showFOVButton"
-        :showPreviewButton="showPreviewButton"
-        :cameraType="cameraType"
-        :hasBackgroundImage="hasBackgroundImage"
-        :upDirection="upDirection"
-        :materialMode="materialMode"
-        :isAnimation="true"
-        @updateBackgroundImage="handleBackgroundImageUpdate"
-        @switchCamera="switchCamera"
-        @toggleGrid="toggleGrid"
-        @updateBackgroundColor="handleBackgroundColorChange"
-        @updateLightIntensity="handleUpdateLightIntensity"
-        @togglePreview="togglePreview"
-        @updateFOV="handleUpdateFOV"
-        @updateUpDirection="handleUpdateUpDirection"
-        @updateMaterialMode="handleUpdateMaterialMode"
+        :show-f-o-v-button="showFOVButton"
+        :show-preview-button="showPreviewButton"
+        :camera-type="cameraType"
+        :has-background-image="hasBackgroundImage"
+        :up-direction="upDirection"
+        :material-mode="materialMode"
+        @update-background-image="handleBackgroundImageUpdate"
+        @switch-camera="switchCamera"
+        @toggle-grid="toggleGrid"
+        @update-background-color="handleBackgroundColorChange"
+        @update-light-intensity="handleUpdateLightIntensity"
+        @toggle-preview="togglePreview"
+        @update-f-o-v="handleUpdateFOV"
+        @update-up-direction="handleUpdateUpDirection"
+        @update-material-mode="handleUpdateMaterialMode"
       />
       <Load3DAnimationControls
         :animations="animations"
         :playing="playing"
-        @togglePlay="togglePlay"
-        @speedChange="speedChange"
-        @animationChange="animationChange"
+        @toggle-play="togglePlay"
+        @speed-change="speedChange"
+        @animation-change="animationChange"
       />
     </div>
   </div>
@@ -74,16 +79,22 @@ import Load3dUtils from '@/extensions/core/load3d/Load3dUtils'
 import {
   AnimationItem,
   CameraType,
+  Load3DAnimationNodeType,
   MaterialMode,
   UpDirection
 } from '@/extensions/core/load3d/interfaces'
+import type { CustomInputSpec } from '@/schemas/nodeDef/nodeDefSchemaV2'
+import type { ComponentWidget } from '@/scripts/domWidget'
 
-const props = defineProps<{
-  node: any
-  type: 'Load3DAnimation' | 'Preview3DAnimation'
+const { widget } = defineProps<{
+  widget: ComponentWidget<string[]>
 }>()
 
-const node = ref(props.node)
+const inputSpec = widget.inputSpec as CustomInputSpec
+
+const node = widget.node
+const type = inputSpec.type as Load3DAnimationNodeType
+
 const backgroundColor = ref('#000000')
 const showGrid = ref(true)
 const showPreview = ref(false)
@@ -101,8 +112,26 @@ const selectedAnimation = ref(0)
 const backgroundImage = ref('')
 
 const showPreviewButton = computed(() => {
-  return !props.type.includes('Preview')
+  return !type.includes('Preview')
 })
+
+const load3DAnimationSceneRef = ref<InstanceType<
+  typeof Load3DAnimationScene
+> | null>(null)
+
+const handleMouseEnter = () => {
+  const sceneRef = load3DAnimationSceneRef.value?.load3DSceneRef
+  if (sceneRef?.load3d) {
+    sceneRef.load3d.updateStatusMouseOnScene(true)
+  }
+}
+
+const handleMouseLeave = () => {
+  const sceneRef = load3DAnimationSceneRef.value?.load3DSceneRef
+  if (sceneRef?.load3d) {
+    sceneRef.load3d.updateStatusMouseOnScene(false)
+  }
+}
 
 const switchCamera = () => {
   cameraType.value =
@@ -110,44 +139,44 @@ const switchCamera = () => {
 
   showFOVButton.value = cameraType.value === 'perspective'
 
-  node.value.properties['Camera Type'] = cameraType.value
+  node.properties['Camera Type'] = cameraType.value
 }
 
 const togglePreview = (value: boolean) => {
   showPreview.value = value
 
-  node.value.properties['Show Preview'] = showPreview.value
+  node.properties['Show Preview'] = showPreview.value
 }
 
 const toggleGrid = (value: boolean) => {
   showGrid.value = value
 
-  node.value.properties['Show Grid'] = showGrid.value
+  node.properties['Show Grid'] = showGrid.value
 }
 
 const handleUpdateLightIntensity = (value: number) => {
   lightIntensity.value = value
 
-  node.value.properties['Light Intensity'] = lightIntensity.value
+  node.properties['Light Intensity'] = lightIntensity.value
 }
 
 const handleBackgroundImageUpdate = async (file: File | null) => {
   if (!file) {
     hasBackgroundImage.value = false
     backgroundImage.value = ''
-    node.value.properties['Background Image'] = ''
+    node.properties['Background Image'] = ''
     return
   }
 
   backgroundImage.value = await Load3dUtils.uploadFile(file)
 
-  node.value.properties['Background Image'] = backgroundImage.value
+  node.properties['Background Image'] = backgroundImage.value
 }
 
 const handleUpdateFOV = (value: number) => {
   fov.value = value
 
-  node.value.properties['FOV'] = fov.value
+  node.properties['FOV'] = fov.value
 }
 
 const materialMode = ref<MaterialMode>('original')
@@ -156,19 +185,19 @@ const upDirection = ref<UpDirection>('original')
 const handleUpdateUpDirection = (value: UpDirection) => {
   upDirection.value = value
 
-  node.value.properties['Up Direction'] = value
+  node.properties['Up Direction'] = value
 }
 
 const handleUpdateMaterialMode = (value: MaterialMode) => {
   materialMode.value = value
 
-  node.value.properties['Material Mode'] = value
+  node.properties['Material Mode'] = value
 }
 
 const handleBackgroundColorChange = (value: string) => {
   backgroundColor.value = value
 
-  node.value.properties['Background Color'] = value
+  node.properties['Background Color'] = value
 }
 
 const togglePlay = (value: boolean) => {

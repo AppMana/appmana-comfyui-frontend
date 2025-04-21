@@ -5,36 +5,36 @@
   >
     <template #tool-buttons>
       <Button
+        v-tooltip.bottom="$t('g.newFolder')"
         class="new-folder-button"
         icon="pi pi-folder-plus"
         text
         severity="secondary"
         @click="nodeBookmarkTreeExplorerRef?.addNewBookmarkFolder()"
-        v-tooltip.bottom="$t('g.newFolder')"
       />
       <Button
+        v-tooltip.bottom="$t('sideToolbar.nodeLibraryTab.sortOrder')"
         class="sort-button"
         :icon="alphabeticalSort ? 'pi pi-sort-alpha-down' : 'pi pi-sort-alt'"
         text
         severity="secondary"
         @click="alphabeticalSort = !alphabeticalSort"
-        v-tooltip.bottom="$t('sideToolbar.nodeLibraryTab.sortOrder')"
       />
     </template>
     <template #header>
       <SearchBox
-        class="node-lib-search-box p-2 2xl:p-4"
         v-model:modelValue="searchQuery"
-        @search="handleSearch"
-        @show-filter="($event) => searchFilter.toggle($event)"
-        @remove-filter="onRemoveFilter"
+        class="node-lib-search-box p-2 2xl:p-4"
         :placeholder="$t('g.searchNodes') + '...'"
         filter-icon="pi pi-filter"
         :filters
+        @search="handleSearch"
+        @show-filter="($event) => searchFilter?.toggle($event)"
+        @remove-filter="onRemoveFilter"
       />
 
       <Popover ref="searchFilter" class="ml-[-13px]">
-        <NodeSearchFilter @addFilter="onAddFilter" />
+        <NodeSearchFilter @add-filter="onAddFilter" />
       </Popover>
     </template>
     <template #body>
@@ -48,9 +48,9 @@
         class="m-2"
       />
       <TreeExplorer
-        class="node-lib-tree-explorer"
-        :roots="renderedRoot.children"
         v-model:expandedKeys="expandedKeys"
+        class="node-lib-tree-explorer"
+        :root="renderedRoot"
       >
         <template #node="{ node }">
           <NodeTreeLeaf :node="node" />
@@ -65,7 +65,6 @@
 import Button from 'primevue/button'
 import Divider from 'primevue/divider'
 import Popover from 'primevue/popover'
-import type { TreeNode } from 'primevue/treenode'
 import { Ref, computed, h, nextTick, ref, render } from 'vue'
 
 import SearchBox from '@/components/common/SearchBox.vue'
@@ -77,14 +76,15 @@ import SidebarTabTemplate from '@/components/sidebar/tabs/SidebarTabTemplate.vue
 import NodeTreeLeaf from '@/components/sidebar/tabs/nodeLibrary/NodeTreeLeaf.vue'
 import { useTreeExpansion } from '@/composables/useTreeExpansion'
 import { useLitegraphService } from '@/services/litegraphService'
-import { FilterAndValue } from '@/services/nodeSearchService'
 import { useNodeBookmarkStore } from '@/stores/nodeBookmarkStore'
 import {
   ComfyNodeDefImpl,
   buildNodeDefTree,
   useNodeDefStore
 } from '@/stores/nodeDefStore'
+import type { TreeNode } from '@/types/treeExplorerTypes'
 import type { TreeExplorerNode } from '@/types/treeExplorerTypes'
+import { FuseFilterWithValue } from '@/utils/fuseUtil'
 import { sortedTree } from '@/utils/treeUtil'
 
 import NodeBookmarkTreeExplorer from './nodeLibrary/NodeBookmarkTreeExplorer.vue'
@@ -97,7 +97,7 @@ const { expandNode, toggleNodeOnEvent } = useTreeExpansion(expandedKeys)
 const nodeBookmarkTreeExplorerRef = ref<InstanceType<
   typeof NodeBookmarkTreeExplorer
 > | null>(null)
-const searchFilter = ref(null)
+const searchFilter = ref<InstanceType<typeof Popover> | null>(null)
 const alphabeticalSort = ref(false)
 
 const searchQuery = ref<string>('')
@@ -132,6 +132,7 @@ const renderedRoot = computed<TreeExplorerNode<ComfyNodeDefImpl>>(() => {
       },
       handleClick(e: MouseEvent) {
         if (this.leaf) {
+          // @ts-expect-error fixme ts strict error
           useLitegraphService().addNodeOnGraph(this.data)
         } else {
           toggleNodeOnEvent(e, this)
@@ -149,9 +150,10 @@ const filteredRoot = computed<TreeNode | null>(() => {
   }
   return buildNodeDefTree(filteredNodeDefs.value)
 })
-const filters: Ref<Array<SearchFilter & { filter: FilterAndValue<string> }>> =
-  ref([])
-const handleSearch = (query: string) => {
+const filters: Ref<
+  (SearchFilter & { filter: FuseFilterWithValue<ComfyNodeDefImpl, string> })[]
+> = ref([])
+const handleSearch = async (query: string) => {
   // Don't apply a min length filter because it does not make sense in
   // multi-byte languages like Chinese, Japanese, Korean, etc.
   if (query.length === 0 && !filters.value.length) {
@@ -160,7 +162,7 @@ const handleSearch = (query: string) => {
     return
   }
 
-  const f = filters.value.map((f) => f.filter as FilterAndValue<string>)
+  const f = filters.value.map((f) => f.filter)
   filteredNodeDefs.value = nodeDefStore.nodeSearchService.searchNode(
     query,
     f,
@@ -172,28 +174,31 @@ const handleSearch = (query: string) => {
     }
   )
 
-  nextTick(() => {
-    expandNode(filteredRoot.value)
-  })
+  await nextTick()
+  // @ts-expect-error fixme ts strict error
+  expandNode(filteredRoot.value)
 }
 
-const onAddFilter = (filterAndValue: FilterAndValue) => {
+const onAddFilter = async (
+  filterAndValue: FuseFilterWithValue<ComfyNodeDefImpl, string>
+) => {
   filters.value.push({
     filter: filterAndValue,
-    badge: filterAndValue[0].invokeSequence.toUpperCase(),
-    badgeClass: filterAndValue[0].invokeSequence + '-badge',
-    text: filterAndValue[1],
+    badge: filterAndValue.filterDef.invokeSequence.toUpperCase(),
+    badgeClass: filterAndValue.filterDef.invokeSequence + '-badge',
+    text: filterAndValue.value,
     id: +new Date()
   })
 
-  handleSearch(searchQuery.value)
+  await handleSearch(searchQuery.value)
 }
 
-const onRemoveFilter = (filterAndValue) => {
+// @ts-expect-error fixme ts strict error
+const onRemoveFilter = async (filterAndValue) => {
   const index = filters.value.findIndex((f) => f === filterAndValue)
   if (index !== -1) {
     filters.value.splice(index, 1)
   }
-  handleSearch(searchQuery.value)
+  await handleSearch(searchQuery.value)
 }
 </script>

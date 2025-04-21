@@ -1,10 +1,10 @@
 <template>
   <Form
     v-slot="$form"
-    @submit="submit"
     :resolver="zodResolver(issueReportSchema)"
+    @submit="submit"
   >
-    <Panel :pt="$attrs.pt">
+    <Panel :pt="$attrs.pt as any">
       <template #header>
         <div class="flex items-center gap-2">
           <span class="font-bold">{{ title }}</span>
@@ -33,15 +33,15 @@
             >
               <Checkbox
                 v-bind="$field"
-                :inputId="field.value"
-                :value="field.value"
                 v-model="selection"
+                :input-id="field.value"
+                :value="field.value"
               />
               <label :for="field.value">{{ field.label }}</label>
             </FormField>
           </div>
         </div>
-        <FormField class="mb-4" v-slot="$field" name="details">
+        <FormField v-slot="$field" class="mb-4" name="details">
           <Textarea
             v-bind="$field"
             class="w-full"
@@ -83,9 +83,9 @@
             >
               <Checkbox
                 v-bind="$field"
-                :inputId="checkbox.value"
-                :value="checkbox.value"
                 v-model="contactPrefs"
+                :input-id="checkbox.value"
+                :value="checkbox.value"
                 :disabled="
                   $form.contactInfo?.error || !$form.contactInfo?.value
                 "
@@ -101,7 +101,6 @@
 
 <script setup lang="ts">
 import { Form, FormField, type FormSubmitEvent } from '@primevue/forms'
-// @ts-expect-error https://github.com/primefaces/primevue/issues/6722
 import { zodResolver } from '@primevue/forms/resolvers/zod'
 import type { CaptureContext, User } from '@sentry/core'
 import { captureMessage } from '@sentry/core'
@@ -187,7 +186,7 @@ const createUser = (formData: IssueReportFormData): User => ({
 })
 
 const createExtraData = async (formData: IssueReportFormData) => {
-  const result = {}
+  const result: Record<string, unknown> = {}
   const isChecked = (fieldValue: string) => formData[fieldValue]
 
   await Promise.all(
@@ -243,7 +242,7 @@ const submit = async (event: FormSubmitEvent) => {
       toast.add({
         severity: 'error',
         summary: t('g.error'),
-        detail: error.message,
+        detail: error instanceof Error ? error.message : String(error),
         life: 3000
       })
     }

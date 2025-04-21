@@ -25,7 +25,11 @@ import type {
   UserDataFullInfo,
   BinaryPreview,
 } from '@/schemas/apiSchema'
-import type { ComfyWorkflowJSON, NodeId } from '@/schemas/comfyWorkflowSchema'
+import type {
+  ComfyApiWorkflow,
+  ComfyWorkflowJSON,
+  NodeId
+} from '@/schemas/comfyWorkflowSchema'
 import {
   type ComfyNodeDef,
   validateComfyNodeDef
@@ -34,13 +38,27 @@ import { WorkflowTemplates } from '@/types/workflowTemplateTypes'
 
 interface QueuePromptRequestBody {
   client_id: string
-  // Mapping from node id to node info + input values
-  // TODO: Type this.
-  prompt: Record<number, any>
+  prompt: ComfyApiWorkflow
   extra_data: {
     extra_pnginfo: {
       workflow: ComfyWorkflowJSON
     }
+    /**
+     * The auth token for the comfy org account if the user is logged in.
+     *
+     * Backend node can access this token by specifying following input:
+     * ```python
+      @classmethod
+      def INPUT_TYPES(s):
+        return {
+          "hidden": { "auth_token": "AUTH_TOKEN_COMFY_ORG"}
+        }
+
+      def execute(self, auth_token: str):
+        print(f"Auth token: {auth_token}")
+     * ```
+     */
+    auth_token_comfy_org?: string
   }
   front?: boolean
   number?: number
@@ -79,6 +97,8 @@ interface ApiMessage<T extends keyof ApiCalls> {
   type: T
   data: ApiCalls[T]
 }
+
+export class UnauthorizedError extends Error {}
 
 /** Ensures workers get a fair shake. */
 type Unionize<T> = T[keyof T]
@@ -131,7 +151,7 @@ type SimpleApiEvents = keyof PickNevers<ApiEventTypes>
 /** Keys (names) of API events that pass a {@link CustomEvent} `detail` object. */
 type ComplexApiEvents = keyof NeverNever<ApiEventTypes>
 
-/** EventTarget typing has no generic capability.  This interface enables tsc strict. */
+/** EventTarget typing has no generic capability. */
 export interface ComfyApi extends EventTarget {
   addEventListener<TEvent extends keyof ApiEvents>(
     type: TEvent,
@@ -144,6 +164,36 @@ export interface ComfyApi extends EventTarget {
     callback: ((event: ApiEvents[TEvent]) => void) | null,
     options?: EventListenerOptions | boolean
   ): void
+}
+
+export class PromptExecutionError extends Error {
+  response: PromptResponse
+
+  constructor(response: PromptResponse) {
+    super('Prompt execution failed')
+    this.response = response
+  }
+
+  override toString() {
+    let message = ''
+    if (typeof this.response.error === 'string') {
+      message += this.response.error
+    } else if (this.response.error) {
+      message +=
+        this.response.error.message + ': ' + this.response.error.details
+    }
+
+    for (const [_, nodeError] of Object.entries(
+      this.response.node_errors ?? []
+    )) {
+      message += '\n' + nodeError.class_type + ':'
+      for (const errorReason of nodeError.errors) {
+        message += '\n    - ' + errorReason.message + ': ' + errorReason.details
+      }
+    }
+
+    return message
+  }
 }
 
 export class ComfyApi extends EventTarget {
@@ -446,7 +496,7 @@ export class ComfyApi extends EventTarget {
    * Gets the index of core workflow templates.
    */
   async getCoreWorkflowTemplates(): Promise<WorkflowTemplates[]> {
-    const res = await axios.get('/templates/index.json')
+    const res = await axios.get(this.fileURL('/templates/index.json'))
     const contentType = res.headers['content-type']
     return contentType?.includes('application/json') ? res.data : []
   }
@@ -491,21 +541,26 @@ export class ComfyApi extends EventTarget {
   }
 
   /**
-   *
+   * Queues a prompt to be executed
    * @param {number} number The index at which to queue the prompt, passing -1 will insert the prompt at the front of the queue
    * @param {object} prompt The prompt data to queue
+   * @param {string} authToken The auth token for the comfy org account if the user is logged in
+   * @throws {PromptExecutionError} If the prompt fails to execute
    */
   async queuePrompt(
     number: number,
-    {
-      output,
-      workflow
-    }: { output: Record<number, any>; workflow: ComfyWorkflowJSON }
+    data: { output: ComfyApiWorkflow; workflow: ComfyWorkflowJSON },
+    authToken?: string
   ): Promise<PromptResponse> {
+    const { output: prompt, workflow } = data
+
     const body: QueuePromptRequestBody = {
       client_id: this.clientId ?? '', // TODO: Unify clientId access
-      prompt: output,
-      extra_data: { extra_pnginfo: { workflow } }
+      prompt,
+      extra_data: {
+        auth_token_comfy_org: authToken,
+        extra_pnginfo: { workflow }
+      }
     }
 
     if (number === -1) {
@@ -523,9 +578,7 @@ export class ComfyApi extends EventTarget {
     })
 
     if (res.status !== 200) {
-      throw {
-        response: await res.json()
-      }
+      throw new PromptExecutionError(await res.json())
     }
 
     return await res.json()
@@ -731,7 +784,12 @@ export class ComfyApi extends EventTarget {
    * @returns { Promise<string, unknown> } A dictionary of id -> value
    */
   async getSettings(): Promise<Settings> {
-    return (await this.fetchApi('/settings')).json()
+    const resp = await this.fetchApi('/settings')
+
+    if (resp.status == 401) {
+      throw new UnauthorizedError(resp.statusText)
+    }
+    return await resp.json()
   }
 
   /**

@@ -1,4 +1,3 @@
-// @ts-strict-ignore
 import fs from 'fs'
 import { describe, expect, it } from 'vitest'
 
@@ -68,10 +67,12 @@ describe('parseComfyWorkflow', () => {
     // Should automatically transform the legacy format object to array.
     workflow.nodes[0].pos = { '0': 3, '1': 4 }
     let validatedWorkflow = await validateComfyWorkflow(workflow)
+    // @ts-expect-error fixme ts strict error
     expect(validatedWorkflow.nodes[0].pos).toEqual([3, 4])
 
     workflow.nodes[0].pos = { 0: 3, 1: 4 }
     validatedWorkflow = await validateComfyWorkflow(workflow)
+    // @ts-expect-error fixme ts strict error
     expect(validatedWorkflow.nodes[0].pos).toEqual([3, 4])
 
     // Should accept the legacy bugged format object.
@@ -89,6 +90,7 @@ describe('parseComfyWorkflow', () => {
       '9': 0
     }
     validatedWorkflow = await validateComfyWorkflow(workflow)
+    // @ts-expect-error fixme ts strict error
     expect(validatedWorkflow.nodes[0].pos).toEqual([600, 340])
   })
 
@@ -107,6 +109,7 @@ describe('parseComfyWorkflow', () => {
     // dynamic widgets display.
     workflow.nodes[0].widgets_values = { foo: 'bar' }
     const validatedWorkflow = await validateComfyWorkflow(workflow)
+    // @ts-expect-error fixme ts strict error
     expect(validatedWorkflow.nodes[0].widgets_values).toEqual({ foo: 'bar' })
   })
 
@@ -173,7 +176,12 @@ describe('parseComfyWorkflow', () => {
       '0.1.0-alpha.1',
       '1.3.321',
       // Git hash
-      '080e6d4af809a46852d1c4b7ed85f06e8a3a72be'
+      '080e6d4af809a46852d1c4b7ed85f06e8a3a72be',
+      // Special case
+      'unknown',
+      // Git describe
+      'v0.3.9-7-g1419dee',
+      'v0.3.9-7-g1419dee-dirty'
     ]
     it.each(validVersionStrings)('valid version: %s', async (ver) => {
       const workflow = JSON.parse(JSON.stringify(defaultGraph))

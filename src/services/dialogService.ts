@@ -1,15 +1,25 @@
+import ApiNodesSignInContent from '@/components/dialog/content/ApiNodesSignInContent.vue'
 import ConfirmationDialogContent from '@/components/dialog/content/ConfirmationDialogContent.vue'
-import ExecutionErrorDialogContent from '@/components/dialog/content/ExecutionErrorDialogContent.vue'
+import ErrorDialogContent from '@/components/dialog/content/ErrorDialogContent.vue'
 import IssueReportDialogContent from '@/components/dialog/content/IssueReportDialogContent.vue'
 import LoadWorkflowWarning from '@/components/dialog/content/LoadWorkflowWarning.vue'
+import ManagerProgressDialogContent from '@/components/dialog/content/ManagerProgressDialogContent.vue'
 import MissingModelsWarning from '@/components/dialog/content/MissingModelsWarning.vue'
 import PromptDialogContent from '@/components/dialog/content/PromptDialogContent.vue'
 import SettingDialogContent from '@/components/dialog/content/SettingDialogContent.vue'
+import SignInContent from '@/components/dialog/content/SignInContent.vue'
+import ManagerDialogContent from '@/components/dialog/content/manager/ManagerDialogContent.vue'
+import ManagerHeader from '@/components/dialog/content/manager/ManagerHeader.vue'
+import ManagerProgressFooter from '@/components/dialog/footer/ManagerProgressFooter.vue'
+import ComfyOrgHeader from '@/components/dialog/header/ComfyOrgHeader.vue'
+import ManagerProgressHeader from '@/components/dialog/header/ManagerProgressHeader.vue'
 import SettingDialogHeader from '@/components/dialog/header/SettingDialogHeader.vue'
 import TemplateWorkflowsContent from '@/components/templates/TemplateWorkflowsContent.vue'
 import TemplateWorkflowsDialogHeader from '@/components/templates/TemplateWorkflowsDialogHeader.vue'
 import { t } from '@/i18n'
+import type { ExecutionErrorWsMessage } from '@/schemas/apiSchema'
 import { type ShowDialogOptions, useDialogStore } from '@/stores/dialogStore'
+import { ManagerTab } from '@/types/comfyManagerTypes'
 
 export type ConfirmationDialogType =
   | 'default'
@@ -64,12 +74,21 @@ export const useDialogService = () => {
     })
   }
 
-  function showExecutionErrorDialog(
-    props: InstanceType<typeof ExecutionErrorDialogContent>['$props']
-  ) {
+  function showExecutionErrorDialog(executionError: ExecutionErrorWsMessage) {
+    const props: InstanceType<typeof ErrorDialogContent>['$props'] = {
+      error: {
+        exceptionType: executionError.exception_type,
+        exceptionMessage: executionError.exception_message,
+        nodeId: executionError.node_id,
+        nodeType: executionError.node_type,
+        traceback: executionError.traceback.join('\n'),
+        reportType: 'graphExecutionError'
+      }
+    }
+
     dialogStore.showDialog({
       key: 'global-execution-error',
-      component: ExecutionErrorDialogContent,
+      component: ErrorDialogContent,
       props
     })
   }
@@ -84,7 +103,7 @@ export const useDialogService = () => {
       headerComponent: TemplateWorkflowsDialogHeader,
       dialogComponentProps: {
         pt: {
-          content: { class: '!px-0' }
+          content: { class: '!px-0 overflow-y-hidden' }
         }
       },
       props
@@ -98,6 +117,153 @@ export const useDialogService = () => {
       key: 'global-issue-report',
       component: IssueReportDialogContent,
       props
+    })
+  }
+
+  function showManagerDialog(
+    props: InstanceType<typeof ManagerDialogContent>['$props'] = {
+      initialTab: ManagerTab.All
+    }
+  ) {
+    dialogStore.showDialog({
+      key: 'global-manager',
+      component: ManagerDialogContent,
+      headerComponent: ManagerHeader,
+      dialogComponentProps: {
+        closable: false,
+        pt: {
+          header: { class: '!p-0 !m-0' },
+          content: { class: '!px-0 h-[83vh] w-[90vw] overflow-y-hidden' }
+        }
+      },
+      props
+    })
+  }
+
+  function showManagerProgressDialog(options?: {
+    props?: InstanceType<typeof ManagerProgressDialogContent>['$props']
+  }) {
+    return dialogStore.showDialog({
+      key: 'global-manager-progress-dialog',
+      component: ManagerProgressDialogContent,
+      headerComponent: ManagerProgressHeader,
+      footerComponent: ManagerProgressFooter,
+      props: options?.props,
+      dialogComponentProps: {
+        closable: false,
+        modal: false,
+        position: 'bottom',
+        pt: {
+          root: { class: 'w-[80%] max-w-2xl mx-auto border-none' },
+          content: { class: '!p-0' },
+          header: { class: '!p-0 border-none' },
+          footer: { class: '!p-0 border-none' }
+        }
+      }
+    })
+  }
+
+  function parseError(error: Error) {
+    const filename =
+      'fileName' in error
+        ? (error.fileName as string)
+        : error.stack?.match(/(\/extensions\/.*\.js)/)?.[1]
+
+    const extensionFile = filename
+      ? filename.substring(filename.indexOf('/extensions/'))
+      : undefined
+
+    return {
+      errorMessage: error.toString(),
+      stackTrace: error.stack,
+      extensionFile
+    }
+  }
+
+  /**
+   * Show a error dialog to the user when an error occurs.
+   * @param error The error to show
+   * @param options The options for the dialog
+   */
+  function showErrorDialog(
+    error: unknown,
+    options: {
+      title?: string
+      reportType?: string
+    } = {}
+  ) {
+    const errorProps: {
+      errorMessage: string
+      stackTrace?: string
+      extensionFile?: string
+    } =
+      error instanceof Error
+        ? parseError(error)
+        : {
+            errorMessage: String(error)
+          }
+
+    const props: InstanceType<typeof ErrorDialogContent>['$props'] = {
+      error: {
+        exceptionType: options.title ?? 'Unknown Error',
+        exceptionMessage: errorProps.errorMessage,
+        traceback: errorProps.stackTrace ?? t('errorDialog.noStackTrace'),
+        reportType: options.reportType
+      }
+    }
+
+    dialogStore.showDialog({
+      key: 'global-error',
+      component: ErrorDialogContent,
+      props
+    })
+  }
+
+  /**
+   * Shows a dialog requiring sign in for API nodes
+   * @returns Promise that resolves to true if user clicks login, false if cancelled
+   */
+  async function showApiNodesSignInDialog(
+    apiNodeNames: string[]
+  ): Promise<boolean> {
+    return new Promise<boolean>((resolve) => {
+      dialogStore.showDialog({
+        key: 'api-nodes-signin',
+        component: ApiNodesSignInContent,
+        props: {
+          apiNodeNames,
+          onLogin: () => showSignInDialog().then((result) => resolve(result)),
+          onCancel: () => resolve(false)
+        },
+        headerComponent: ComfyOrgHeader,
+        dialogComponentProps: {
+          closable: false,
+          onClose: () => resolve(false)
+        }
+      })
+    }).then((result) => {
+      dialogStore.closeDialog({ key: 'api-nodes-signin' })
+      return result
+    })
+  }
+
+  async function showSignInDialog(): Promise<boolean> {
+    return new Promise<boolean>((resolve) => {
+      dialogStore.showDialog({
+        key: 'global-signin',
+        component: SignInContent,
+        headerComponent: ComfyOrgHeader,
+        props: {
+          onSuccess: () => resolve(true)
+        },
+        dialogComponentProps: {
+          closable: false,
+          onClose: () => resolve(false)
+        }
+      })
+    }).then((result) => {
+      dialogStore.closeDialog({ key: 'global-signin' })
+      return result
     })
   }
 
@@ -182,6 +348,11 @@ export const useDialogService = () => {
     showExecutionErrorDialog,
     showTemplateWorkflowsDialog,
     showIssueReportDialog,
+    showManagerDialog,
+    showManagerProgressDialog,
+    showErrorDialog,
+    showApiNodesSignInDialog,
+    showSignInDialog,
     prompt,
     confirm
   }

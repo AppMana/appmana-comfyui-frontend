@@ -26,7 +26,7 @@ const zVector2 = z.union([
   z
     .object({ 0: z.number(), 1: z.number() })
     .passthrough()
-    .transform((v) => [v[0], v[1]]),
+    .transform((v) => [v[0], v[1]] as [number, number]),
   z.tuple([z.number(), z.number()])
 ])
 
@@ -82,7 +82,12 @@ const zReroute = z
     id: z.number(),
     parentId: z.number().optional(),
     pos: zVector2,
-    linkIds: z.array(z.number()).nullish()
+    linkIds: z.array(z.number()).nullish(),
+    floating: z
+      .object({
+        slotType: z.enum(['input', 'output'])
+      })
+      .optional()
   })
   .passthrough()
 
@@ -155,11 +160,29 @@ const zAuxId = z
   )
   .transform(([username, repo]) => `${username}/${repo}`)
 
-const zSemVer = z
-  .string()
-  .regex(semverPattern, 'Invalid semantic version (x.y.z)')
-const zGitHash = z.string().regex(gitHashPattern, 'Invalid Git commit hash')
-const zVersion = z.union([zSemVer, zGitHash])
+const zGitHash = z.string().superRefine((val: string, ctx) => {
+  if (!gitHashPattern.test(val)) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: `Node pack version has invalid Git commit hash: "${val}"`
+    })
+  }
+})
+const zSemVer = z.string().superRefine((val: string, ctx) => {
+  if (!semverPattern.test(val)) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: `Node pack version has invalid semantic version: "${val}"`
+    })
+  }
+})
+const zVersion = z.union([
+  z
+    .string()
+    .transform((ver) => ver.replace(/^v/, '')) // Strip leading 'v'
+    .pipe(z.union([zSemVer, zGitHash])),
+  z.literal('unknown')
+])
 
 const zProperties = z
   .object({
@@ -201,18 +224,6 @@ const zGroup = z
   })
   .passthrough()
 
-const zInfo = z
-  .object({
-    name: z.string(),
-    author: z.string(),
-    description: z.string(),
-    version: z.string(),
-    created: z.string(),
-    modified: z.string(),
-    software: z.string()
-  })
-  .passthrough()
-
 const zDS = z
   .object({
     scale: z.number(),
@@ -230,7 +241,7 @@ const zConfig = z
 const zExtra = z
   .object({
     ds: zDS.optional(),
-    info: zInfo.optional(),
+    frontendVersion: z.string().optional(),
     linkExtensions: z.array(zComfyLinkExtension).optional(),
     reroutes: z.array(zReroute).optional()
   })
@@ -239,10 +250,13 @@ const zExtra = z
 /** Schema version 0.4 */
 export const zComfyWorkflow = z
   .object({
+    id: z.string().uuid().optional(),
+    revision: z.number().optional(),
     last_node_id: zNodeId,
     last_link_id: z.number(),
     nodes: z.array(zComfyNode),
     links: z.array(zComfyLink),
+    floatingLinks: z.array(zComfyLinkObject).optional(),
     groups: z.array(zGroup).optional(),
     config: zConfig.optional().nullable(),
     extra: zExtra.optional().nullable(),
@@ -254,12 +268,15 @@ export const zComfyWorkflow = z
 /** Schema version 1 */
 export const zComfyWorkflow1 = z
   .object({
+    id: z.string().uuid().optional(),
+    revision: z.number().optional(),
     version: z.literal(1),
     config: zConfig.optional().nullable(),
     state: zGraphState,
     groups: z.array(zGroup).optional(),
     nodes: z.array(zComfyNode),
     links: z.array(zComfyLinkObject).optional(),
+    floatingLinks: z.array(zComfyLinkObject).optional(),
     reroutes: z.array(zReroute).optional(),
     extra: zExtra.optional().nullable(),
     models: z.array(zModelFile).optional()
@@ -270,7 +287,11 @@ export type ModelFile = z.infer<typeof zModelFile>
 export type NodeInput = z.infer<typeof zNodeInput>
 export type NodeOutput = z.infer<typeof zNodeOutput>
 export type ComfyLink = z.infer<typeof zComfyLink>
+export type ComfyLinkObject = z.infer<typeof zComfyLinkObject>
 export type ComfyNode = z.infer<typeof zComfyNode>
+export type Reroute = z.infer<typeof zReroute>
+export type WorkflowJSON04 = z.infer<typeof zComfyWorkflow>
+export type WorkflowJSON10 = z.infer<typeof zComfyWorkflow1>
 export type ComfyWorkflowJSON = z.infer<
   typeof zComfyWorkflow | typeof zComfyWorkflow1
 >

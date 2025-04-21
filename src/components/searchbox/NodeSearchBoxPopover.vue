@@ -4,7 +4,6 @@
       v-model:visible="visible"
       modal
       :dismissable-mask="dismissable"
-      @hide="clearFilters"
       :pt="{
         root: {
           class: 'invisible-dialog-root',
@@ -19,6 +18,7 @@
           leaveToClass: 'opacity-0 scale-75'
         }
       }"
+      @hide="clearFilters"
     >
       <template #container>
         <NodeSearchBox
@@ -46,13 +46,13 @@ import Dialog from 'primevue/dialog'
 import { computed, ref, toRaw, watchEffect } from 'vue'
 
 import { useLitegraphService } from '@/services/litegraphService'
-import { FilterAndValue } from '@/services/nodeSearchService'
 import { useCanvasStore } from '@/stores/graphStore'
 import { ComfyNodeDefImpl, useNodeDefStore } from '@/stores/nodeDefStore'
 import { useSettingStore } from '@/stores/settingStore'
 import { useSearchBoxStore } from '@/stores/workspace/searchBoxStore'
 import { ConnectingLinkImpl } from '@/types/litegraphTypes'
 import { LinkReleaseTriggerAction } from '@/types/searchBoxTypes'
+import { FuseFilterWithValue } from '@/utils/fuseUtil'
 
 import NodeSearchBox from './NodeSearchBox.vue'
 
@@ -71,11 +71,13 @@ const getNewNodeLocation = (): Vector2 => {
     .originalEvent
   return [originalEvent.canvasX, originalEvent.canvasY]
 }
-const nodeFilters = ref<FilterAndValue[]>([])
-const addFilter = (filter: FilterAndValue) => {
+const nodeFilters = ref<FuseFilterWithValue<ComfyNodeDefImpl, string>[]>([])
+const addFilter = (filter: FuseFilterWithValue<ComfyNodeDefImpl, string>) => {
   nodeFilters.value.push(filter)
 }
-const removeFilter = (filter: FilterAndValue) => {
+const removeFilter = (
+  filter: FuseFilterWithValue<ComfyNodeDefImpl, string>
+) => {
   nodeFilters.value = nodeFilters.value.filter(
     (f) => toRaw(f) !== toRaw(filter)
   )
@@ -94,6 +96,7 @@ const addNode = (nodeDef: ComfyNodeDefImpl) => {
 
   const eventDetail = triggerEvent.value?.detail
   if (eventDetail && eventDetail.subType === 'empty-release') {
+    // @ts-expect-error fixme ts strict error
     eventDetail.linkReleaseContext.links.forEach((link: ConnectingLink) => {
       ConnectingLinkImpl.createFromPlainObject(link).connectTo(node)
     })
@@ -121,6 +124,7 @@ const showSearchBox = (e: LiteGraphCanvasEvent) => {
       showNewSearchBox(e)
     }
   } else {
+    // @ts-expect-error fixme ts strict error
     canvasStore.canvas.showSearchBox(detail.originalEvent)
   }
 }
@@ -134,11 +138,16 @@ const showNewSearchBox = (e: LiteGraphCanvasEvent) => {
       return
     }
     const firstLink = ConnectingLinkImpl.createFromPlainObject(links[0])
-    const filter = nodeDefStore.nodeSearchService.getFilterById(
-      firstLink.releaseSlotType
-    )
-    const dataType = firstLink.type.toString()
-    addFilter([filter, dataType])
+    const filter =
+      firstLink.releaseSlotType === 'input'
+        ? nodeDefStore.nodeSearchService.inputTypeFilter
+        : nodeDefStore.nodeSearchService.outputTypeFilter
+
+    const dataType = firstLink.type?.toString() ?? ''
+    addFilter({
+      filterDef: filter,
+      value: dataType
+    })
   }
 
   visible.value = true
@@ -180,6 +189,7 @@ const showContextMenu = (e: LiteGraphCanvasEvent) => {
         slotTo: firstLink.input,
         afterRerouteId: firstLink.afterRerouteId
       }
+  // @ts-expect-error fixme ts strict error
   canvasStore.canvas.showConnectionMenu({
     ...connectionOptions,
     ...commonOptions
@@ -202,7 +212,7 @@ const canvasEventHandler = (e: LiteGraphCanvasEvent) => {
     handleCanvasEmptyRelease(e)
   } else if (e.detail.subType === 'group-double-click') {
     const group = e.detail.group
-    const [x, y] = group.pos
+    const [_, y] = group.pos
     const relativeY = e.detail.originalEvent.canvasY - y
     // Show search box if the click is NOT on the title bar
     if (relativeY > group.titleHeight) {

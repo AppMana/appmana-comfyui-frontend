@@ -214,6 +214,10 @@ export class ComfyPage {
         `Failed to setup workflows directory: ${await resp.text()}`
       )
     }
+
+    await this.page.evaluate(async () => {
+      await window['app'].extensionManager.workflow.syncWorkflows()
+    })
   }
 
   async setupUser(username: string) {
@@ -408,7 +412,7 @@ export class ComfyPage {
   }
 
   async getVisibleToastCount() {
-    return await this.page.locator('.p-toast:visible').count()
+    return await this.page.locator('.p-toast-message:visible').count()
   }
 
   async clickTextEncodeNode1() {
@@ -459,53 +463,126 @@ export class ComfyPage {
     await this.nextFrame()
   }
 
-  async dragAndDropFile(fileName: string) {
-    const filePath = this.assetPath(fileName)
+  async dragAndDropExternalResource(
+    options: {
+      fileName?: string
+      url?: string
+      dropPosition?: Position
+    } = {}
+  ) {
+    const { dropPosition = { x: 100, y: 100 }, fileName, url } = options
 
-    // Read the file content
-    const buffer = fs.readFileSync(filePath)
+    if (!fileName && !url)
+      throw new Error('Must provide either fileName or url')
 
-    // Get file type
-    const getFileType = (fileName: string) => {
-      if (fileName.endsWith('.png')) return 'image/png'
-      if (fileName.endsWith('.webp')) return 'image/webp'
-      if (fileName.endsWith('.webm')) return 'video/webm'
-      if (fileName.endsWith('.json')) return 'application/json'
-      return 'application/octet-stream'
+    const evaluateParams: {
+      dropPosition: Position
+      fileName?: string
+      fileType?: string
+      buffer?: Uint8Array | number[]
+      url?: string
+    } = { dropPosition }
+
+    // Dropping a file from the filesystem
+    if (fileName) {
+      const filePath = this.assetPath(fileName)
+      const buffer = fs.readFileSync(filePath)
+
+      const getFileType = (fileName: string) => {
+        if (fileName.endsWith('.png')) return 'image/png'
+        if (fileName.endsWith('.webp')) return 'image/webp'
+        if (fileName.endsWith('.webm')) return 'video/webm'
+        if (fileName.endsWith('.json')) return 'application/json'
+        if (fileName.endsWith('.glb')) return 'model/gltf-binary'
+        return 'application/octet-stream'
+      }
+
+      evaluateParams.fileName = fileName
+      evaluateParams.fileType = getFileType(fileName)
+      evaluateParams.buffer = [...new Uint8Array(buffer)]
     }
 
-    const fileType = getFileType(fileName)
+    // Dropping a URL (e.g., dropping image across browser tabs in Firefox)
+    if (url) evaluateParams.url = url
 
-    await this.page.evaluate(
-      async ({ buffer, fileName, fileType }) => {
-        const file = new File([new Uint8Array(buffer)], fileName, {
-          type: fileType
-        })
-        const dataTransfer = new DataTransfer()
+    // Execute the drag and drop in the browser
+    await this.page.evaluate(async (params) => {
+      const dataTransfer = new DataTransfer()
+
+      // Add file if provided
+      if (params.buffer && params.fileName && params.fileType) {
+        const file = new File(
+          [new Uint8Array(params.buffer)],
+          params.fileName,
+          {
+            type: params.fileType
+          }
+        )
         dataTransfer.items.add(file)
+      }
 
-        const dropEvent = new DragEvent('drop', {
-          bubbles: true,
-          cancelable: true,
-          dataTransfer
-        })
+      // Add URL data if provided
+      if (params.url) {
+        dataTransfer.setData('text/uri-list', params.url)
+        dataTransfer.setData('text/x-moz-url', params.url)
+      }
 
-        Object.defineProperty(dropEvent, 'preventDefault', {
-          value: () => {},
-          writable: false
-        })
+      const targetElement = document.elementFromPoint(
+        params.dropPosition.x,
+        params.dropPosition.y
+      )
 
-        Object.defineProperty(dropEvent, 'stopPropagation', {
-          value: () => {},
-          writable: false
-        })
+      if (!targetElement) {
+        console.error('No element found at drop position:', params.dropPosition)
+        return { success: false, error: 'No element at position' }
+      }
 
-        document.dispatchEvent(dropEvent)
-      },
-      { buffer: [...new Uint8Array(buffer)], fileName, fileType }
-    )
+      const eventOptions = {
+        bubbles: true,
+        cancelable: true,
+        dataTransfer,
+        clientX: params.dropPosition.x,
+        clientY: params.dropPosition.y
+      }
+
+      const dragOverEvent = new DragEvent('dragover', eventOptions)
+      const dropEvent = new DragEvent('drop', eventOptions)
+
+      Object.defineProperty(dropEvent, 'preventDefault', {
+        value: () => {},
+        writable: false
+      })
+
+      Object.defineProperty(dropEvent, 'stopPropagation', {
+        value: () => {},
+        writable: false
+      })
+
+      targetElement.dispatchEvent(dragOverEvent)
+      targetElement.dispatchEvent(dropEvent)
+
+      return {
+        success: true,
+        targetInfo: {
+          tagName: targetElement.tagName,
+          id: targetElement.id,
+          classList: Array.from(targetElement.classList)
+        }
+      }
+    }, evaluateParams)
 
     await this.nextFrame()
+  }
+
+  async dragAndDropFile(
+    fileName: string,
+    options: { dropPosition?: Position } = {}
+  ) {
+    return this.dragAndDropExternalResource({ fileName, ...options })
+  }
+
+  async dragAndDropURL(url: string, options: { dropPosition?: Position } = {}) {
+    return this.dragAndDropExternalResource({ url, ...options })
   }
 
   async dragNode2() {
@@ -553,11 +630,20 @@ export class ComfyPage {
     await this.dragAndDrop(this.clipTextEncodeNode1InputSlot, this.emptySpace)
   }
 
-  async connectEdge() {
-    await this.dragAndDrop(
-      this.loadCheckpointNodeClipOutputSlot,
-      this.clipTextEncodeNode1InputSlot
-    )
+  async connectEdge(
+    options: {
+      reverse?: boolean
+    } = {}
+  ) {
+    const { reverse = false } = options
+    const start = reverse
+      ? this.clipTextEncodeNode1InputSlot
+      : this.loadCheckpointNodeClipOutputSlot
+    const end = reverse
+      ? this.loadCheckpointNodeClipOutputSlot
+      : this.clipTextEncodeNode1InputSlot
+
+    await this.dragAndDrop(start, end)
   }
 
   async adjustWidgetValue() {

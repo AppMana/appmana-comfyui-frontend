@@ -1,19 +1,19 @@
 <template>
   <div class="queue-button-group flex">
     <SplitButton
+      v-tooltip.bottom="{
+        value: workspaceStore.shiftDown
+          ? $t('menu.runWorkflowFront')
+          : $t('menu.runWorkflow'),
+        showDelay: 600
+      }"
       class="comfyui-queue-button"
       :label="activeQueueModeMenuItem.label"
       severity="primary"
       size="small"
-      @click="queuePrompt"
       :model="queueModeMenuItems"
       data-testid="queue-button"
-      v-tooltip.bottom="{
-        value: workspaceStore.shiftDown
-          ? $t('menu.queueWorkflowFront')
-          : $t('menu.queueWorkflow'),
-        showDelay: 600
-      }"
+      @click="queuePrompt"
     >
       <template #icon>
         <i-lucide:list-start v-if="workspaceStore.shiftDown" />
@@ -23,15 +23,15 @@
       </template>
       <template #item="{ item }">
         <Button
+          v-tooltip="{
+            value: item.tooltip,
+            showDelay: 600
+          }"
           :label="String(item.label)"
           :icon="item.icon"
           :severity="item.key === queueMode ? 'primary' : 'secondary'"
           size="small"
           text
-          v-tooltip="{
-            value: item.tooltip,
-            showDelay: 600
-          }"
         />
       </template>
     </SplitButton>
@@ -48,8 +48,7 @@
         text
         :aria-label="$t('menu.interrupt')"
         @click="() => commandStore.execute('Comfy.Interrupt')"
-      >
-      </Button>
+      />
       <Button
         v-tooltip.bottom="{
           value: $t('sideToolbar.queueTab.clearPendingTasks'),
@@ -98,7 +97,7 @@ const { t } = useI18n()
 const queueModeMenuItemLookup = computed(() => ({
   disabled: {
     key: 'disabled',
-    label: t('menu.queue'),
+    label: t('menu.run'),
     tooltip: t('menu.disabledTooltip'),
     command: () => {
       queueMode.value = 'disabled'
@@ -106,7 +105,7 @@ const queueModeMenuItemLookup = computed(() => ({
   },
   instant: {
     key: 'instant',
-    label: `${t('menu.queue')} (${t('menu.instant')})`,
+    label: `${t('menu.run')} (${t('menu.instant')})`,
     tooltip: t('menu.instantTooltip'),
     command: () => {
       queueMode.value = 'instant'
@@ -114,7 +113,7 @@ const queueModeMenuItemLookup = computed(() => ({
   },
   change: {
     key: 'change',
-    label: `${t('menu.queue')} (${t('menu.onChange')})`,
+    label: `${t('menu.run')} (${t('menu.onChange')})`,
     tooltip: t('menu.onChangeTooltip'),
     command: () => {
       queueMode.value = 'change'
@@ -135,9 +134,12 @@ const hasPendingTasks = computed(
 )
 
 const commandStore = useCommandStore()
-const queuePrompt = (e: MouseEvent) => {
-  const commandId = e.shiftKey ? 'Comfy.QueuePromptFront' : 'Comfy.QueuePrompt'
-  commandStore.execute(commandId)
+const queuePrompt = async (e: Event) => {
+  const commandId =
+    'shiftKey' in e && e.shiftKey
+      ? 'Comfy.QueuePromptFront'
+      : 'Comfy.QueuePrompt'
+  await commandStore.execute(commandId)
 }
 </script>
 

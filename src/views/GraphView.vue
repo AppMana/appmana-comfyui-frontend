@@ -1,19 +1,20 @@
 <template>
   <div class="comfyui-body grid h-screen w-screen overflow-hidden">
-    <div class="comfyui-body-top" id="comfyui-body-top">
+    <div id="comfyui-body-top" class="comfyui-body-top">
       <TopMenubar v-if="useNewMenu === 'Top'" />
     </div>
-    <div class="comfyui-body-bottom" id="comfyui-body-bottom">
+    <div id="comfyui-body-bottom" class="comfyui-body-bottom">
       <TopMenubar v-if="useNewMenu === 'Bottom'" />
     </div>
-    <div class="comfyui-body-left" id="comfyui-body-left" />
-    <div class="comfyui-body-right" id="comfyui-body-right" />
-    <div class="graph-canvas-container" id="graph-canvas-container">
+    <div id="comfyui-body-left" class="comfyui-body-left" />
+    <div id="comfyui-body-right" class="comfyui-body-right" />
+    <div id="graph-canvas-container" class="graph-canvas-container">
       <GraphCanvas @ready="onGraphReady" />
     </div>
   </div>
 
   <GlobalToast />
+  <RerouteMigrationToast />
   <UnloadWindowConfirmDialog v-if="!isElectron()" />
   <BrowserTabTitle />
   <MenuHamburger />
@@ -31,6 +32,7 @@ import MenuHamburger from '@/components/MenuHamburger.vue'
 import UnloadWindowConfirmDialog from '@/components/dialog/UnloadWindowConfirmDialog.vue'
 import GraphCanvas from '@/components/graph/GraphCanvas.vue'
 import GlobalToast from '@/components/toast/GlobalToast.vue'
+import RerouteMigrationToast from '@/components/toast/RerouteMigrationToast.vue'
 import TopMenubar from '@/components/topbar/TopMenubar.vue'
 import { useCoreCommands } from '@/composables/useCoreCommands'
 import { useErrorHandling } from '@/composables/useErrorHandling'
@@ -174,17 +176,21 @@ const reconnectingMessage: ToastMessageOptions = {
 }
 
 const onReconnecting = () => {
-  toast.remove(reconnectingMessage)
-  toast.add(reconnectingMessage)
+  if (!settingStore.get('Comfy.Toast.DisableReconnectingToast')) {
+    toast.remove(reconnectingMessage)
+    toast.add(reconnectingMessage)
+  }
 }
 
 const onReconnected = () => {
-  toast.remove(reconnectingMessage)
-  toast.add({
-    severity: 'success',
-    summary: t('g.reconnected'),
-    life: 2000
-  })
+  if (!settingStore.get('Comfy.Toast.DisableReconnectingToast')) {
+    toast.remove(reconnectingMessage)
+    toast.add({
+      severity: 'success',
+      summary: t('g.reconnected'),
+      life: 2000
+    })
+  }
 }
 
 onMounted(() => {
@@ -224,15 +230,17 @@ const onGraphReady = () => {
       )
 
       // Load model folders
-      wrapWithErrorHandlingAsync(useModelStore().loadModelFolders)()
+      void wrapWithErrorHandlingAsync(useModelStore().loadModelFolders)()
 
       // Non-blocking load of node frequencies
-      wrapWithErrorHandlingAsync(useNodeFrequencyStore().loadNodeFrequencies)()
+      void wrapWithErrorHandlingAsync(
+        useNodeFrequencyStore().loadNodeFrequencies
+      )()
 
       // Node defs now available after comfyApp.setup.
       // Explicitly initialize nodeSearchService to avoid indexing delay when
       // node search is triggered
-      useNodeDefStore().nodeSearchService.endsWithFilterStartSequence('')
+      useNodeDefStore().nodeSearchService.searchNode('')
     },
     { timeout: 1000 }
   )

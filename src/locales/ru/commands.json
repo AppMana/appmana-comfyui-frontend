@@ -1,4 +1,7 @@
 {
+  "Comfy-Desktop_CheckForUpdates": {
+    "label": "Проверить наличие обновлений"
+  },
   "Comfy-Desktop_Folders_OpenCustomNodesFolder": {
     "label": "Открыть папку пользовательских нод"
   },
@@ -43,6 +46,9 @@
   },
   "Comfy_Canvas_ResetView": {
     "label": "Сбросить вид"
+  },
+  "Comfy_Canvas_Resize": {
+    "label": "Изменить размер выбранных узлов"
   },
   "Comfy_Canvas_ToggleLinkVisibility": {
     "label": "Переключить видимость ссылки"
@@ -124,6 +130,12 @@
   },
   "Comfy_LoadDefaultWorkflow": {
     "label": "Загрузить стандартный рабочий процесс"
+  },
+  "Comfy_Manager_CustomNodesManager": {
+    "label": "Менеджер Пользовательских Узлов"
+  },
+  "Comfy_Manager_ToggleManagerProgressDialog": {
+    "label": "Переключить диалоговое окно прогресса"
   },
   "Comfy_NewBlankWorkflow": {
     "label": "Новый пустой рабочий процесс"

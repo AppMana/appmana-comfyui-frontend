@@ -4,7 +4,9 @@ import {
   LGraphNode,
   LiteGraph
 } from '@comfyorg/litegraph'
+import { Point } from '@comfyorg/litegraph'
 
+import { useFirebaseAuthActions } from '@/composables/auth/useFirebaseAuthActions'
 import {
   DEFAULT_DARK_COLOR_PALETTE,
   DEFAULT_LIGHT_COLOR_PALETTE
@@ -26,11 +28,15 @@ import { useColorPaletteStore } from '@/stores/workspace/colorPaletteStore'
 import { useSearchBoxStore } from '@/stores/workspace/searchBoxStore'
 import { useWorkspaceStore } from '@/stores/workspaceStore'
 
+const moveSelectedNodesVersionAdded = '1.22.2'
+
 export function useCoreCommands(): ComfyCommand[] {
   const workflowService = useWorkflowService()
   const workflowStore = useWorkflowStore()
   const dialogService = useDialogService()
   const colorPaletteStore = useColorPaletteStore()
+  const firebaseAuthActions = useFirebaseAuthActions()
+  const toastStore = useToastStore()
   const getTracker = () => workflowStore.activeWorkflow?.changeTracker
 
   const getSelectedNodes = (): LGraphNode[] => {
@@ -55,7 +61,19 @@ export function useCoreCommands(): ComfyCommand[] {
     })
   }
 
-  const commonProps = { source: 'System' }
+  const moveSelectedNodes = (
+    positionUpdater: (pos: Point, gridSize: number) => Point
+  ) => {
+    const selectedNodes = getSelectedNodes()
+    if (selectedNodes.length === 0) return
+
+    const gridSize = useSettingStore().get('Comfy.SnapToGrid.GridSize')
+    selectedNodes.forEach((node) => {
+      node.pos = positionUpdater(node.pos, gridSize)
+    })
+    app.canvas.state.selectionChanged = true
+    app.canvas.setDirty(true, true)
+  }
 
   const commands = [
     {
@@ -184,7 +202,7 @@ export function useCoreCommands(): ComfyCommand[] {
       label: 'Interrupt',
       function: async () => {
         await api.interrupt()
-        useToastStore().add({
+        toastStore.add({
           severity: 'info',
           summary: t('g.interrupted'),
           detail: t('toastMessages.interrupted'),
@@ -198,7 +216,7 @@ export function useCoreCommands(): ComfyCommand[] {
       label: 'Clear Pending Tasks',
       function: async () => {
         await useQueueStore().clear(['queue'])
-        useToastStore().add({
+        toastStore.add({
           severity: 'info',
           summary: t('g.confirmed'),
           detail: t('toastMessages.pendingTasksDeleted'),
@@ -246,7 +264,7 @@ export function useCoreCommands(): ComfyCommand[] {
       label: 'Fit view to selected nodes',
       function: () => {
         if (app.canvas.empty) {
-          useToastStore().add({
+          toastStore.add({
             severity: 'error',
             summary: t('toastMessages.emptyCanvas'),
             life: 3000
@@ -312,6 +330,28 @@ export function useCoreCommands(): ComfyCommand[] {
       }
     },
     {
+      id: 'Comfy.QueueSelectedOutputNodes',
+      icon: 'pi pi-play',
+      label: 'Queue Selected Output Nodes',
+      versionAdded: '1.19.6',
+      function: async () => {
+        const batchCount = useQueueSettingsStore().batchCount
+        const queueNodeIds = getSelectedNodes()
+          .filter((node) => node.constructor.nodeData?.output_node)
+          .map((node) => node.id)
+        if (queueNodeIds.length === 0) {
+          toastStore.add({
+            severity: 'error',
+            summary: t('toastMessages.nothingToQueue'),
+            detail: t('toastMessages.pleaseSelectOutputNodes'),
+            life: 3000
+          })
+          return
+        }
+        await app.queuePrompt(0, batchCount, queueNodeIds)
+      }
+    },
+    {
       id: 'Comfy.ShowSettingsDialog',
       icon: 'pi pi-cog',
       label: 'Show Settings Dialog',
@@ -328,7 +368,7 @@ export function useCoreCommands(): ComfyCommand[] {
       function: () => {
         const { canvas } = app
         if (!canvas.selectedItems?.size) {
-          useToastStore().add({
+          toastStore.add({
             severity: 'error',
             summary: t('toastMessages.nothingToGroup'),
             detail: t('toastMessages.pleaseSelectNodesToGroup'),
@@ -580,6 +620,22 @@ export function useCoreCommands(): ComfyCommand[] {
       }
     },
     {
+      id: 'Comfy.ContactSupport',
+      icon: 'pi pi-question',
+      label: 'Contact Support',
+      versionAdded: '1.17.8',
+      function: () => {
+        dialogService.showIssueReportDialog({
+          title: t('issueReport.contactSupportTitle'),
+          subtitle: t('issueReport.contactSupportDescription'),
+          panelProps: {
+            errorType: 'ContactSupport',
+            defaultFields: ['Workflow', 'Logs', 'SystemStats', 'Settings']
+          }
+        })
+      }
+    },
+    {
       id: 'Comfy.Help.OpenComfyUIForum',
       icon: 'pi pi-comments',
       label: 'Open ComfyUI Forum',
@@ -602,22 +658,68 @@ export function useCoreCommands(): ComfyCommand[] {
     {
       id: 'Comfy.Manager.CustomNodesManager',
       icon: 'pi pi-puzzle',
-      label: 'Custom Nodes Manager',
+      label: 'Toggle the Custom Nodes Manager',
       versionAdded: '1.12.10',
       function: () => {
-        dialogService.showManagerDialog()
+        dialogService.toggleManagerDialog()
       }
     },
     {
       id: 'Comfy.Manager.ToggleManagerProgressDialog',
       icon: 'pi pi-spinner',
-      label: 'Toggle Progress Dialog',
+      label: 'Toggle the Custom Nodes Manager Progress Bar',
       versionAdded: '1.13.9',
       function: () => {
-        dialogService.showManagerProgressDialog()
+        dialogService.toggleManagerProgressDialog()
       }
+    },
+    {
+      id: 'Comfy.User.OpenSignInDialog',
+      icon: 'pi pi-user',
+      label: 'Open Sign In Dialog',
+      versionAdded: '1.17.6',
+      function: async () => {
+        await dialogService.showSignInDialog()
+      }
+    },
+    {
+      id: 'Comfy.User.SignOut',
+      icon: 'pi pi-sign-out',
+      label: 'Sign Out',
+      versionAdded: '1.18.1',
+      function: async () => {
+        await firebaseAuthActions.logout()
+      }
+    },
+    {
+      id: 'Comfy.Canvas.MoveSelectedNodes.Up',
+      icon: 'pi pi-arrow-up',
+      label: 'Move Selected Nodes Up',
+      versionAdded: moveSelectedNodesVersionAdded,
+      function: () => moveSelectedNodes(([x, y], gridSize) => [x, y - gridSize])
+    },
+    {
+      id: 'Comfy.Canvas.MoveSelectedNodes.Down',
+      icon: 'pi pi-arrow-down',
+      label: 'Move Selected Nodes Down',
+      versionAdded: moveSelectedNodesVersionAdded,
+      function: () => moveSelectedNodes(([x, y], gridSize) => [x, y + gridSize])
+    },
+    {
+      id: 'Comfy.Canvas.MoveSelectedNodes.Left',
+      icon: 'pi pi-arrow-left',
+      label: 'Move Selected Nodes Left',
+      versionAdded: moveSelectedNodesVersionAdded,
+      function: () => moveSelectedNodes(([x, y], gridSize) => [x - gridSize, y])
+    },
+    {
+      id: 'Comfy.Canvas.MoveSelectedNodes.Right',
+      icon: 'pi pi-arrow-right',
+      label: 'Move Selected Nodes Right',
+      versionAdded: moveSelectedNodesVersionAdded,
+      function: () => moveSelectedNodes(([x, y], gridSize) => [x + gridSize, y])
     }
   ]
 
-  return commands.map((command) => ({ ...command, ...commonProps }))
+  return commands.map((command) => ({ ...command, source: 'System' }))
 }

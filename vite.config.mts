@@ -3,8 +3,9 @@ import dotenv from 'dotenv'
 import IconsResolver from 'unplugin-icons/resolver'
 import Icons from 'unplugin-icons/vite'
 import Components from 'unplugin-vue-components/vite'
-import { defineConfig } from 'vite'
-import type { UserConfigExport } from 'vitest/config'
+import { type UserConfig, defineConfig } from 'vite'
+import { createHtmlPlugin } from 'vite-plugin-html'
+import vueDevTools from 'vite-plugin-vue-devtools'
 
 import {
   addElementVnodeExportPlugin,
@@ -18,6 +19,8 @@ const IS_DEV = process.env.NODE_ENV === 'development'
 const SHOULD_MINIFY = process.env.ENABLE_MINIFY === 'true'
 // vite dev server will listen on all addresses, including LAN and public addresses
 const VITE_REMOTE_DEV = process.env.VITE_REMOTE_DEV === 'true'
+const DISABLE_TEMPLATES_PROXY = process.env.DISABLE_TEMPLATES_PROXY === 'true'
+const DISABLE_VUE_PLUGINS = process.env.DISABLE_VUE_PLUGINS === 'true'
 
 const DEV_SERVER_COMFYUI_URL =
   process.env.DEV_SERVER_COMFYUI_URL || 'http://127.0.0.1:8188'
@@ -52,6 +55,26 @@ export default defineConfig({
         target: DEV_SERVER_COMFYUI_URL
       },
 
+      // Proxy extension assets (images/videos) under /extensions to the ComfyUI backend
+      '/extensions': {
+        target: DEV_SERVER_COMFYUI_URL,
+        changeOrigin: true
+      },
+
+      // Proxy docs markdown from backend
+      '/docs': {
+        target: DEV_SERVER_COMFYUI_URL,
+        changeOrigin: true
+      },
+
+      ...(!DISABLE_TEMPLATES_PROXY
+        ? {
+            '/templates': {
+              target: DEV_SERVER_COMFYUI_URL
+            }
+          }
+        : {}),
+
       '/testsubrouteindex': {
         target: 'http://localhost:5173',
         rewrite: (path) => path.substring('/testsubrouteindex'.length)
@@ -60,11 +83,14 @@ export default defineConfig({
   },
 
   plugins: [
-    vue(),
+    ...(!DISABLE_VUE_PLUGINS
+      ? [vueDevTools(), vue(), createHtmlPlugin({})]
+      : [vue()]),
     comfyAPIPlugin(IS_DEV),
     generateImportMapPlugin([
       { name: 'vue', pattern: /[\\/]node_modules[\\/]vue[\\/]/ },
-      { name: 'primevue', pattern: /[\\/]node_modules[\\/]primevue[\\/]/ }
+      { name: 'primevue', pattern: /[\\/]node_modules[\\/]primevue[\\/]/ },
+      { name: 'vue-i18n', pattern: /[\\/]node_modules[\\/]vue-i18n[\\/]/ }
     ]),
     addElementVnodeExportPlugin(),
 
@@ -115,8 +141,7 @@ export default defineConfig({
     __SENTRY_DSN__: JSON.stringify(process.env.SENTRY_DSN || ''),
     __ALGOLIA_APP_ID__: JSON.stringify(process.env.ALGOLIA_APP_ID || ''),
     __ALGOLIA_API_KEY__: JSON.stringify(process.env.ALGOLIA_API_KEY || ''),
-    __USE_PROD_FIREBASE_CONFIG__:
-      process.env.USE_PROD_FIREBASE_CONFIG === 'true'
+    __USE_PROD_CONFIG__: process.env.USE_PROD_CONFIG === 'true'
   },
 
   resolve: {
@@ -128,4 +153,4 @@ export default defineConfig({
   optimizeDeps: {
     exclude: ['@comfyorg/litegraph', '@comfyorg/comfyui-electron-types']
   }
-}) as UserConfigExport
+}) satisfies UserConfig as UserConfig

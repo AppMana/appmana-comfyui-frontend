@@ -29,7 +29,7 @@ jobs:
           SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
           ALGOLIA_APP_ID: ${{ secrets.ALGOLIA_APP_ID }}
           ALGOLIA_API_KEY: ${{ secrets.ALGOLIA_API_KEY }}
-          USE_PROD_FIREBASE_CONFIG: 'true'
+          USE_PROD_CONFIG: 'true'
         run: |
           npm ci
           npm run build
@@ -54,7 +54,7 @@ jobs:
           name: dist-files
       - name: Create release
         id: create_release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@da05d552573ad5aba039eaac05058a918a7bf631
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
@@ -93,7 +93,7 @@ jobs:
         env:
           COMFYUI_FRONTEND_VERSION: ${{ needs.build.outputs.version }}
       - name: Publish pypi package
-        uses: pypa/gh-action-pypi-publish@release/v1
+        uses: pypa/gh-action-pypi-publish@76f52bc884231f62b9a034ebfe128415bbaabdfc
         with:
           password: ${{ secrets.PYPI_TOKEN }}
           packages-dir: comfyui_frontend_package/dist

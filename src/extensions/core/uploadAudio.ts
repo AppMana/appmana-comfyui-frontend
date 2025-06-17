@@ -1,18 +1,17 @@
-import type { IWidget, LGraphNode } from '@comfyorg/litegraph'
+import type { LGraphNode } from '@comfyorg/litegraph'
 import type { IStringWidget } from '@comfyorg/litegraph/dist/types/widgets'
 
 import { useNodeDragAndDrop } from '@/composables/node/useNodeDragAndDrop'
 import { useNodeFileInput } from '@/composables/node/useNodeFileInput'
 import { useNodePaste } from '@/composables/node/useNodePaste'
 import { t } from '@/i18n'
+import type { ResultItemType } from '@/schemas/apiSchema'
 import type { ComfyNodeDef } from '@/schemas/nodeDefSchema'
 import type { DOMWidget } from '@/scripts/domWidget'
 import { useToastStore } from '@/stores/toastStore'
 
 import { api } from '../../scripts/api'
 import { app } from '../../scripts/app'
-
-type FolderType = 'input' | 'output' | 'temp'
 
 function splitFilePath(path: string): [string, string] {
   const folder_separator = path.lastIndexOf('/')
@@ -28,7 +27,7 @@ function splitFilePath(path: string): [string, string] {
 function getResourceURL(
   subfolder: string,
   filename: string,
-  type: FolderType = 'input'
+  type: ResultItemType = 'input'
 ): string {
   const params = [
     'filename=' + encodeURIComponent(filename),
@@ -90,7 +89,13 @@ app.registerExtension({
   name: 'Comfy.AudioWidget',
   async beforeRegisterNodeDef(nodeType, nodeData) {
     if (
-      ['LoadAudio', 'SaveAudio', 'PreviewAudio'].includes(
+      [
+        'LoadAudio',
+        'SaveAudio',
+        'PreviewAudio',
+        'SaveAudioMP3',
+        'SaveAudioOpus'
+      ].includes(
         // @ts-expect-error fixme ts strict error
         nodeType.prototype.comfyClass
       )
@@ -111,7 +116,10 @@ app.registerExtension({
           node.addDOMWidget(inputName, /* name=*/ 'audioUI', audio)
         audioUIWidget.serialize = false
 
-        const isOutputNode = node.constructor.nodeData.output_node
+        const { nodeData } = node.constructor
+        if (nodeData == null) throw new TypeError('nodeData is null')
+
+        const isOutputNode = nodeData.output_node
         if (isOutputNode) {
           // Hide the audio widget when there is no audio initially.
           audioUIWidget.element.classList.add('empty-audio-widget')
@@ -164,11 +172,11 @@ app.registerExtension({
         // The widget that allows user to select file.
         // @ts-expect-error fixme ts strict error
         const audioWidget = node.widgets.find(
-          (w: IWidget) => w.name === 'audio'
+          (w) => w.name === 'audio'
         ) as IStringWidget
         // @ts-expect-error fixme ts strict error
         const audioUIWidget = node.widgets.find(
-          (w: IWidget) => w.name === 'audioUI'
+          (w) => w.name === 'audioUI'
         ) as unknown as DOMWidget<HTMLAudioElement, string>
 
         const onAudioWidgetUpdate = () => {

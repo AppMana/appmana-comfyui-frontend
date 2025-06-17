@@ -103,7 +103,7 @@ test.describe('Missing models warning', () => {
         }
       ])
     }
-    comfyPage.page.route(
+    await comfyPage.page.route(
       '**/api/experiment/models',
       (route) => route.fulfill(modelFoldersRes),
       { times: 1 }
@@ -121,7 +121,7 @@ test.describe('Missing models warning', () => {
         }
       ])
     }
-    comfyPage.page.route(
+    await comfyPage.page.route(
       '**/api/experiment/models/text_encoders',
       (route) => route.fulfill(clipModelsRes),
       { times: 1 }
@@ -129,6 +129,18 @@ test.describe('Missing models warning', () => {
 
     await comfyPage.loadWorkflow('missing_models')
 
+    const missingModelsWarning = comfyPage.page.locator('.comfy-missing-models')
+    await expect(missingModelsWarning).not.toBeVisible()
+  })
+
+  test('Should not display warning when model metadata exists but widget values have changed', async ({
+    comfyPage
+  }) => {
+    // This tests the scenario where outdated model metadata exists in the workflow
+    // but the actual selected models (widget values) have changed
+    await comfyPage.loadWorkflow('model_metadata_widget_mismatch')
+
+    // The missing models warning should NOT appear
     const missingModelsWarning = comfyPage.page.locator('.comfy-missing-models')
     await expect(missingModelsWarning).not.toBeVisible()
   })
@@ -339,5 +351,32 @@ test.describe('Error dialog', () => {
     })
     const errorDialog = comfyPage.page.locator('.comfy-error-report')
     await expect(errorDialog).toBeVisible()
+  })
+})
+
+test.describe('Signin dialog', () => {
+  test('Paste content to signin dialog should not paste node on canvas', async ({
+    comfyPage
+  }) => {
+    const nodeNum = (await comfyPage.getNodes()).length
+    await comfyPage.clickEmptyLatentNode()
+    await comfyPage.ctrlC()
+
+    const textBox = comfyPage.widgetTextBox
+    await textBox.click()
+    await textBox.fill('test_password')
+    await textBox.press('Control+a')
+    await textBox.press('Control+c')
+
+    await comfyPage.page.evaluate(() => {
+      window['app'].extensionManager.dialog.showSignInDialog()
+    })
+
+    const input = comfyPage.page.locator('#comfy-org-sign-in-password')
+    await input.waitFor({ state: 'visible' })
+    await input.press('Control+v')
+    await expect(input).toHaveValue('test_password')
+
+    expect(await comfyPage.getNodes()).toHaveLength(nodeNum)
   })
 })

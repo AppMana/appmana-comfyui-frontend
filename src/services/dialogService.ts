@@ -8,6 +8,8 @@ import MissingModelsWarning from '@/components/dialog/content/MissingModelsWarni
 import PromptDialogContent from '@/components/dialog/content/PromptDialogContent.vue'
 import SettingDialogContent from '@/components/dialog/content/SettingDialogContent.vue'
 import SignInContent from '@/components/dialog/content/SignInContent.vue'
+import TopUpCreditsDialogContent from '@/components/dialog/content/TopUpCreditsDialogContent.vue'
+import UpdatePasswordContent from '@/components/dialog/content/UpdatePasswordContent.vue'
 import ManagerDialogContent from '@/components/dialog/content/manager/ManagerDialogContent.vue'
 import ManagerHeader from '@/components/dialog/content/manager/ManagerHeader.vue'
 import ManagerProgressFooter from '@/components/dialog/footer/ManagerProgressFooter.vue'
@@ -19,7 +21,6 @@ import TemplateWorkflowsDialogHeader from '@/components/templates/TemplateWorkfl
 import { t } from '@/i18n'
 import type { ExecutionErrorWsMessage } from '@/schemas/apiSchema'
 import { type ShowDialogOptions, useDialogStore } from '@/stores/dialogStore'
-import { ManagerTab } from '@/types/comfyManagerTypes'
 
 export type ConfirmationDialogType =
   | 'default'
@@ -51,7 +52,13 @@ export const useDialogService = () => {
   }
 
   function showSettingsDialog(
-    panel?: 'about' | 'keybinding' | 'extension' | 'server-config'
+    panel?:
+      | 'about'
+      | 'keybinding'
+      | 'extension'
+      | 'server-config'
+      | 'user'
+      | 'credits'
   ) {
     const props = panel ? { props: { defaultPanel: panel } } : undefined
 
@@ -79,7 +86,7 @@ export const useDialogService = () => {
       error: {
         exceptionType: executionError.exception_type,
         exceptionMessage: executionError.exception_message,
-        nodeId: executionError.node_id,
+        nodeId: executionError.node_id?.toString(),
         nodeType: executionError.node_type,
         traceback: executionError.traceback.join('\n'),
         reportType: 'graphExecutionError'
@@ -121,16 +128,14 @@ export const useDialogService = () => {
   }
 
   function showManagerDialog(
-    props: InstanceType<typeof ManagerDialogContent>['$props'] = {
-      initialTab: ManagerTab.All
-    }
+    props: InstanceType<typeof ManagerDialogContent>['$props'] = {}
   ) {
     dialogStore.showDialog({
       key: 'global-manager',
       component: ManagerDialogContent,
       headerComponent: ManagerHeader,
       dialogComponentProps: {
-        closable: false,
+        closable: true,
         pt: {
           header: { class: '!p-0 !m-0' },
           content: { class: '!px-0 h-[83vh] w-[90vw] overflow-y-hidden' }
@@ -340,6 +345,75 @@ export const useDialogService = () => {
     })
   }
 
+  function showTopUpCreditsDialog(options?: {
+    isInsufficientCredits?: boolean
+  }) {
+    return dialogStore.showDialog({
+      key: 'top-up-credits',
+      component: TopUpCreditsDialogContent,
+      headerComponent: ComfyOrgHeader,
+      props: options,
+      dialogComponentProps: {
+        pt: {
+          header: { class: '!p-3' }
+        }
+      }
+    })
+  }
+
+  /**
+   * Shows a dialog for updating the current user's password.
+   */
+  function showUpdatePasswordDialog() {
+    return dialogStore.showDialog({
+      key: 'global-update-password',
+      component: UpdatePasswordContent,
+      headerComponent: ComfyOrgHeader,
+      props: {
+        onSuccess: () =>
+          dialogStore.closeDialog({ key: 'global-update-password' })
+      }
+    })
+  }
+
+  /**
+   * Shows a dialog from a third party extension.
+   * @param options - The dialog options.
+   * @param options.key - The dialog key.
+   * @param options.title - The dialog title.
+   * @param options.headerComponent - The dialog header component.
+   * @param options.footerComponent - The dialog footer component.
+   * @param options.component - The dialog component.
+   * @param options.props - The dialog props.
+   * @returns The dialog instance and a function to close the dialog.
+   */
+  function showExtensionDialog(options: ShowDialogOptions & { key: string }) {
+    return {
+      dialog: dialogStore.showExtensionDialog(options),
+      closeDialog: () => dialogStore.closeDialog({ key: options.key })
+    }
+  }
+
+  function toggleManagerDialog(
+    props?: InstanceType<typeof ManagerDialogContent>['$props']
+  ) {
+    if (dialogStore.isDialogOpen('global-manager')) {
+      dialogStore.closeDialog({ key: 'global-manager' })
+    } else {
+      showManagerDialog(props)
+    }
+  }
+
+  function toggleManagerProgressDialog(
+    props?: InstanceType<typeof ManagerProgressDialogContent>['$props']
+  ) {
+    if (dialogStore.isDialogOpen('global-manager-progress-dialog')) {
+      dialogStore.closeDialog({ key: 'global-manager-progress-dialog' })
+    } else {
+      showManagerProgressDialog({ props })
+    }
+  }
+
   return {
     showLoadWorkflowWarning,
     showMissingModelsWarning,
@@ -353,7 +427,12 @@ export const useDialogService = () => {
     showErrorDialog,
     showApiNodesSignInDialog,
     showSignInDialog,
+    showTopUpCreditsDialog,
+    showUpdatePasswordDialog,
+    showExtensionDialog,
     prompt,
-    confirm
+    confirm,
+    toggleManagerDialog,
+    toggleManagerProgressDialog
   }
 }

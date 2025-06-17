@@ -1,18 +1,36 @@
-import { computed, onMounted, ref } from 'vue'
+import {
+  type Component,
+  computed,
+  defineAsyncComponent,
+  onMounted,
+  ref
+} from 'vue'
 import { useI18n } from 'vue-i18n'
 
-import { useFirebaseAuthStore } from '@/stores/firebaseAuthStore'
 import { SettingTreeNode, useSettingStore } from '@/stores/settingStore'
 import type { SettingParams } from '@/types/settingTypes'
 import { isElectron } from '@/utils/envUtil'
 import { normalizeI18nKey } from '@/utils/formatUtil'
 import { buildTree } from '@/utils/treeUtil'
 
+import { useCurrentUser } from '../auth/useCurrentUser'
+
+interface SettingPanelItem {
+  node: SettingTreeNode
+  component: Component
+}
+
 export function useSettingUI(
-  defaultPanel?: 'about' | 'keybinding' | 'extension' | 'server-config'
+  defaultPanel?:
+    | 'about'
+    | 'keybinding'
+    | 'extension'
+    | 'server-config'
+    | 'user'
+    | 'credits'
 ) {
   const { t } = useI18n()
-  const firebaseAuthStore = useFirebaseAuthStore()
+  const { isLoggedIn } = useCurrentUser()
   const settingStore = useSettingStore()
   const activeCategory = ref<SettingTreeNode | null>(null)
 
@@ -42,52 +60,95 @@ export function useSettingUI(
     () => settingRoot.value.children ?? []
   )
 
-  // Define panel nodes
-  const aboutPanelNode: SettingTreeNode = {
-    key: 'about',
-    label: 'About',
-    children: []
+  // Define panel items
+  const aboutPanel: SettingPanelItem = {
+    node: {
+      key: 'about',
+      label: 'About',
+      children: []
+    },
+    component: defineAsyncComponent(
+      () => import('@/components/dialog/content/setting/AboutPanel.vue')
+    )
   }
 
-  const creditsPanelNode: SettingTreeNode = {
-    key: 'credits',
-    label: 'Credits',
-    children: []
+  const creditsPanel: SettingPanelItem = {
+    node: {
+      key: 'credits',
+      label: 'Credits',
+      children: []
+    },
+    component: defineAsyncComponent(
+      () => import('@/components/dialog/content/setting/CreditsPanel.vue')
+    )
   }
 
-  const keybindingPanelNode: SettingTreeNode = {
-    key: 'keybinding',
-    label: 'Keybinding',
-    children: []
+  const userPanel: SettingPanelItem = {
+    node: {
+      key: 'user',
+      label: 'User',
+      children: []
+    },
+    component: defineAsyncComponent(
+      () => import('@/components/dialog/content/setting/UserPanel.vue')
+    )
   }
 
-  const extensionPanelNode: SettingTreeNode = {
-    key: 'extension',
-    label: 'Extension',
-    children: []
+  const keybindingPanel: SettingPanelItem = {
+    node: {
+      key: 'keybinding',
+      label: 'Keybinding',
+      children: []
+    },
+    component: defineAsyncComponent(
+      () => import('@/components/dialog/content/setting/KeybindingPanel.vue')
+    )
   }
 
-  const serverConfigPanelNode: SettingTreeNode = {
-    key: 'server-config',
-    label: 'Server-Config',
-    children: []
+  const extensionPanel: SettingPanelItem = {
+    node: {
+      key: 'extension',
+      label: 'Extension',
+      children: []
+    },
+    component: defineAsyncComponent(
+      () => import('@/components/dialog/content/setting/ExtensionPanel.vue')
+    )
   }
 
-  /**
-   * Server config panel is only available in Electron
-   */
-  const serverConfigPanelNodeList = computed<SettingTreeNode[]>(() => {
-    return isElectron() ? [serverConfigPanelNode] : []
-  })
+  const serverConfigPanel: SettingPanelItem = {
+    node: {
+      key: 'server-config',
+      label: 'Server-Config',
+      children: []
+    },
+    component: defineAsyncComponent(
+      () => import('@/components/dialog/content/setting/ServerConfigPanel.vue')
+    )
+  }
+
+  const panels = computed<SettingPanelItem[]>(() =>
+    [
+      aboutPanel,
+      creditsPanel,
+      userPanel,
+      keybindingPanel,
+      extensionPanel,
+      ...(isElectron() ? [serverConfigPanel] : [])
+    ].filter((panel) => panel.component)
+  )
 
   /**
    * The default category to show when the dialog is opened.
    */
   const defaultCategory = computed<SettingTreeNode>(() => {
-    return defaultPanel
-      ? settingCategories.value.find((x) => x.key === defaultPanel) ??
-          settingCategories.value[0]
-      : settingCategories.value[0]
+    if (!defaultPanel) return settingCategories.value[0]
+    // Search through all groups in groupedMenuTreeNodes
+    for (const group of groupedMenuTreeNodes.value) {
+      const found = group.children?.find((node) => node.key === defaultPanel)
+      if (found) return found
+    }
+    return settingCategories.value[0]
   })
 
   const translateCategory = (node: SettingTreeNode) => ({
@@ -99,16 +160,15 @@ export function useSettingUI(
   })
 
   const groupedMenuTreeNodes = computed<SettingTreeNode[]>(() => [
-    // Account settings - only show when user is authenticated
-    ...(firebaseAuthStore.isAuthenticated
-      ? [
-          {
-            key: 'account',
-            label: 'Account',
-            children: [creditsPanelNode].map(translateCategory)
-          }
-        ]
-      : []),
+    // Account settings - only show credits when user is authenticated
+    {
+      key: 'account',
+      label: 'Account',
+      children: [
+        userPanel.node,
+        ...(isLoggedIn.value ? [creditsPanel.node] : [])
+      ].map(translateCategory)
+    },
     // Normal settings stored in the settingStore
     {
       key: 'settings',
@@ -120,10 +180,10 @@ export function useSettingUI(
       key: 'specialSettings',
       label: 'Special Settings',
       children: [
-        keybindingPanelNode,
-        extensionPanelNode,
-        aboutPanelNode,
-        ...serverConfigPanelNodeList.value
+        keybindingPanel.node,
+        extensionPanel.node,
+        aboutPanel.node,
+        ...(isElectron() ? [serverConfigPanel.node] : [])
       ].map(translateCategory)
     }
   ])
@@ -133,6 +193,7 @@ export function useSettingUI(
   })
 
   return {
+    panels,
     activeCategory,
     defaultCategory,
     groupedMenuTreeNodes,

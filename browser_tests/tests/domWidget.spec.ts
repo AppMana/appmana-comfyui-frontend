@@ -24,4 +24,27 @@ test.describe('DOM Widget', () => {
     await expect(firstMultiline).not.toBeVisible()
     await expect(lastMultiline).not.toBeVisible()
   })
+
+  test('Position update when entering focus mode', async ({ comfyPage }) => {
+    await comfyPage.setSetting('Comfy.UseNewMenu', 'Top')
+    await comfyPage.executeCommand('Workspace.ToggleFocusMode')
+    await comfyPage.nextFrame()
+    await expect(comfyPage.canvas).toHaveScreenshot('focus-mode-on.png')
+  })
+
+  // No DOM widget should be created by creation of interim LGraphNode objects.
+  test('Copy node with DOM widget by dragging + alt', async ({ comfyPage }) => {
+    const initialCount = await comfyPage.getDOMWidgetCount()
+
+    // TextEncodeNode1
+    await comfyPage.page.mouse.move(618, 191)
+    await comfyPage.page.keyboard.down('Alt')
+    await comfyPage.page.mouse.down()
+    await comfyPage.page.mouse.move(100, 100)
+    await comfyPage.page.mouse.up()
+    await comfyPage.page.keyboard.up('Alt')
+
+    const finalCount = await comfyPage.getDOMWidgetCount()
+    expect(finalCount).toBe(initialCount + 1)
+  })
 })

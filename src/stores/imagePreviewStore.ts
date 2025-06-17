@@ -1,25 +1,25 @@
 import { LGraphNode } from '@comfyorg/litegraph'
 import { defineStore } from 'pinia'
 
-import { ExecutedWsMessage, ResultItem } from '@/schemas/apiSchema'
+import {
+  ExecutedWsMessage,
+  ResultItem,
+  ResultItemType
+} from '@/schemas/apiSchema'
 import { api } from '@/scripts/api'
+import { app } from '@/scripts/app'
 import { parseFilePath } from '@/utils/formatUtil'
 import { isVideoNode } from '@/utils/litegraphUtil'
 
 const createOutputs = (
   filenames: string[],
-  type: string,
+  type: ResultItemType,
   isAnimated: boolean
 ): ExecutedWsMessage['output'] => {
   return {
     images: filenames.map((image) => ({ type, ...parseFilePath(image) })),
     animated: filenames.map((image) => isAnimated && image.endsWith('.webp'))
   }
-}
-
-const getPreviewParam = (node: LGraphNode): string => {
-  if (node.animatedImages || isVideoNode(node)) return ''
-  return app.getPreviewFormatParam()
 }
 
 export const useNodeOutputStore = defineStore('nodeOutput', () => {
@@ -35,6 +35,41 @@ export const useNodeOutputStore = defineStore('nodeOutput', () => {
     return app.nodePreviewImages[getNodeId(node)]
   }
 
+  /**
+   * Check if a node's outputs includes images that should/can be loaded normally
+   * by PIL.
+   */
+  const isImageOutputs = (
+    node: LGraphNode,
+    outputs: ExecutedWsMessage['output']
+  ): boolean => {
+    // If animated webp/png or video outputs, return false
+    if (node.animatedImages || isVideoNode(node)) return false
+
+    // If no images, return false
+    if (!outputs?.images?.length) return false
+
+    // If svg images, return false
+    if (outputs.images.some((image) => image.filename?.endsWith('svg')))
+      return false
+
+    return true
+  }
+
+  /**
+   * Get the preview param for the node's outputs.
+   *
+   * If the output is an image, use the user's preferred format (from settings).
+   * For non-image outputs, return an empty string, as including the preview param
+   * will force the server to load the output file as an image.
+   */
+  function getPreviewParam(
+    node: LGraphNode,
+    outputs: ExecutedWsMessage['output']
+  ): string {
+    return isImageOutputs(node, outputs) ? app.getPreviewFormatParam() : ''
+  }
+
   function getNodeImageUrls(node: LGraphNode): string[] | undefined {
     const previews = getNodePreviews(node)
     if (previews?.length) return previews
@@ -43,7 +78,7 @@ export const useNodeOutputStore = defineStore('nodeOutput', () => {
     if (!outputs?.images?.length) return
 
     const rand = app.getRandParam()
-    const previewParam = getPreviewParam(node)
+    const previewParam = getPreviewParam(node, outputs)
 
     return outputs.images.map((image) => {
       const imgUrlPart = new URLSearchParams(image)
@@ -57,7 +92,7 @@ export const useNodeOutputStore = defineStore('nodeOutput', () => {
     {
       folder = 'input',
       isAnimated = false
-    }: { folder?: string; isAnimated?: boolean } = {}
+    }: { folder?: ResultItemType; isAnimated?: boolean } = {}
   ) {
     if (!filenames || !node) return
 
@@ -78,6 +113,7 @@ export const useNodeOutputStore = defineStore('nodeOutput', () => {
     getNodeOutputs,
     getNodeImageUrls,
     getNodePreviews,
-    setNodeOutputs
+    setNodeOutputs,
+    getPreviewParam
   }
 })

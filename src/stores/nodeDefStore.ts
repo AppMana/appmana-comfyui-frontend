@@ -38,9 +38,11 @@ export class ComfyNodeDefImpl
   category: string
   readonly python_module: string
   readonly description: string
+  readonly help: string
   readonly deprecated: boolean
   readonly experimental: boolean
   readonly output_node: boolean
+  readonly api_node: boolean
   /**
    * @deprecated Use `inputs` instead
    */
@@ -117,10 +119,12 @@ export class ComfyNodeDefImpl
     this.category = obj.category
     this.python_module = obj.python_module
     this.description = obj.description
+    this.help = obj.help ?? ''
     this.deprecated = obj.deprecated ?? obj.category === ''
     this.experimental =
       obj.experimental ?? obj.category.startsWith('_for_testing')
     this.output_node = obj.output_node
+    this.api_node = !!obj.api_node
     this.input = obj.input ?? {}
     this.output = obj.output ?? []
     this.output_is_list = obj.output_is_list
@@ -214,10 +218,22 @@ export const SYSTEM_NODE_DEFS: Record<string, ComfyNodeDefV1> = {
   }
 }
 
-export function buildNodeDefTree(nodeDefs: ComfyNodeDefImpl[]): TreeNode {
-  return buildTree(nodeDefs, (nodeDef: ComfyNodeDefImpl) =>
+export interface BuildNodeDefTreeOptions {
+  /**
+   * Custom function to extract the tree path from a node definition.
+   * If not provided, uses the default path based on nodeDef.nodePath.
+   */
+  pathExtractor?: (nodeDef: ComfyNodeDefImpl) => string[]
+}
+
+export function buildNodeDefTree(
+  nodeDefs: ComfyNodeDefImpl[],
+  options: BuildNodeDefTreeOptions = {}
+): TreeNode {
+  const { pathExtractor } = options
+  const defaultPathExtractor = (nodeDef: ComfyNodeDefImpl) =>
     nodeDef.nodePath.split('/')
-  )
+  return buildTree(nodeDefs, pathExtractor || defaultPathExtractor)
 }
 
 export function createDummyFolderNodeDef(folderPath: string): ComfyNodeDefImpl {
@@ -290,6 +306,8 @@ export const useNodeDefStore = defineStore('nodeDef', () => {
   }
   function fromLGraphNode(node: LGraphNode): ComfyNodeDefImpl | null {
     // Frontend-only nodes don't have nodeDef
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore Optional chaining used in index
     return nodeDefsByName.value[node.constructor?.nodeData?.name] ?? null
   }
 
